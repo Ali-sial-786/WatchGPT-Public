@@ -158,15 +158,20 @@ class PhoneActions(
     }
 
     private suspend fun changeReminder(args: JsonObject): String {
-        val id = ActionArgs.text(args, "id", 36) ?: return invalid(CHANGE_REMINDER, "id")
+        val id = ActionArgs.text(args, "id", 36)
+        val title = ActionArgs.text(args, "match_title", 200)
+        if (id == null && title == null) return invalid(CHANGE_REMINDER, "id or match_title")
         val organizer = Organizer.get(appContext)
-        val item = organizer.list().firstOrNull { it.id == id } ?: return done(CHANGE_REMINDER, "missing", "error: reminder not found")
+        val matches = organizer.list().filter { if (id != null) it.id == id else it.title.trim().equals(title, ignoreCase = true) }
+        if (matches.size > 1) return done(CHANGE_REMINDER, "ambiguous", "error: more than one item has that exact title. Manage the items in WatchGPT's reminders screen; no item was changed.")
+        val item = matches.singleOrNull() ?: return done(CHANGE_REMINDER, "missing", "error: reminder not found")
+        val selectedId = item.id
         when (ActionArgs.choice(args, "operation", setOf("complete", "snooze", "delete", "edit"))) {
-            "complete" -> organizer.complete(id)
+            "complete" -> organizer.complete(selectedId)
 
-            "snooze" -> organizer.snooze(id, ActionArgs.int(args, "minutes", 1..10080) ?: 10)
+            "snooze" -> organizer.snooze(selectedId, ActionArgs.int(args, "minutes", 1..10080) ?: 10)
 
-            "delete" -> organizer.delete(id)
+            "delete" -> organizer.delete(selectedId)
 
             "edit" -> organizer.save(
                 item.copy(
@@ -405,8 +410,8 @@ class PhoneActions(
                 ),
                 ToolSpec(
                     CHANGE_REMINDER,
-                    "Complete, snooze, edit or delete a WatchGPT item by its exact ID. Never guess an ID. Ask before deleting if intent is unclear.",
-                    """{"type":"object","properties":{"id":{"type":"string"},"operation":{"type":"string","enum":["complete","snooze","delete","edit"]},"minutes":{"type":"integer","minimum":1,"maximum":10080},"title":{"type":"string"},"notes":{"type":"string"},"at":{"type":"string"},"repeat":{"type":"string","enum":["none","daily","weekdays","weekly","monthly"]}},"required":["id","operation"],"additionalProperties":false}""",
+                    "Complete, snooze, edit or delete a WatchGPT item by its exact ID or the exact title the user said. Use match_title for private reminders whose IDs stay on the phone. Duplicate titles are rejected; never guess an ID or title. Delete only when the user asks.",
+                    """{"type":"object","properties":{"id":{"type":"string"},"match_title":{"type":"string","description":"Exact existing title spoken by the user; avoids sending the reminder list to ChatGPT."},"operation":{"type":"string","enum":["complete","snooze","delete","edit"]},"minutes":{"type":"integer","minimum":1,"maximum":10080},"title":{"type":"string"},"notes":{"type":"string"},"at":{"type":"string"},"repeat":{"type":"string","enum":["none","daily","weekdays","weekly","monthly"]}},"required":["operation"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     SET_TIMER,

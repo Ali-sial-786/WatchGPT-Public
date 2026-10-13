@@ -108,14 +108,17 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
     var tab by rememberSaveable { mutableStateOf("Reminders") }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmDelete by remember { mutableStateOf<Entry?>(null) }
-    var notifications by remember { mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled()) }
+    var notifications by remember { mutableStateOf(organizer.notificationsAllowed()) }
+    var calendarPermission by remember { mutableStateOf(organizer.calendar.permitted()) }
     var exact by remember { mutableStateOf(context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        notifications = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        notifications = organizer.notificationsAllowed()
+        calendarPermission = organizer.calendar.permitted()
         organizer.requestSync()
     }
     LifecycleResumeEffect(Unit) {
-        notifications = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        notifications = organizer.notificationsAllowed()
+        calendarPermission = organizer.calendar.permitted()
         exact = context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
         organizer.requestSync()
         onPauseOrDispose { }
@@ -156,14 +159,23 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
         Text(if (calendarPage) "Calendar sync" else "Your day", style = if (watch) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
         if (calendarPage) {
             var calendars by remember { mutableStateOf<List<CalendarSync.Calendar>>(emptyList()) }
+            var calendarLoading by remember { mutableStateOf(true) }
             var selectedCalendar by remember { mutableStateOf(organizer.calendar.selected) }
-            LaunchedEffect(calendarStatus) { calendars = organizer.calendar.calendars() }
+            LaunchedEffect(calendarStatus, calendarPermission) {
+                calendarLoading = true
+                try {
+                    calendars = organizer.calendar.calendars()
+                } finally {
+                    calendarLoading = false
+                }
+            }
             Text("Optional. Your reminders work without Google. Calendar copies are events, not Google Tasks.")
             Text("Only WatchGPT-created events are managed. Calendar alerts are off to avoid duplicate reminders.", style = MaterialTheme.typography.bodySmall)
             Text(calendarStatus)
             organizer.calendar.lastSync?.let { Text("Last provider sync: ${java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d MMM HH:mm"))}", style = MaterialTheme.typography.bodySmall) }
-            if (!organizer.calendar.permitted()) Button(onClick = { permission.launch(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)) }) { Text("Allow calendar access") }
-            if (calendars.isEmpty()) Text("No writable Google calendar found. Add a Google account in your phone’s settings and enable Calendar sync.")
+            if (!calendarPermission) Button(onClick = { permission.launch(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)) }) { Text("Allow calendar access") }
+            if (calendarLoading) Text("Loading calendars…")
+            if (!calendarLoading && calendars.isEmpty()) Text("No writable Google calendar found. Add a Google account in your phone’s settings and enable Calendar sync.")
             calendars.forEach { calendar ->
                 OutlinedButton(onClick = {
                     run {
@@ -230,7 +242,7 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
             OutlinedButton(onClick = organizer::requestSync, modifier = Modifier.fillMaxWidth()) { Text("Sync now") }
             if (!watch) TextButton(onClick = { calendarPage = true }) { Text("Google Calendar · optional") }
             if (!notifications) {
-                Text("Notifications are off. Saved reminders cannot alert you.", color = MaterialTheme.colorScheme.error)
+                Text("Reminder notifications are off. Saved reminders cannot alert you.", color = MaterialTheme.colorScheme.error)
                 Button(onClick = {
                     if (Build.VERSION.SDK_INT >= 33) {
                         permission.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
@@ -238,6 +250,7 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
                         context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
                     }
                 }) { Text("Enable alerts") }
+                OutlinedButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text("Notification settings") }
             }
             if (!exact) {
                 Text("Precise timing is off. Android may delay alerts.", style = MaterialTheme.typography.bodySmall)

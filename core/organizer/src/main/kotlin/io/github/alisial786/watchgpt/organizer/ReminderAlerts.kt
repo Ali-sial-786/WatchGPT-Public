@@ -40,6 +40,13 @@ internal class ReminderAlerts(private val organizer: Organizer) {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
+    fun notificationsAllowed(): Boolean {
+        val manager = NotificationManagerCompat.from(context)
+        val channel = context.getSystemService(NotificationManager::class.java).getNotificationChannel(CHANNEL)
+        return manager.areNotificationsEnabled() && channel?.importance != NotificationManager.IMPORTANCE_NONE &&
+            (Build.VERSION.SDK_INT < 33 || context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+    }
+
     @SuppressLint("ScheduleExactAlarm")
     @Synchronized
     fun schedule(entry: Entry, from: Instant = Instant.now()) {
@@ -61,9 +68,14 @@ internal class ReminderAlerts(private val organizer: Organizer) {
         if (organizer.db.wasDelivered(token(entry, due))) return
         val whenToRing = maxOf(due, now + 1000)
         val intent = pending(entry, due)
-        if (alarms.canScheduleExactAlarms()) {
-            alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, whenToRing, intent)
-        } else {
+        try {
+            if (alarms.canScheduleExactAlarms()) {
+                alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, whenToRing, intent)
+            } else {
+                alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, whenToRing, intent)
+            }
+        } catch (_: SecurityException) {
+            // Exact access can be revoked between the permission check and scheduling.
             alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, whenToRing, intent)
         }
     }
@@ -76,7 +88,7 @@ internal class ReminderAlerts(private val organizer: Organizer) {
         val token = token(entry, at)
         if (organizer.db.wasDelivered(token)) return
         val manager = NotificationManagerCompat.from(context)
-        if (!manager.areNotificationsEnabled() || (Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)) return
+        if (!notificationsAllowed()) return
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(NotificationChannel(CHANNEL, "Reminders", NotificationManager.IMPORTANCE_HIGH).apply { enableVibration(true) })
         val open = context.packageManager.getLaunchIntentForPackage(context.packageName)?.putExtra("organizer", true)?.putExtra("quiet", true)?.putExtra("entry", id)
         val notification = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_reminder)

@@ -55,6 +55,7 @@ class Organizer internal constructor(context: Context, private val startWorkers:
         if (startWorkers) WorkManager.getInstance(context).enqueueUniquePeriodicWork("organizer-periodic", ExistingPeriodicWorkPolicy.KEEP, PeriodicWorkRequestBuilder<OrganizerWorker>(15, TimeUnit.MINUTES).build())
         requestSync()
     }
+    fun notificationsAllowed(): Boolean = alerts.notificationsAllowed()
     suspend fun list(): List<Entry> = withContext(Dispatchers.IO) { db.all().filterNot { it.deleted } }
     suspend fun save(entry: Entry): Entry = withContext(Dispatchers.IO) {
         val saved = db.save(entry)

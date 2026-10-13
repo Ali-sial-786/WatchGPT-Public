@@ -164,14 +164,16 @@ jobs:
           arch: x86_64
           disable-animations: true
           script: |
-            ./gradlew :core:organizer:connectedDebugAndroidTest --console=plain --max-workers=2
+            ./gradlew :core:organizer:connectedDebugAndroidTest --console=plain --max-workers=2 || (python tools/print-android-test-results.py; mkdir -p docs/screenshots; adb pull /sdcard/Pictures/WatchGPT_Demos/. docs/screenshots/ || true; exit 1)
+            python tools/print-android-test-results.py
             mkdir -p docs/screenshots
             adb pull /sdcard/Pictures/WatchGPT_Demos/. docs/screenshots/
       - name: Save synthetic screenshots to the private preview branch
-        if: github.event_name == 'workflow_dispatch' && github.event.repository.private
+        if: always() && github.event_name == 'workflow_dispatch' && github.event.repository.private
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          if ! compgen -G "docs/screenshots/*.png" > /dev/null; then exit 0; fi
           gh auth setup-git
           git config user.name "WatchGPT CI"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

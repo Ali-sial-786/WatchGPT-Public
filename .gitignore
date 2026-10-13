@@ -20,3 +20,6 @@ captures/
 
 # Demo video work (brag / HyperFrames), not part of the app.
 brag-output*/
+
+__pycache__/
+*.pyc

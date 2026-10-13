@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.buddy
+package io.github.alisial786.watchgpt.buddy
 
 import kotlin.math.PI
 import kotlin.math.abs
@@ -23,7 +23,7 @@ internal class ArcSeed(
     val speed: Float,
     val phase: Float,
     val sweep: Float,
-    /** Hue offset from the Buddy's accent, degrees, and how far the colour walks along the arc (centred on it). */
+    /** Hue offset from the WatchGPT's accent, degrees, and how far the colour walks along the arc (centred on it). */
     val hue: Float,
     val hueSpan: Float,
     val width: Float,

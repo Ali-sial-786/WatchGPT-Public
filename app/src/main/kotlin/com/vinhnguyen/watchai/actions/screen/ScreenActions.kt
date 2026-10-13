@@ -1,16 +1,16 @@
-package com.vinhnguyen.watchai.actions.screen
+package io.github.alisial786.watchgpt.actions.screen
 
 import android.content.Context
 import android.content.pm.PackageManager
-import com.vinhnguyen.watchai.actions.ActionArgs
-import com.vinhnguyen.watchai.actions.AppLimits
-import com.vinhnguyen.watchai.actions.CardHub
-import com.vinhnguyen.watchai.actions.Pending
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.ToolSpec
-import com.vinhnguyen.watchai.brain.Toolbox
-import com.vinhnguyen.watchai.brain.guard.LocalJudge
+import io.github.alisial786.watchgpt.actions.ActionArgs
+import io.github.alisial786.watchgpt.actions.AppLimits
+import io.github.alisial786.watchgpt.actions.CardHub
+import io.github.alisial786.watchgpt.actions.Pending
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.ToolSpec
+import io.github.alisial786.watchgpt.brain.Toolbox
+import io.github.alisial786.watchgpt.brain.guard.LocalJudge
 import kotlinx.coroutines.delay
 
 /**
@@ -20,7 +20,7 @@ import kotlinx.coroutines.delay
  * instruction (the Guard keeps that result on the phone). Before a tap, the phone's own model
  * ([judge]) says whether it could send, pay, post or delete something, from the control's words in
  * whatever language the app shows; such a tap, or one it can't judge, waits for the user's yes like a
- * text does ([Pending]). Buddy only uses the apps the user turned on ([AppLimits]).
+ * text does ([Pending]). WatchGPT only uses the apps the user turned on ([AppLimits]).
  */
 class ScreenActions(
     context: Context,
@@ -28,14 +28,14 @@ class ScreenActions(
     private val limits: AppLimits,
     private val judge: LocalJudge?,
     private val logger: BrainLogger = BrainLogger.None,
-    /** Where "Let Buddy use this app?" shows, with a button for the yes. */
+    /** Where "Let WatchGPT use this app?" shows, with a button for the yes. */
     private val cards: CardHub? = null,
-    private val service: () -> BuddyAccessibility? = { BuddyAccessibility.current },
+    private val service: () -> WatchGPTAccessibility? = { WatchGPTAccessibility.current },
 ) : Toolbox {
     private val appContext = context.applicationContext
 
     /** The last look at the screen: ids in tool calls point into it. */
-    @Volatile private var last: BuddyAccessibility.Screen? = null
+    @Volatile private var last: WatchGPTAccessibility.Screen? = null
 
     /** The model's verdicts on taps, while the app runs: the same button in the same app is asked about once. */
     private val verdicts =
@@ -66,7 +66,7 @@ class ScreenActions(
                 val (app, screen) = fresh(hands) ?: return blocked(name, hands)
                 val node = screen.nodes.firstOrNull { it.id == id } ?: return done(name, "invalid", "error: there's no control [$id]; look at the screen again")
                 val handle = screen.handles[id] ?: return done(name, "invalid", "error: [$id] is gone; look at the screen again")
-                if (node.password) return done(name, "refused", "error: Buddy never touches password fields")
+                if (node.password) return done(name, "refused", "error: WatchGPT never touches password fields")
                 val label = ScreenModel.label(node) ?: "item"
                 if (risky(app, node)) {
                     done(name, "proposed", pending.propose("Tap \"$label\" in $app.") { if (hands.tap(handle)) settle("ok: tapped \"$label\"") else "error: the tap didn't work" })
@@ -82,7 +82,7 @@ class ScreenActions(
                 val text = ActionArgs.text(args, "text", TYPE_MAX) ?: return done(name, "invalid", "error: say what to type")
                 val (app, screen) = fresh(hands) ?: return blocked(name, hands)
                 val node = screen.nodes.firstOrNull { it.id == id && it.editable } ?: return done(name, "invalid", "error: [$id] isn't a text field")
-                if (node.password) return done(name, "refused", "error: Buddy never types into password fields")
+                if (node.password) return done(name, "refused", "error: WatchGPT never types into password fields")
                 val handle = screen.handles[id] ?: return done(name, "invalid", "error: [$id] is gone; look at the screen again")
                 if (!hands.type(handle, text)) return done(name, "failed", "error: couldn't type there")
                 if (ActionArgs.bool(args, "submit") != true) return done(name, "ok", settle("ok: typed it into [$id] in $app (nothing is sent by typing)"))
@@ -148,7 +148,7 @@ class ScreenActions(
      * after an app opens, Android can still show its own screen or the app before for a moment (29.09,
      * opening Zalo), so it looks again a few times before giving up.
      */
-    private suspend fun look(hands: BuddyAccessibility): Pair<String, BuddyAccessibility.Screen>? {
+    private suspend fun look(hands: WatchGPTAccessibility): Pair<String, WatchGPTAccessibility.Screen>? {
         repeat(LOOK_TRIES) { attempt ->
             val screen = hands.look()
             if (screen != null && limits.allowed(screen.packageName)) {
@@ -161,25 +161,25 @@ class ScreenActions(
     }
 
     /** The last look if it's still the app in front, else a new one. */
-    private suspend fun fresh(hands: BuddyAccessibility): Pair<String, BuddyAccessibility.Screen>? {
+    private suspend fun fresh(hands: WatchGPTAccessibility): Pair<String, WatchGPTAccessibility.Screen>? {
         val now = hands.look() ?: return null
         val kept = last
         return if (kept != null && kept.packageName == now.packageName && limits.allowed(now.packageName)) appName(kept.packageName) to kept else look(hands)
     }
 
-    /** Why Buddy can't use the app in front; for one that's off, it offers to turn it on (with the user's yes). */
+    /** Why WatchGPT can't use the app in front; for one that's off, it offers to turn it on (with the user's yes). */
     private suspend fun blocked(
         name: String,
-        hands: BuddyAccessibility,
+        hands: WatchGPTAccessibility,
     ): String {
         val pkg = hands.look()?.packageName
         return when {
             pkg == null -> done(name, "failed", "error: there's no app on the phone's screen to use; open one first")
 
-            pkg == appContext.packageName -> done(name, "failed", "error: Buddy's own app is on the screen; open the app the user means first")
+            pkg == appContext.packageName -> done(name, "failed", "error: WatchGPT's own app is on the screen; open the app the user means first")
 
             else -> {
-                val answer = limits.whenOff(pkg, pending, cards) { "ok: ${appName(pkg)} is on for Buddy now; look at the screen again" }
+                val answer = limits.whenOff(pkg, pending, cards) { "ok: ${appName(pkg)} is on for WatchGPT now; look at the screen again" }
                 done(name, if (answer.startsWith("not done yet")) "proposed" else "refused", answer)
             }
         }
@@ -223,7 +223,7 @@ class ScreenActions(
         private const val TYPE_MAX = 300
         private const val SETTLE_MS = 700L
         private const val OFF =
-            "error: Buddy can't use apps yet: the user has to switch on \"Buddy\" in the phone's Settings, Accessibility, Installed apps. " +
+            "error: WatchGPT can't use apps yet: the user has to switch on \"WatchGPT\" in the phone's Settings, Accessibility, Installed apps. " +
                 "Tell them that; it's needed once."
 
         val SPECS =

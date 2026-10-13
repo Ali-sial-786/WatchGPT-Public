@@ -1,60 +1,60 @@
-package com.vinhnguyen.watchai
+package io.github.alisial786.watchgpt
 
 import android.content.Context
 import android.os.SystemClock
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
-import com.vinhnguyen.watchai.actions.ActionLogStore
-import com.vinhnguyen.watchai.actions.AppLimits
-import com.vinhnguyen.watchai.actions.CardHub
-import com.vinhnguyen.watchai.actions.Contacts
-import com.vinhnguyen.watchai.actions.ConversationActions
-import com.vinhnguyen.watchai.actions.Memory
-import com.vinhnguyen.watchai.actions.MemoryActions
-import com.vinhnguyen.watchai.actions.MessageInbox
-import com.vinhnguyen.watchai.actions.NoteStore
-import com.vinhnguyen.watchai.actions.Pending
-import com.vinhnguyen.watchai.actions.PhoneActions
-import com.vinhnguyen.watchai.actions.PhoneClock
-import com.vinhnguyen.watchai.actions.PhoneControls
-import com.vinhnguyen.watchai.actions.PhoneShortcuts
-import com.vinhnguyen.watchai.actions.ReachActions
-import com.vinhnguyen.watchai.actions.Safety
-import com.vinhnguyen.watchai.actions.UserTurns
-import com.vinhnguyen.watchai.actions.screen.ScreenActions
-import com.vinhnguyen.watchai.brain.Availability
-import com.vinhnguyen.watchai.brain.BrainRouter
-import com.vinhnguyen.watchai.brain.ChatTurn
-import com.vinhnguyen.watchai.brain.Toolbox
-import com.vinhnguyen.watchai.brain.Toolboxes
-import com.vinhnguyen.watchai.brain.chatgpt.ChatGptBrain
-import com.vinhnguyen.watchai.brain.chatgpt.ChatGptHttp
-import com.vinhnguyen.watchai.brain.chatgpt.ChatGptSettings
-import com.vinhnguyen.watchai.brain.chatgpt.auth.AuthSession
-import com.vinhnguyen.watchai.brain.chatgpt.auth.ChatGptSignIn
-import com.vinhnguyen.watchai.brain.chatgpt.auth.CodexOAuthClient
-import com.vinhnguyen.watchai.brain.guard.ActionLog
-import com.vinhnguyen.watchai.brain.guard.Budget
-import com.vinhnguyen.watchai.brain.guard.Guard
-import com.vinhnguyen.watchai.brain.guard.Level
-import com.vinhnguyen.watchai.brain.guard.Presence
-import com.vinhnguyen.watchai.brain.guard.PrivateReply
-import com.vinhnguyen.watchai.buddy.Genes
-import com.vinhnguyen.watchai.ondevice.AppForeground
-import com.vinhnguyen.watchai.ondevice.EngineHolder
-import com.vinhnguyen.watchai.ondevice.GeminiNanoBrain
-import com.vinhnguyen.watchai.ondevice.GemmaBrain
-import com.vinhnguyen.watchai.ondevice.GemmaReader
-import com.vinhnguyen.watchai.ondevice.ModelRepository
-import com.vinhnguyen.watchai.ondevice.OnDeviceSettings
-import com.vinhnguyen.watchai.plus.Plus
-import com.vinhnguyen.watchai.security.KeystoreVault
-import com.vinhnguyen.watchai.security.TimberBrainLogger
-import com.vinhnguyen.watchai.ui.TestPage
-import com.vinhnguyen.watchai.voice.LanguageId
-import com.vinhnguyen.watchai.voice.LocalSpeech
-import com.vinhnguyen.watchai.watch.WatchCalls
+import io.github.alisial786.watchgpt.actions.ActionLogStore
+import io.github.alisial786.watchgpt.actions.AppLimits
+import io.github.alisial786.watchgpt.actions.CardHub
+import io.github.alisial786.watchgpt.actions.Contacts
+import io.github.alisial786.watchgpt.actions.ConversationActions
+import io.github.alisial786.watchgpt.actions.Memory
+import io.github.alisial786.watchgpt.actions.MemoryActions
+import io.github.alisial786.watchgpt.actions.MessageInbox
+import io.github.alisial786.watchgpt.actions.NoteStore
+import io.github.alisial786.watchgpt.actions.Pending
+import io.github.alisial786.watchgpt.actions.PhoneActions
+import io.github.alisial786.watchgpt.actions.PhoneClock
+import io.github.alisial786.watchgpt.actions.PhoneControls
+import io.github.alisial786.watchgpt.actions.PhoneShortcuts
+import io.github.alisial786.watchgpt.actions.ReachActions
+import io.github.alisial786.watchgpt.actions.Safety
+import io.github.alisial786.watchgpt.actions.UserTurns
+import io.github.alisial786.watchgpt.actions.screen.ScreenActions
+import io.github.alisial786.watchgpt.brain.Availability
+import io.github.alisial786.watchgpt.brain.BrainRouter
+import io.github.alisial786.watchgpt.brain.ChatTurn
+import io.github.alisial786.watchgpt.brain.Toolbox
+import io.github.alisial786.watchgpt.brain.Toolboxes
+import io.github.alisial786.watchgpt.brain.chatgpt.ChatGptBrain
+import io.github.alisial786.watchgpt.brain.chatgpt.ChatGptHttp
+import io.github.alisial786.watchgpt.brain.chatgpt.ChatGptSettings
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.AuthSession
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.ChatGptSignIn
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.CodexOAuthClient
+import io.github.alisial786.watchgpt.brain.guard.ActionLog
+import io.github.alisial786.watchgpt.brain.guard.Budget
+import io.github.alisial786.watchgpt.brain.guard.Guard
+import io.github.alisial786.watchgpt.brain.guard.Level
+import io.github.alisial786.watchgpt.brain.guard.Presence
+import io.github.alisial786.watchgpt.brain.guard.PrivateReply
+import io.github.alisial786.watchgpt.buddy.Genes
+import io.github.alisial786.watchgpt.ondevice.AppForeground
+import io.github.alisial786.watchgpt.ondevice.EngineHolder
+import io.github.alisial786.watchgpt.ondevice.GeminiNanoBrain
+import io.github.alisial786.watchgpt.ondevice.GemmaBrain
+import io.github.alisial786.watchgpt.ondevice.GemmaReader
+import io.github.alisial786.watchgpt.ondevice.ModelRepository
+import io.github.alisial786.watchgpt.ondevice.OnDeviceSettings
+import io.github.alisial786.watchgpt.plus.Plus
+import io.github.alisial786.watchgpt.security.KeystoreVault
+import io.github.alisial786.watchgpt.security.TimberBrainLogger
+import io.github.alisial786.watchgpt.ui.TestPage
+import io.github.alisial786.watchgpt.voice.LanguageId
+import io.github.alisial786.watchgpt.voice.LocalSpeech
+import io.github.alisial786.watchgpt.watch.WatchCalls
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -115,7 +115,7 @@ class AppGraph(
     /** The one message or call waiting for a yes, by voice or with the phone's pop-up. */
     val pending = Pending(userTurns)
 
-    /** What the phone's pop-up shows while Buddy works. */
+    /** What the phone's pop-up shows while WatchGPT works. */
     val cards = CardHub()
 
     val actions = PhoneActions(appContext, notes, controls, phoneClock, logger = logger, cards = cards)
@@ -130,15 +130,15 @@ class AppGraph(
     /** Gemma on this phone: reads private data before ChatGPT gets it, and judges taps and apps. */
     val reader = GemmaReader(models, onDeviceSettings, engines, logger, languageOf = languages::of)
 
-    /** The apps Buddy may use: only the ones the user turned on; settings, stores, passwords and payments never. */
+    /** The apps WatchGPT may use: only the ones the user turned on; settings, stores, passwords and payments never. */
     val limits = AppLimits(appContext, reader)
 
     val shortcuts = PhoneShortcuts(appContext, logger, { foreground.isForeground() }, cards, limits, pending)
 
-    /** Using apps on the phone for the user, once they switch on Buddy's accessibility service. */
+    /** Using apps on the phone for the user, once they switch on WatchGPT's accessibility service. */
     val screen = ScreenActions(appContext, pending, limits, reader, logger, cards)
 
-    // What Buddy remembers (conversations, the facts the user asked it to keep) gets its own vault and key too.
+    // What WatchGPT remembers (conversations, the facts the user asked it to keep) gets its own vault and key too.
     private val memoryVault = KeystoreVault(appContext, logger, alias = "watchai_memory_master_v1", dirName = "memory")
     val memory = Memory(memoryVault, scope)
     val memoryActions = MemoryActions(memory, userTurns, logger)
@@ -147,7 +147,7 @@ class AppGraph(
     val tools: Toolbox =
         Toolboxes(listOf(actions, ReachActions(appContext, contacts, inbox, pending, logger, cards = cards, limits = limits), shortcuts, screen, memoryActions))
 
-    /** What a conversation starts with: what the user asked Buddy to keep, and the last conversations unless they turned that off. */
+    /** What a conversation starts with: what the user asked WatchGPT to keep, and the last conversations unless they turned that off. */
     suspend fun remembered(except: String? = null): String? = memory.context(history = settings.rememberChats, except = except)
 
     /** A finished turn of a conversation for the history, unless the user turned it off; [local] if only the phone's own model heard it. */
@@ -160,10 +160,10 @@ class AppGraph(
         if (settings.rememberChats) memory.add(conversation, where, turn.role == ChatTurn.Role.USER, turn.text, local)
     }
 
-    /** Texts, replies and calls Buddy may send in an hour, across all conversations. */
+    /** Texts, replies and calls WatchGPT may send in an hour, across all conversations. */
     val budget = Budget(max = OUTBOUND_PER_HOUR, windowMs = HOUR_MS, now = SystemClock::elapsedRealtime)
 
-    // The log of what Buddy did gets its own vault and key too.
+    // The log of what WatchGPT did gets its own vault and key too.
     private val logVault = KeystoreVault(appContext, logger, alias = "watchai_log_master_v1", dirName = "log")
     val actionLog = ActionLogStore(logVault, scope)
 
@@ -228,24 +228,25 @@ class AppGraph(
         return result
     }
 
-    /** Buddy Plus through RevenueCat: extras only (choose your Buddy's look, early access). */
+    /** WatchGPT Plus through RevenueCat: extras only (choose your WatchGPT's look, early access). */
     val plus = Plus(appContext, BuildConfig.REVENUECAT_KEY, scope, BuildConfig.DEBUG)
 
-    /** The Buddy a Plus user picked (a seed), or null for the one made from their account. */
-    val chosenBuddy = MutableStateFlow(settings.chosenBuddy)
+    /** The WatchGPT a Plus user picked (a seed), or null for the one made from their account. */
+    val chosenWatchGPT = MutableStateFlow(settings.chosenWatchGPT)
 
-    fun chooseBuddy(seed: Long?) {
-        settings.chosenBuddy = seed
-        chosenBuddy.value = seed
+    fun chooseWatchGPT(seed: Long?) {
+        settings.chosenWatchGPT = seed
+        chosenWatchGPT.value = seed
     }
 
-    /** This user's Buddy: the one they picked with Plus, else from their ChatGPT account, or this install until they sign in. */
-    suspend fun buddySeed(): Long = chosenBuddy.value?.takeIf { plus.active.value }
+    /** This user's WatchGPT: the one they picked with Plus, else from their ChatGPT account, or this install until they sign in. */
+    suspend fun buddySeed(): Long = chosenWatchGPT.value?.takeIf { plus.active.value }
         ?: Genes.seedFor(runCatching { session.bearer().accountId }.getOrNull() ?: settings.installId)
     val watchCalls = WatchCalls(this)
 
-    /** "Delete everything": tokens, keys, reports, notes, what Buddy remembers, models, settings. */
+    /** "Delete everything": tokens, keys, reports, notes, what WatchGPT remembers, models, settings. */
     suspend fun deleteEverything() {
+        io.github.alisial786.watchgpt.organizer.Organizer.get(appContext).deleteAll()
         runCatching { session.signOut() }
         vault.wipe()
         notesVault.wipe()
@@ -280,7 +281,7 @@ class AppSettings(
         get() = prefs.getBoolean("cloud_allowed", false)
         set(value) = prefs.edit { putBoolean("cloud_allowed", value) }
 
-    /** A random id for this install, for Buddy until the user signs in. Never sent anywhere. */
+    /** A random id for this install, for WatchGPT until the user signs in. Never sent anywhere. */
     val installId: String
         get() = prefs.getString("install_id", null) ?: UUID.randomUUID().toString().also { id -> prefs.edit { putString("install_id", id) } }
 
@@ -289,8 +290,8 @@ class AppSettings(
         get() = prefs.getBoolean("private_on_phone", true)
         set(value) = prefs.edit { putBoolean("private_on_phone", value) }
 
-    /** The Buddy picked with Plus (a seed), or null. */
-    var chosenBuddy: Long?
+    /** The WatchGPT picked with Plus (a seed), or null. */
+    var chosenWatchGPT: Long?
         get() = if (prefs.contains("chosen_buddy")) prefs.getLong("chosen_buddy", 0) else null
         set(value) = prefs.edit { if (value == null) remove("chosen_buddy") else putLong("chosen_buddy", value) }
 
@@ -299,7 +300,11 @@ class AppSettings(
         get() = prefs.getBoolean("remember_chats", true)
         set(value) = prefs.edit { putBoolean("remember_chats", value) }
 
-    /** GPT-Live voice, chosen in Settings; watch calls use it too. */
+    /** Inactivity ends a call; zero keeps it open until stopped or disconnected. */
+    var conversationTimeoutSeconds: Int
+        get() = prefs.getInt("conversation_timeout", 120).coerceIn(0, 900)
+        set(value) = prefs.edit { putInt("conversation_timeout", value.coerceIn(0, 900)) }
+
     var voice: String
         get() = prefs.getString("voice", null) ?: "cove"
         set(value) = prefs.edit { putString("voice", value) }

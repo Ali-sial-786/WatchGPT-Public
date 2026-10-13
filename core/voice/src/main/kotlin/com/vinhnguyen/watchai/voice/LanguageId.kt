@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 import android.content.Context
 import android.view.textclassifier.TextClassificationManager

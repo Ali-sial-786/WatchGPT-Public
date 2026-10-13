@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
 import android.content.Context
 import android.content.Intent
@@ -7,10 +7,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.SystemClock
 import android.provider.Settings
-import com.vinhnguyen.watchai.brain.guard.LocalJudge
+import io.github.alisial786.watchgpt.brain.guard.LocalJudge
 
 /**
- * The apps Buddy may use: only the ones the user turned on ("Apps Buddy can use"). It opens those,
+ * The apps WatchGPT may use: only the ones the user turned on ("Apps WatchGPT can use"). It opens those,
  * uses them on the screen and reads their messages; every other app is off. Some can't be turned
  * on at all, by what the phone itself says about them (there's no list of apps or words here: no
  * list covers every country's banks):
@@ -41,7 +41,7 @@ class AppLimits(
         val never: Set<String>,
     )
 
-    /** Whether Buddy may open and use [packageName]: the user turned it on, and it isn't one that's always off. */
+    /** Whether WatchGPT may open and use [packageName]: the user turned it on, and it isn't one that's always off. */
     fun allowed(packageName: String): Boolean = !alwaysOff(packageName) && on(packageName)
 
     /** The phone's settings, stores, passwords, sign-in codes, tap-to-pay, anything without an icon: never on. */
@@ -50,7 +50,7 @@ class AppLimits(
         return packageName == appContext.packageName || packageName !in k.openable || packageName in k.never
     }
 
-    /** Whether Buddy reads [packageName]'s messages: only an app the user turned on. */
+    /** Whether WatchGPT reads [packageName]'s messages: only an app the user turned on. */
     fun readsMessages(packageName: String): Boolean = packageName !in known().never && on(packageName)
 
     /** Kept from notifications at all: everything but the apps that are always off, so turning one on later has its messages. */
@@ -64,7 +64,7 @@ class AppLimits(
         val status: Status,
     )
 
-    /** The apps on the home screen and whether Buddy may use each, by name. */
+    /** The apps on the home screen and whether WatchGPT may use each, by name. */
     fun apps(): List<App> {
         val k = known()
         return (k.openable - appContext.packageName)
@@ -87,10 +87,10 @@ class AppLimits(
     }
 
     /**
-     * What a tool answers when the user wants Buddy in [packageName] and it's off: a proposal to turn
+     * What a tool answers when the user wants WatchGPT in [packageName] and it's off: a proposal to turn
      * it on, which waits for their yes like a text does (by voice, or the pop-up's button), then runs
      * [then]; or why it can't be. A money or secrets app, as the phone's model sees it, or one it can't
-     * tell about, is only turned on by hand in the list: no text in an app can talk Buddy into it.
+     * tell about, is only turned on by hand in the list: no text in an app can talk WatchGPT into it.
      */
     suspend fun whenOff(
         packageName: String,
@@ -100,15 +100,15 @@ class AppLimits(
     ): String {
         val name = label(packageName)
         if (alwaysOff(packageName)) {
-            return "error: $name is an app Buddy never uses (the phone's settings, a store, passwords, sign-in codes or payments). " +
+            return "error: $name is an app WatchGPT never uses (the phone's settings, a store, passwords, sign-in codes or payments). " +
                 "The user has to do this themselves."
         }
         if (verdict(packageName) != false) {
-            return "error: $name is off for Buddy, and it looks like a banking, payment or password app, so only the user can turn it " +
-                "on, by hand in Buddy's app (Apps Buddy can use). Tell them."
+            return "error: $name is off for WatchGPT, and it looks like a banking, payment or password app, so only the user can turn it " +
+                "on, by hand in WatchGPT's app (Apps WatchGPT can use). Tell them."
         }
-        cards?.show(BuddyCard.Ask("Let Buddy use $name?", "It can then open it, use it for you and read its messages. Turn it off any time.", "Turn on", packageName))
-        return pending.propose("Turn on $name for Buddy (only apps the user turns on are used), so it can open it, use it and read its messages.") {
+        cards?.show(WatchGPTCard.Ask("Let WatchGPT use $name?", "It can then open it, use it for you and read its messages. Turn it off any time.", "Turn on", packageName))
+        return pending.propose("Turn on $name for WatchGPT (only apps the user turns on are used), so it can open it, use it and read its messages.") {
             choose(packageName, true)
             then()
         }
@@ -150,7 +150,7 @@ class AppLimits(
                 addAll(activities(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${appContext.packageName}"))))
                 addAll(services(Intent(AUTOFILL)))
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) addAll(services(Intent(CREDENTIALS)))
-                addAll(activities(Intent(Intent.ACTION_VIEW, Uri.parse("otpauth://totp/Buddy?secret=BUDDY"))))
+                addAll(activities(Intent(Intent.ACTION_VIEW, Uri.parse("otpauth://totp/WatchGPT?secret=BUDDY"))))
                 addAll(services(Intent(TAP_TO_PAY)))
             } - appContext.packageName
         return Known(SystemClock.elapsedRealtime(), openable, never).also { known = it }

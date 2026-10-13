@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import android.Manifest
 import android.content.ComponentName
@@ -67,15 +67,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vinhnguyen.watchai.actions.BuddyNotificationListener
-import com.vinhnguyen.watchai.actions.PhoneActions
-import com.vinhnguyen.watchai.actions.ReachActions
-import com.vinhnguyen.watchai.ui.VoiceLabViewModel.Engine
-import com.vinhnguyen.watchai.ui.VoiceLabViewModel.ModelWarmth
-import com.vinhnguyen.watchai.voice.ChatGptRealtimeSession
-import com.vinhnguyen.watchai.voice.VoicePhase
-import com.vinhnguyen.watchai.voice.VoiceState
-import com.vinhnguyen.watchai.watch.Route
+import io.github.alisial786.watchgpt.actions.PhoneActions
+import io.github.alisial786.watchgpt.actions.ReachActions
+import io.github.alisial786.watchgpt.actions.WatchGPTNotificationListener
+import io.github.alisial786.watchgpt.ui.VoiceLabViewModel.Engine
+import io.github.alisial786.watchgpt.ui.VoiceLabViewModel.ModelWarmth
+import io.github.alisial786.watchgpt.voice.ChatGptRealtimeSession
+import io.github.alisial786.watchgpt.voice.VoicePhase
+import io.github.alisial786.watchgpt.voice.VoiceState
+import io.github.alisial786.watchgpt.watch.Route
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 
@@ -350,7 +350,7 @@ private fun WatchCard(vm: VoiceLabViewModel) {
                 Button(onClick = vm::endWatchCall) { Text("End") }
             } else {
                 Text(
-                    "Open Buddy on the watch and talk; the phone can stay in your pocket. Tip: set the watch's side button to open it (Settings, Advanced features, Customize buttons).",
+                    "Open WatchGPT on the watch and talk; the phone can stay in your pocket. Tip: set the watch's side button to open it (Settings, Advanced features, Customize buttons).",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

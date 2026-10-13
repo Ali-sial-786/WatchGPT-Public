@@ -1,9 +1,9 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
-import com.vinhnguyen.watchai.brain.Availability
-import com.vinhnguyen.watchai.brain.BrainError
-import com.vinhnguyen.watchai.brain.UnavailableReason
-import com.vinhnguyen.watchai.brain.chatgpt.auth.SignInError
+import io.github.alisial786.watchgpt.brain.Availability
+import io.github.alisial786.watchgpt.brain.BrainError
+import io.github.alisial786.watchgpt.brain.UnavailableReason
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.SignInError
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

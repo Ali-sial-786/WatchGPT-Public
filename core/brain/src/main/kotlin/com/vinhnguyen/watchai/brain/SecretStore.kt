@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain
+package io.github.alisial786.watchgpt.brain
 
 /**
  * Encrypted storage for small secrets (sign-in tokens). The Android implementation lives in

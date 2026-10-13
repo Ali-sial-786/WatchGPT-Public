@@ -52,7 +52,7 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
-        <!-- The apps Buddy stays out of (AppLimits), by what they do on the phone: settings, app stores,
+        <!-- The apps WatchGPT stays out of (AppLimits), by what they do on the phone: settings, app stores,
              authenticators, password managers and passkey providers, tap-to-pay. -->
         <intent>
             <action android:name="android.settings.SETTINGS" />
@@ -106,6 +106,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <!-- Woken by Google Play services when the watch app opens its voice channel. -->
@@ -123,7 +127,7 @@
 
         <!-- Messages the user got, to read out and answer; only once they turn on notification access. -->
         <service
-            android:name=".actions.BuddyNotificationListener"
+            android:name=".actions.WatchGPTNotificationListener"
             android:exported="false"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
@@ -135,7 +139,7 @@
         <!-- Using apps for the user (read the screen, tap, type), only once they switch it on in the
              accessibility settings. Never in banking, payment, password or system apps (ScreenModel). -->
         <service
-            android:name=".actions.screen.BuddyAccessibility"
+            android:name=".actions.screen.WatchGPTAccessibility"
             android:exported="false"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">

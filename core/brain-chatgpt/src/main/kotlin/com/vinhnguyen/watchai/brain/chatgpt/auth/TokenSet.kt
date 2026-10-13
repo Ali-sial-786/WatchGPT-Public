@@ -1,6 +1,6 @@
-package com.vinhnguyen.watchai.brain.chatgpt.auth
+package io.github.alisial786.watchgpt.brain.chatgpt.auth
 
-import com.vinhnguyen.watchai.brain.SecretStore
+import io.github.alisial786.watchgpt.brain.SecretStore
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -25,13 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vinhnguyen.watchai.AppSettings
-import com.vinhnguyen.watchai.BuildConfig
-import com.vinhnguyen.watchai.brain.BrainId
-import com.vinhnguyen.watchai.voice.ChatGptRealtimeSession
+import io.github.alisial786.watchgpt.AppSettings
+import io.github.alisial786.watchgpt.BuildConfig
+import io.github.alisial786.watchgpt.brain.BrainId
+import io.github.alisial786.watchgpt.voice.ChatGptRealtimeSession
 import kotlinx.coroutines.launch
 
-/** Buddy's voice, working in the background, privacy and what the app is made of. */
+/** WatchGPT's voice, working in the background, privacy and what the app is made of. */
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
@@ -49,7 +49,7 @@ fun SettingsScreen(
     var licences by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    Group("Buddy's voice", footer = "On the watch and on this phone, from your next conversation.") {
+    Group("WatchGPT's voice", footer = "On the watch and on this phone, from your next conversation.") {
         FlowRow(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ChatGptRealtimeSession.VOICES.forEach { v ->
                 Pill(
@@ -59,6 +59,28 @@ fun SettingsScreen(
                         voice = v
                     },
                     filled = voice == v,
+                )
+            }
+        }
+    }
+
+    var timeout by remember { mutableStateOf(settings.conversationTimeoutSeconds) }
+    Group("Conversation timeout", footer = "Silence before ending phone and watch conversations. Changes apply to the next call. Longer sessions can use more battery and voice allowance.") {
+        FlowRow(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(30, 60, 120, 300, 900, 0).forEach { seconds ->
+                Pill(
+                    if (seconds == 0) {
+                        "Until I stop"
+                    } else if (seconds < 60) {
+                        "30 sec"
+                    } else {
+                        "${seconds / 60} min"
+                    },
+                    onClick = {
+                        settings.conversationTimeoutSeconds = seconds
+                        timeout = seconds
+                    },
+                    filled = timeout == seconds,
                 )
             }
         }
@@ -102,7 +124,7 @@ fun SettingsScreen(
             onClick = onSafetyCheck,
         )
         Item(
-            "Apps Buddy can use",
+            "Apps WatchGPT can use",
             subtitle = "Only the apps you turn on; settings, password and payment apps never",
             onClick = onApps,
         )
@@ -131,7 +153,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { confirm = false },
             title = { Text("Delete everything?") },
-            text = { Text("Signs you out of ChatGPT, deletes the offline model, your notes, what Buddy remembers, flagged answers and all settings.") },
+            text = { Text("Signs you out of ChatGPT, deletes the offline model, your notes, what WatchGPT remembers, flagged answers and all settings.") },
             confirmButton = {
                 TextButton(onClick = {
                     confirm = false
@@ -175,7 +197,7 @@ private fun BenchmarkItems(vm: BenchmarkViewModel) {
 
 /**
  * One switch for working in the background: Android's battery optimisation exemption. With it,
- * the watch reaches Buddy with the phone app closed (Android may refuse to start the call service
+ * the watch reaches WatchGPT with the phone app closed (Android may refuse to start the call service
  * otherwise), and a conversation on the phone keeps going after leaving the app.
  */
 @Composable
@@ -193,9 +215,9 @@ private fun BackgroundItem() {
         "Work in the background",
         subtitle =
         if (allowed) {
-            "Your watch reaches Buddy with the phone app closed, and a conversation here keeps going when you switch apps."
+            "Your watch reaches WatchGPT with the phone app closed, and a conversation here keeps going when you switch apps."
         } else {
-            "Lets your watch reach Buddy with the phone app closed. Uses a bit more battery."
+            "Lets your watch reach WatchGPT with the phone app closed. Uses a bit more battery."
         },
         last = true,
         onClick = if (allowed) ({ context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }) else null,
@@ -214,7 +236,7 @@ private fun BackgroundItem() {
 }
 
 private const val LICENCES =
-    "Buddy's animation is ported from bloub by Jérémy Perret, MIT License (github.com/jeremy-prt/bloub). " +
+    "WatchGPT's animation is ported from bloub by Jérémy Perret, MIT License (github.com/jeremy-prt/bloub). " +
         "Inter typeface: SIL Open Font License 1.1 (The Inter Project Authors). Liquid Glass (backdrop, shapes) by Kyant: " +
         "Apache License 2.0. Material Symbols: Apache License 2.0 (Google). Map data © OpenStreetMap contributors (ODbL). " +
         "Gemma 4 model: Apache License 2.0 (Google). LiteRT-LM, Tink, OkHttp, Timber, AndroidX, Kotlin: Apache License 2.0. " +

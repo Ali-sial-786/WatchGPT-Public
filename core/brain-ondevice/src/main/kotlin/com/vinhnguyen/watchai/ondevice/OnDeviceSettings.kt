@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ondevice
+package io.github.alisial786.watchgpt.ondevice
 
 import android.content.Context
 import androidx.core.content.edit

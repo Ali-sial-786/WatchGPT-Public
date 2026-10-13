@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -16,7 +16,7 @@ import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.google.ai.edge.litertlm.ThinkingConfig
-import com.vinhnguyen.watchai.ondevice.EngineHolder
+import io.github.alisial786.watchgpt.ondevice.EngineHolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.watchlink
+package io.github.alisial786.watchgpt.watchlink
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong

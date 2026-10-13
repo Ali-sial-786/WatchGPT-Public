@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -67,7 +67,7 @@ import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.shapes.Capsule
 import com.kyant.shapes.RoundedRectangle
-import com.vinhnguyen.watchai.R
+import io.github.alisial786.watchgpt.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
@@ -34,24 +34,24 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vinhnguyen.watchai.AppGraph
-import com.vinhnguyen.watchai.R
-import com.vinhnguyen.watchai.buddy.Act
-import com.vinhnguyen.watchai.buddy.Genes
-import com.vinhnguyen.watchai.buddy.Mood
-import com.vinhnguyen.watchai.buddy.Reaction
-import com.vinhnguyen.watchai.buddy.ui.BuddyView
-import com.vinhnguyen.watchai.plus.Plus
+import io.github.alisial786.watchgpt.AppGraph
+import io.github.alisial786.watchgpt.R
+import io.github.alisial786.watchgpt.buddy.Act
+import io.github.alisial786.watchgpt.buddy.Genes
+import io.github.alisial786.watchgpt.buddy.Mood
+import io.github.alisial786.watchgpt.buddy.Reaction
+import io.github.alisial786.watchgpt.buddy.ui.WatchGPTView
+import io.github.alisial786.watchgpt.plus.Plus
 import kotlinx.coroutines.launch
 
 /**
- * Buddy Plus: what it is (extras for people who want to support Buddy), the ways to get it as
- * RevenueCat offers them, and restoring it. Everything Buddy does stays free.
+ * WatchGPT Plus: what it is (extras for people who want to support WatchGPT), the ways to get it as
+ * RevenueCat offers them, and restoring it. Everything WatchGPT does stays free.
  */
 @Composable
 fun PlusScreen(
     graph: AppGraph,
-    onChooseBuddy: () -> Unit,
+    onChooseWatchGPT: () -> Unit,
 ) {
     val p = LocalPalette.current
     val plus = graph.plus
@@ -65,9 +65,9 @@ fun PlusScreen(
 
     Text(
         if (active) {
-            "Thank you for supporting Buddy. Everything below is yours."
+            "Thank you for supporting WatchGPT. Everything below is yours."
         } else {
-            "Buddy does everything for free. Plus is for people who want to support it, with a few extras."
+            "WatchGPT does everything for free. Plus is for people who want to support it, with a few extras."
         },
         style = MaterialTheme.typography.bodyLarge,
         color = p.textSecondary,
@@ -75,20 +75,20 @@ fun PlusScreen(
     )
     Group("What Plus adds", footer = "Privacy and safety are never part of Plus: they're the same for everyone.") {
         Item(
-            "Choose your Buddy",
-            subtitle = "Pick any Buddy you like. It's the one on your watch too.",
+            "Choose your WatchGPT",
+            subtitle = "Pick any WatchGPT you like. It's the one on your watch too.",
             painter = painterResource(R.drawable.sym_sentiment_satisfied),
-            onClick = onChooseBuddy,
-            trailing = { Pill(if (active) "Choose" else "Look", onClick = onChooseBuddy, filled = false) },
+            onClick = onChooseWatchGPT,
+            trailing = { Pill(if (active) "Choose" else "Look", onClick = onChooseWatchGPT, filled = false) },
         )
         Item(
             "New things first",
-            subtitle = "Early access to what comes next, starting with Buddy on your computer.",
+            subtitle = "Early access to what comes next, starting with WatchGPT on your computer.",
             painter = painterResource(R.drawable.sym_bolt),
         )
         Item(
             "A thank-you mark",
-            subtitle = "Plus next to your Buddy in the menu.",
+            subtitle = "Plus next to your WatchGPT in the menu.",
             painter = painterResource(R.drawable.sym_star),
             last = true,
         )
@@ -99,7 +99,7 @@ fun PlusScreen(
             Group { Item("Not set up in this build", subtitle = "Built without a RevenueCat key, so there's nothing to buy.", last = true) }
 
         active ->
-            Group { Item("You have Buddy Plus", subtitle = "Thank you!", painter = painterResource(R.drawable.sym_check_circle), last = true) }
+            Group { Item("You have WatchGPT Plus", subtitle = "Thank you!", painter = painterResource(R.drawable.sym_check_circle), last = true) }
 
         offers.isEmpty() ->
             Group { Item("Loading the prices…", last = true) }
@@ -118,7 +118,7 @@ fun PlusScreen(
                                 scope.launch {
                                     said =
                                         when (val result = plus.buy(activity, offer)) {
-                                            Plus.Bought.Done -> "Welcome to Buddy Plus."
+                                            Plus.Bought.Done -> "Welcome to WatchGPT Plus."
                                             Plus.Bought.Cancelled -> null
                                             is Plus.Bought.Failed -> result.why
                                         }
@@ -153,7 +153,7 @@ fun PlusScreen(
 }
 
 /**
- * Choosing your Buddy (a Plus extra): a grid of Buddies, each playing a little when tapped. With
+ * Choosing your WatchGPT (a Plus extra): a grid of Companions, each playing a little when tapped. With
  * Plus a tap makes it yours, here and on the watch; without, it shows Plus.
  */
 @Composable
@@ -163,13 +163,13 @@ fun LookScreen(
 ) {
     val p = LocalPalette.current
     val active by graph.plus.active.collectAsStateWithLifecycle()
-    val chosen by graph.chosenBuddy.collectAsStateWithLifecycle()
+    val chosen by graph.chosenWatchGPT.collectAsStateWithLifecycle()
     val own by produceState<Long?>(null) { value = graph.buddySeed() }
     var batch by rememberSaveable { mutableIntStateOf(0) }
     val seeds = remember(batch) { List(LOOKS) { Genes.seedFor("buddy look ${batch * LOOKS + it}") } }
 
     Text(
-        if (active) "Tap a Buddy to make it yours. It's the one on your watch from the next conversation." else "Have a look. With Buddy Plus, any of them can be yours.",
+        if (active) "Tap a WatchGPT to make it yours. It's the one on your watch from the next conversation." else "Have a look. With WatchGPT Plus, any of them can be yours.",
         style = MaterialTheme.typography.bodyLarge,
         color = p.textSecondary,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp),
@@ -180,15 +180,15 @@ fun LookScreen(
                 row.forEach { seed ->
                     val mine = active && chosen == seed
                     Look(seed, mine, Modifier.weight(1f)) {
-                        if (active) graph.chooseBuddy(seed) else onPlus()
+                        if (active) graph.chooseWatchGPT(seed) else onPlus()
                     }
                 }
             }
         }
     }
     Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Pill("More Buddies", onClick = { batch++ }, filled = false)
-        if (active && chosen != null) Pill("Back to my own Buddy", onClick = { graph.chooseBuddy(null) }, filled = false)
+        Pill("More Companions", onClick = { batch++ }, filled = false)
+        if (active && chosen != null) Pill("Back to my own WatchGPT", onClick = { graph.chooseWatchGPT(null) }, filled = false)
     }
     if (own != null && !active) {
         Text(
@@ -219,13 +219,13 @@ private fun Look(
             .clip(CircleShape)
             .background(p.surface)
             .then(if (mine) Modifier.border(2.dp, p.text, CircleShape) else Modifier)
-            .clickable(role = Role.Button, onClickLabel = "Choose this Buddy") {
+            .clickable(role = Role.Button, onClickLabel = "Choose this WatchGPT") {
                 next++
                 onTap()
             },
         contentAlignment = Alignment.Center,
     ) {
-        BuddyView(
+        WatchGPTView(
             genes = remember(seed) { Genes.of(seed) },
             act = Act.REST,
             reaction = mood?.let { Reaction(it, 0.8f) },

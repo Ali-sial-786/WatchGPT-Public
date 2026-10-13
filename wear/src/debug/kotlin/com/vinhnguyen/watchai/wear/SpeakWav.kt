@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -9,15 +9,15 @@ import android.media.AudioTrack
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.vinhnguyen.watchai.watchlink.Wav
+import io.github.alisial786.watchgpt.watchlink.Wav
 import java.io.File
 
 /**
- * Debug builds only: says a WAV (16 kHz, mono, 16-bit) out of the watch speaker, so "Hey Buddy"
+ * Debug builds only: says a WAV (16 kHz, mono, 16-bit) out of the watch speaker, so "Hey WatchGPT"
  * can be tested through the real mic, timing included. Synthetic speech only. While testing, a
  * heard phrase only ticks and logs ("dry", on unless --ez dry false) instead of calling the phone.
  *
- *   adb shell am broadcast -n com.vinhnguyen.watchai/com.vinhnguyen.watchai.wear.SpeakWav --es file hey.wav
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/io.github.alisial786.watchgpt.wear.SpeakWav --es file hey.wav
  */
 class SpeakWav : BroadcastReceiver() {
     override fun onReceive(

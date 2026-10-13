@@ -1,7 +1,7 @@
-package com.vinhnguyen.watchai.watch
+package io.github.alisial786.watchgpt.watch
 
-import com.vinhnguyen.watchai.actions.Watch
-import com.vinhnguyen.watchai.watchlink.Control
+import io.github.alisial786.watchgpt.actions.Watch
+import io.github.alisial786.watchgpt.watchlink.Control
 
 /**
  * The watch during a watch call, asked over the link: timers and alarms on its own clock (they
@@ -20,7 +20,8 @@ class WatchOnCall(
         hour: Int,
         minute: Int,
         label: String?,
-    ): String = watch.ask(Control("alarm", hour = hour, minute = minute, label = label)) ?: NO_ANSWER
+        days: List<Int>,
+    ): String = watch.ask(Control("alarm", hour = hour, minute = minute, label = label, days = days)) ?: NO_ANSWER
 
     override suspend fun battery(): String = watch.ask(Control("battery")) ?: NO_ANSWER
 

@@ -1,7 +1,7 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
-import com.vinhnguyen.watchai.brain.SecretStore
-import com.vinhnguyen.watchai.brain.guard.ActionLog
+import io.github.alisial786.watchgpt.brain.SecretStore
+import io.github.alisial786.watchgpt.brain.guard.ActionLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,8 +14,8 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
 /**
- * What Buddy did in the last 30 days, encrypted on the phone in its own vault: which action and
- * how it ended, never what was in it (no message text, no names). Shown on "What Buddy did".
+ * What WatchGPT did in the last 30 days, encrypted on the phone in its own vault: which action and
+ * how it ended, never what was in it (no message text, no names). Shown on "What WatchGPT did".
  */
 class ActionLogStore(
     private val store: SecretStore,

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ondevice
+package io.github.alisial786.watchgpt.ondevice
 
 import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
@@ -7,10 +7,10 @@ import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.google.ai.edge.litertlm.ThinkingConfig
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.guard.LocalJudge
-import com.vinhnguyen.watchai.brain.guard.LocalReader
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.guard.LocalJudge
+import io.github.alisial786.watchgpt.brain.guard.LocalReader
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel

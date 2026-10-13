@@ -1,11 +1,11 @@
-package com.vinhnguyen.watchai.brain.chatgpt.auth
+package io.github.alisial786.watchgpt.brain.chatgpt.auth
 
-import com.vinhnguyen.watchai.brain.BrainError
-import com.vinhnguyen.watchai.brain.BrainException
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.SecretStore
-import com.vinhnguyen.watchai.brain.code
+import io.github.alisial786.watchgpt.brain.BrainError
+import io.github.alisial786.watchgpt.brain.BrainException
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.SecretStore
+import io.github.alisial786.watchgpt.brain.code
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow

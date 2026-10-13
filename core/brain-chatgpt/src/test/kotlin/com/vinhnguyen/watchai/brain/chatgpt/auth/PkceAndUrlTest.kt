@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain.chatgpt.auth
+package io.github.alisial786.watchgpt.brain.chatgpt.auth
 
 import com.google.common.truth.Truth.assertThat
 import okhttp3.HttpUrl.Companion.toHttpUrl

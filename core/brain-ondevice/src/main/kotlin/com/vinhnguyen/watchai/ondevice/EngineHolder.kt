@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ondevice
+package io.github.alisial786.watchgpt.ondevice
 
 import android.content.ComponentCallbacks2
 import android.content.Context
@@ -8,9 +8,9 @@ import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.LogSeverity
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.code
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.code
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -15,32 +15,32 @@ Common problems and what to do about them.
 Install the **release** build on the watch: `gradlew :wear:installRelease`. Debug builds are much slower
 on a watch.
 
-### "Hey Buddy" doesn't hear me
+### "Hey Watch G P T" doesn't hear me
 
 - By default the watch listens after you raise your wrist. Raise it, then say it.
-- Open **Learn my voice** on the watch and read the five sentences. Buddy keeps only the spellings it
+- Open **Learn my voice** on the watch and read the five sentences. WatchGPT keeps only the spellings it
   heard, not your recordings.
 - **Always listening** keeps it on all the time. It uses more battery.
 
-### Buddy can't read my messages
+### WatchGPT can't read my messages
 
-- Allow **notification access** in "What Buddy can do". Buddy reads messages from their notifications,
+- Allow **notification access** in "What WatchGPT can do". WatchGPT reads messages from their notifications,
   keeps them in memory only, and for at most 6 hours.
 - Banking, payment, password and authenticator apps are skipped on purpose.
-- Buddy can reply to a chat that has a notification, but can't start a new WhatsApp chat hands-free.
+- WatchGPT can reply to a chat that has a notification, but can't start a new WhatsApp chat hands-free.
 
 ### Nothing was sent after I said yes
 
 A text or call waits for your yes **in a later turn**, **within two minutes**, **while you're there**
 (watch unlocked on your wrist, phone unlocked, or earbuds in), and at most ten an hour. If one of those
-doesn't hold, the gate refuses. "What Buddy did" shows what happened.
+doesn't hold, the gate refuses. "What WatchGPT did" shows what happened.
 
 ### Private answers take long the first time
 
-The on-device model has to load: about 9 to 11 s cold on the S23 Ultra, about 3 s warm. Buddy warms it
+The on-device model has to load: about 9 to 11 s cold on the S23 Ultra, about 3 s warm. WatchGPT warms it
 at the start of each conversation. Without an offline model, the phone reads the items out plainly.
 
-### Buddy Plus isn't there
+### WatchGPT Plus isn't there
 
 The build has no RevenueCat key. See [Getting started](getting-started.md#2-optional-buddy-plus). A
 Test Store key only goes into debug builds; release builds leave Plus out.
@@ -55,7 +55,7 @@ settings.
 The app only accepts launches that match its intent filter. Add the launcher action and category:
 
 ```bash
-adb shell am start -n com.vinhnguyen.watchai/.MainActivity -a android.intent.action.MAIN -c android.intent.category.LAUNCHER
+adb shell am start -n io.github.alisial786.watchgpt/.MainActivity -a android.intent.action.MAIN -c android.intent.category.LAUNCHER
 ```
 
 ### The build picks the wrong Java

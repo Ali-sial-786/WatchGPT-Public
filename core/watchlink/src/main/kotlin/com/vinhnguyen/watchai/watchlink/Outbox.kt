@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.watchlink
+package io.github.alisial786.watchgpt.watchlink
 
 import java.util.ArrayDeque
 import java.util.concurrent.TimeUnit

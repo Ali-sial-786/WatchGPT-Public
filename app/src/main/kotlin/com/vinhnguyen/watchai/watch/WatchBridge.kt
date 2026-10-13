@@ -1,9 +1,9 @@
-package com.vinhnguyen.watchai.watch
+package io.github.alisial786.watchgpt.watch
 
 import android.content.Context
 import com.google.android.gms.wearable.ChannelClient
 import com.google.android.gms.wearable.Wearable
-import com.vinhnguyen.watchai.watchlink.WatchLink
+import io.github.alisial786.watchgpt.watchlink.WatchLink
 import kotlinx.coroutines.tasks.await
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream

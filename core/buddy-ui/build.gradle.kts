@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vinhnguyen.watchai.buddy.ui"
+    namespace = "io.github.alisial786.watchgpt.buddy.ui"
     compileSdk = 37
 
     defaultConfig {

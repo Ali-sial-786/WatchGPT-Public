@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.Manifest
 import android.app.Application
@@ -49,9 +49,9 @@ import androidx.wear.compose.material3.FilledTonalButton
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
-import com.vinhnguyen.watchai.buddy.Act
-import com.vinhnguyen.watchai.buddy.ui.BuddySurface
-import com.vinhnguyen.watchai.wear.PhoneVoiceLink.Phase
+import io.github.alisial786.watchgpt.buddy.Act
+import io.github.alisial786.watchgpt.buddy.ui.WatchGPTSurface
+import io.github.alisial786.watchgpt.wear.PhoneVoiceLink.Phase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -74,10 +74,14 @@ class WearActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        io.github.alisial786.watchgpt.organizer.Organizer.get(this).requestSync()
+        if (savedInstanceState == null && intent.getBooleanExtra("organizer", false)) {
+            io.github.alisial786.watchgpt.organizer.OrganizerActivity.open(this)
+        }
         // Wrist down: stay on the face in ambient mode instead of going back to the watch face.
         lifecycle.addObserver(ambientObserver)
         // Opening the app is the "press to talk": from the launcher, the tile or the side button.
-        // Tests open it with "quiet" to only switch "Hey Buddy" back on after an install.
+        // Tests open it with "quiet" to only switch "Hey WatchGPT" back on after an install.
         if (savedInstanceState == null && !intent.getBooleanExtra(QUIET, false)) talkNow()
         setContent {
             val isAmbient by ambient.collectAsStateWithLifecycle()
@@ -89,7 +93,7 @@ class WearActivity : ComponentActivity() {
         super.onStart()
         PhoneVoiceLink.get(this).onScreen = true
         CallService.faceShown(this)
-        // "Hey Buddy" is on but not running (the watch restarted, or Android stopped it): the app is on screen, so it can start.
+        // "Hey WatchGPT" is on but not running (the watch restarted, or Android stopped it): the app is on screen, so it can start.
         if (WakeSetting.isOn(this) && !CallService.armed.value && micAllowed()) CallService.wakeOn(this)
     }
 
@@ -101,7 +105,11 @@ class WearActivity : ComponentActivity() {
     /** Opened again while already running (single task): talk again, unless a conversation is on. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (!intent.getBooleanExtra(QUIET, false)) talkNow()
+        if (intent.getBooleanExtra("organizer", false)) {
+            io.github.alisial786.watchgpt.organizer.OrganizerActivity.open(this)
+        } else if (!intent.getBooleanExtra(QUIET, false)) {
+            talkNow()
+        }
     }
 
     private fun micAllowed() = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
@@ -167,7 +175,7 @@ private fun WatchScreen(
         onDispose { window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
     }
     val micPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted) vm.toggle() }
-    // Notifications only bring the face up over the watch face; "Hey Buddy" works without them.
+    // Notifications only bring the face up over the watch face; "Hey WatchGPT" works without them.
     val wakePermission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
             if (granted[Manifest.permission.RECORD_AUDIO] == true) vm.setWake(true)
@@ -185,7 +193,7 @@ private fun WatchScreen(
     val scroll = rememberScrollState()
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
-    // One screen: Buddy and a line of text. The one setting is a scroll away (bezel or swipe).
+    // One screen: WatchGPT and a line of text. The one setting is a scroll away (bezel or swipe).
     Column(
         Modifier
             .fillMaxSize()
@@ -200,7 +208,7 @@ private fun WatchScreen(
             verticalArrangement = Arrangement.Center,
         ) {
             val shownAct = act(state.phase, wakeOn && wakeListening)
-            BuddySurface(
+            WatchGPTSurface(
                 genes = genes,
                 act = shownAct,
                 reaction = state.reaction,
@@ -208,7 +216,7 @@ private fun WatchScreen(
                 level = if (ambient) 0f else state.level,
                 paper = Color.Black,
                 ambient = ambient,
-                // Every frame costs the watch's small cores: 10 a second, 15 while Buddy talks (the mouth), 24 while a reaction plays.
+                // Every frame costs the watch's small cores: 10 a second, 15 while WatchGPT talks (the mouth), 24 while a reaction plays.
                 fps = if (shownAct == Act.SPEAK) 15 else 10,
                 busyFps = 24,
                 modifier =
@@ -232,18 +240,25 @@ private fun WatchScreen(
             earbuds?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         if (!active && !ambient) {
+            FilledTonalButton(
+                onClick = { io.github.alisial786.watchgpt.organizer.OrganizerActivity.open(context) },
+                label = { Text("Reminders") },
+                secondaryLabel = { Text("Your tasks & agenda") },
+                modifier = Modifier.padding(horizontal = 32.dp).fillMaxWidth(),
+            )
+            Spacer(Modifier.height(8.dp))
             SwitchButton(
                 checked = wakeOn,
                 onCheckedChange = { on ->
                     val missing = WAKE_PERMISSIONS.filter { context.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
                     if (on && missing.isNotEmpty()) wakePermission.launch(missing.toTypedArray()) else vm.setWake(on)
                 },
-                label = { Text("Hey Buddy") },
+                label = { Text("Hey WatchGPT") },
                 modifier = Modifier.padding(horizontal = 36.dp),
             )
             if (wakeOn) {
                 Spacer(Modifier.height(4.dp))
-                // Without it "Hey Buddy" needs a raised wrist first; with it there's no hand needed at all.
+                // Without it "Hey WatchGPT" needs a raised wrist first; with it there's no hand needed at all.
                 SwitchButton(
                     checked = always,
                     onCheckedChange = vm::setAlways,
@@ -252,7 +267,7 @@ private fun WatchScreen(
                     modifier = Modifier.padding(horizontal = 36.dp),
                 )
                 Spacer(Modifier.height(4.dp))
-                // When "Hey Buddy" misses the user: five sentences read out teach it their voice.
+                // When "Hey WatchGPT" misses the user: five sentences read out teach it their voice.
                 FilledTonalButton(
                     onClick = { context.startActivity(Intent(context, TeachActivity::class.java)) },
                     label = { Text("Learn my voice") },
@@ -265,7 +280,7 @@ private fun WatchScreen(
     }
 }
 
-/** What the conversation looks like on Buddy. */
+/** What the conversation looks like on WatchGPT. */
 private fun act(
     phase: Phase,
     wakeListening: Boolean,
@@ -284,7 +299,7 @@ private fun label(
     state: PhoneVoiceLink.State,
     wakeListening: Boolean,
 ): String = when (state.phase) {
-    Phase.IDLE -> if (wakeListening) "Tap or say \"Hey Buddy\"" else "Tap to talk"
+    Phase.IDLE -> if (wakeListening) "Tap or say \"Hey WatchGPT\"" else "Tap to talk"
     Phase.CONNECTING -> state.detail ?: "Connecting…"
     Phase.LISTENING -> "Listening"
     Phase.THINKING -> "Thinking…"

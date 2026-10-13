@@ -1,27 +1,27 @@
-package com.vinhnguyen.watchai.brain.chatgpt
+package io.github.alisial786.watchgpt.brain.chatgpt
 
-import com.vinhnguyen.watchai.brain.Availability
-import com.vinhnguyen.watchai.brain.Brain
-import com.vinhnguyen.watchai.brain.BrainError
-import com.vinhnguyen.watchai.brain.BrainException
-import com.vinhnguyen.watchai.brain.BrainId
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.ChatEvent
-import com.vinhnguyen.watchai.brain.ChatRequest
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.ToolContext
-import com.vinhnguyen.watchai.brain.Toolbox
-import com.vinhnguyen.watchai.brain.TurnStats
-import com.vinhnguyen.watchai.brain.UnavailableReason
-import com.vinhnguyen.watchai.brain.chatgpt.api.ErrorMapper
-import com.vinhnguyen.watchai.brain.chatgpt.api.ResponsesRequest
-import com.vinhnguyen.watchai.brain.chatgpt.api.SseEvent
-import com.vinhnguyen.watchai.brain.chatgpt.api.SseReader
-import com.vinhnguyen.watchai.brain.chatgpt.api.UsageSnapshot
-import com.vinhnguyen.watchai.brain.chatgpt.auth.AuthSession
-import com.vinhnguyen.watchai.brain.chatgpt.auth.Bearer
-import com.vinhnguyen.watchai.brain.chatgpt.auth.OpenAiEndpoints
-import com.vinhnguyen.watchai.brain.code
+import io.github.alisial786.watchgpt.brain.Availability
+import io.github.alisial786.watchgpt.brain.Brain
+import io.github.alisial786.watchgpt.brain.BrainError
+import io.github.alisial786.watchgpt.brain.BrainException
+import io.github.alisial786.watchgpt.brain.BrainId
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.ChatEvent
+import io.github.alisial786.watchgpt.brain.ChatRequest
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.ToolContext
+import io.github.alisial786.watchgpt.brain.Toolbox
+import io.github.alisial786.watchgpt.brain.TurnStats
+import io.github.alisial786.watchgpt.brain.UnavailableReason
+import io.github.alisial786.watchgpt.brain.chatgpt.api.ErrorMapper
+import io.github.alisial786.watchgpt.brain.chatgpt.api.ResponsesRequest
+import io.github.alisial786.watchgpt.brain.chatgpt.api.SseEvent
+import io.github.alisial786.watchgpt.brain.chatgpt.api.SseReader
+import io.github.alisial786.watchgpt.brain.chatgpt.api.UsageSnapshot
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.AuthSession
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.Bearer
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.OpenAiEndpoints
+import io.github.alisial786.watchgpt.brain.code
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -56,7 +56,7 @@ public data class ChatGptSettings(
     /** Tried in order; the first one this account can use is remembered for the session. */
     val models: List<String> = listOf("gpt-6-luna", "gpt-6-sol", "gpt-5.6-luna"),
     val reasoningEffort: String = "low",
-    val userAgent: String = "WatchAI/0.1 (Android)",
+    val userAgent: String = "WatchGPT/0.1 (Android)",
     val enabled: Boolean = true,
     /** Debug builds: log redacted error-body snippets. Never on in release. */
     val diagnostics: Boolean = false,

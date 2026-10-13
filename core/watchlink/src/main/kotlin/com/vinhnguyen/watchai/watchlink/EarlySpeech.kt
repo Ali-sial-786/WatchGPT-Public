@@ -1,8 +1,8 @@
-package com.vinhnguyen.watchai.watchlink
+package io.github.alisial786.watchgpt.watchlink
 
 /**
- * What the user says between "Hey Buddy" (or opening the app) and the phone picking up, about 2 s,
- * kept so that "Hey Buddy, what time is it?" works in one breath instead of losing the question.
+ * What the user says between "Hey WatchGPT" (or opening the app) and the phone picking up, about 2 s,
+ * kept so that "Hey WatchGPT, what time is it?" works in one breath instead of losing the question.
  * Keeps the last [maxFrames] frames; [drain] hands them over starting one frame before the first
  * that is at least [voiceLevel] loud (so soft first sounds aren't clipped), and empties the buffer.
  */

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.watchlink
+package io.github.alisial786.watchgpt.watchlink
 
 /**
  * IMA ADPCM: 4 bits per sample, a quarter of raw PCM (64 kbit/s at 16 kHz), in a few lines of

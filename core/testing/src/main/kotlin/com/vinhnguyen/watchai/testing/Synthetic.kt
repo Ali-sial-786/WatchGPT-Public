@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.testing
+package io.github.alisial786.watchgpt.testing
 
 import java.util.Base64
 

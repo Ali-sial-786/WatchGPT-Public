@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.buddy
+package io.github.alisial786.watchgpt.buddy
 
 import com.google.common.collect.Range
 import com.google.common.truth.Truth.assertThat
@@ -6,9 +6,9 @@ import org.junit.Test
 import kotlin.math.atan2
 import kotlin.math.hypot
 
-class BuddyTest {
+class WatchGPTTest {
     @Test
-    fun `the same user always gets the same Buddy, other users mostly others`() {
+    fun `the same user always gets the same WatchGPT, other users mostly others`() {
         assertThat(Genes.forUser("account-123")).isEqualTo(Genes.forUser("account-123"))
         val many = (1..200).map { Genes.forUser("account-$it") }
         // Shape, colour and resting face alone give 8 x 12 x 8 combinations; the nudges are continuous.
@@ -19,8 +19,8 @@ class BuddyTest {
     }
 
     @Test
-    fun `a seed gives the same Buddy forever`() {
-        // Pinned: if this changes, every user's Buddy changes. Only add new traits at the end of Genes.of.
+    fun `a seed gives the same WatchGPT forever`() {
+        // Pinned: if this changes, every user's WatchGPT changes. Only add new traits at the end of Genes.of.
         val genes = Genes.of(42L)
         assertThat(listOf(genes.shape, genes.color, genes.rest)).isEqualTo(PINNED_42)
         assertThat(genes.face.gaze.yaw).isWithin(1e-4f).of(PINNED_42_YAW)
@@ -50,8 +50,8 @@ class BuddyTest {
 
     @Test
     fun `a frame is a pure function of time and the changes before it`() {
-        fun run(t: Double): BuddyFrame {
-            val engine = BuddyEngine(Genes.of(7))
+        fun run(t: Double): WatchGPTFrame {
+            val engine = WatchGPTEngine(Genes.of(7))
             engine.reset(State.SPEAK, 1.0)
             engine.setState(State.EXCITED, 2.0)
             return engine.sample(t, 0.5f)
@@ -67,7 +67,7 @@ class BuddyTest {
     }
 
     @Test
-    fun `reactions play for their own time, then Buddy goes back to the conversation`() {
+    fun `reactions play for their own time, then WatchGPT goes back to the conversation`() {
         val scene = Scene(Act.SPEAK, actAt = 1.0, reaction = Reaction(Mood.LOVE, 0.7f), reactionAt = 10.0)
         assertThat(Director.target(scene, 9.0)).isEqualTo(State.SPEAK to 1.0)
         assertThat(Director.target(scene, 11.0)).isEqualTo(State.LOVE to 10.0)
@@ -80,7 +80,7 @@ class BuddyTest {
     fun `every state draws, with a face or without one`() {
         val genes = Genes.of(11)
         State.entries.forEach { state ->
-            val engine = BuddyEngine(genes)
+            val engine = WatchGPTEngine(genes)
             engine.reset(state, 0.0)
             listOf(0.0, 0.5, 1.2, 2.5).forEach { t ->
                 val frame = engine.sample(t, 0.6f)
@@ -91,11 +91,11 @@ class BuddyTest {
         }
         val faceless = listOf(State.THINK, State.ERROR, State.SURPRISED, State.SLEEPY)
         faceless.forEach { state ->
-            val engine = BuddyEngine(genes)
+            val engine = WatchGPTEngine(genes)
             engine.reset(state, 0.0)
             assertThat(engine.sample(1.0).features).isEmpty()
         }
-        val idle = BuddyEngine(genes).apply { reset(State.IDLE, 0.0) }.sample(1.0)
+        val idle = WatchGPTEngine(genes).apply { reset(State.IDLE, 0.0) }.sample(1.0)
         assertThat(idle.features).hasSize(3)
     }
 
@@ -104,7 +104,7 @@ class BuddyTest {
         BodyShape.entries.forEach { shape ->
             RestFace.entries.forEach { face ->
                 val genes = Genes(0, shape, Tint.MILK, face)
-                val engine = BuddyEngine(genes).apply { reset(State.IDLE, 0.0) }
+                val engine = WatchGPTEngine(genes).apply { reset(State.IDLE, 0.0) }
                 // Across the gaze drift, sampled over a minute.
                 (0 until 120).forEach { i ->
                     val frame = engine.sample(i * 0.5)
@@ -151,17 +151,17 @@ class BuddyTest {
     }
 
     @Test
-    fun `with animations off Buddy holds still`() {
-        val engine = BuddyEngine(Genes.of(5), still = true).apply { reset(State.IDLE, 0.0) }
+    fun `with animations off WatchGPT holds still`() {
+        val engine = WatchGPTEngine(Genes.of(5), still = true).apply { reset(State.IDLE, 0.0) }
         assertThat(engine.sample(1.0).body).isEqualTo(engine.sample(7.3).body)
         engine.setState(State.THINK, 8.0)
         assertThat(engine.sample(8.01).dots).hasSize(2)
     }
 
     @Test
-    fun `rings take the Buddy's own colour`() {
+    fun `rings take the WatchGPT's own colour`() {
         val genes = Genes.of(21)
-        val engine = BuddyEngine(genes).apply { reset(State.PROUD, 0.0) }
+        val engine = WatchGPTEngine(genes).apply { reset(State.PROUD, 0.0) }
         val arcs = engine.sample(1.2).arcs
         assertThat(arcs).isNotEmpty()
         arcs.flatMap { it.colors.toList() }.forEach { argb ->

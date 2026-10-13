@@ -1,9 +1,9 @@
-package com.vinhnguyen.watchai.brain.chatgpt.auth
+package io.github.alisial786.watchgpt.brain.chatgpt.auth
 
 import com.google.common.truth.Truth.assertThat
-import com.vinhnguyen.watchai.brain.chatgpt.endpoints
-import com.vinhnguyen.watchai.brain.chatgpt.json
-import com.vinhnguyen.watchai.brain.chatgpt.testAuthClient
+import io.github.alisial786.watchgpt.brain.chatgpt.endpoints
+import io.github.alisial786.watchgpt.brain.chatgpt.json
+import io.github.alisial786.watchgpt.brain.chatgpt.testAuthClient
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject

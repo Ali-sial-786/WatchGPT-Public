@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -13,18 +13,18 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
-import com.vinhnguyen.watchai.brain.Brain
-import com.vinhnguyen.watchai.brain.BrainError
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.ChatEvent
-import com.vinhnguyen.watchai.brain.ChatRequest
-import com.vinhnguyen.watchai.brain.ChatTurn
-import com.vinhnguyen.watchai.brain.DeviceContext
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.Preloadable
-import com.vinhnguyen.watchai.brain.Preloaded
-import com.vinhnguyen.watchai.brain.ReplyStyle
-import com.vinhnguyen.watchai.brain.Toolbox
+import io.github.alisial786.watchgpt.brain.Brain
+import io.github.alisial786.watchgpt.brain.BrainError
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.ChatEvent
+import io.github.alisial786.watchgpt.brain.ChatRequest
+import io.github.alisial786.watchgpt.brain.ChatTurn
+import io.github.alisial786.watchgpt.brain.DeviceContext
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.Preloadable
+import io.github.alisial786.watchgpt.brain.Preloaded
+import io.github.alisial786.watchgpt.brain.ReplyStyle
+import io.github.alisial786.watchgpt.brain.Toolbox
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

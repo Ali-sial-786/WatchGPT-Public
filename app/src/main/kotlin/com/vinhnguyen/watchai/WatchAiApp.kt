@@ -1,7 +1,7 @@
-package com.vinhnguyen.watchai
+package io.github.alisial786.watchgpt
 
 import android.app.Application
-import com.vinhnguyen.watchai.security.ReleaseTree
+import io.github.alisial786.watchgpt.security.ReleaseTree
 import timber.log.Timber
 
 class WatchAiApp : Application() {

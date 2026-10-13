@@ -1,6 +1,6 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
-import com.vinhnguyen.watchai.brain.SecretStore
+import io.github.alisial786.watchgpt.brain.SecretStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

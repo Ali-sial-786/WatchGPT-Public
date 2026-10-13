@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain
+package io.github.alisial786.watchgpt.brain
 
 /** Everything a brain can fail with. Messages for users are built from these, never from provider text. */
 public sealed interface BrainError {

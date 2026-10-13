@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
@@ -55,10 +55,10 @@ import androidx.core.graphics.drawable.toBitmap
 import com.kyant.backdrop.Backdrop
 import com.kyant.shapes.Capsule
 import com.kyant.shapes.RoundedRectangle
-import com.vinhnguyen.watchai.R
-import com.vinhnguyen.watchai.actions.BuddyCard
-import com.vinhnguyen.watchai.actions.Symbol
-import com.vinhnguyen.watchai.voice.VoicePhase
+import io.github.alisial786.watchgpt.R
+import io.github.alisial786.watchgpt.actions.Symbol
+import io.github.alisial786.watchgpt.actions.WatchGPTCard
+import io.github.alisial786.watchgpt.voice.VoicePhase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -66,15 +66,15 @@ import kotlinx.coroutines.withContext
 sealed interface Island {
     data object Hidden : Island
 
-    /** A conversation is on: a small capsule with what Buddy is doing. */
+    /** A conversation is on: a small capsule with what WatchGPT is doing. */
     data class Live(
         val phase: VoicePhase,
         val onWatch: Boolean,
     ) : Island
 
-    /** Something Buddy did or found, or a text or call waiting for a yes. */
+    /** Something WatchGPT did or found, or a text or call waiting for a yes. */
     data class Showing(
-        val card: BuddyCard,
+        val card: WatchGPTCard,
     ) : Island
 }
 
@@ -83,12 +83,12 @@ private val OnInk = Color(0xFFF7F7F8)
 private val OnInkQuiet = Color(0xB3F7F7F8)
 
 /**
- * Buddy's pop-up, like the Dynamic Island: a dark glass capsule at the top that grows into a card
+ * WatchGPT's pop-up, like the Dynamic Island: a dark glass capsule at the top that grows into a card
  * for what just happened (a timer, directions with a map, an app, messages) and shrinks back.
  * A text or a call waiting for a yes gets its buttons here: a tap is as good as saying it.
  */
 @Composable
-fun BuddyIsland(
+fun WatchGPTIsland(
     island: Island,
     backdrop: Backdrop,
     accent: Color,
@@ -136,7 +136,7 @@ fun BuddyIsland(
                             indication = null,
                             role = Role.Button,
                             onClickLabel = "Close",
-                            onClick = { if (state.card !is BuddyCard.Ask) onDismiss() },
+                            onClick = { if (state.card !is WatchGPTCard.Ask) onDismiss() },
                         ).animateContentSize(spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow))
                         .padding(14.dp),
                 ) {
@@ -148,16 +148,16 @@ fun BuddyIsland(
 
 @Composable
 private fun Card(
-    card: BuddyCard,
+    card: WatchGPTCard,
     accent: Color,
     onDecide: (Boolean) -> Unit,
 ) {
     when (card) {
-        is BuddyCard.Done -> Header({ Symbol(card.symbol, if (card.symbol == Symbol.CANCEL) Color(0xFFF97066) else accent) }, card.title, card.detail)
+        is WatchGPTCard.Done -> Header({ Symbol(card.symbol, if (card.symbol == Symbol.CANCEL) Color(0xFFF97066) else accent) }, card.title, card.detail)
 
-        is BuddyCard.App -> Header({ AppIcon(card.packageName, CARD_ICON) }, card.title, null)
+        is WatchGPTCard.App -> Header({ AppIcon(card.packageName, CARD_ICON) }, card.title, null)
 
-        is BuddyCard.Ask -> {
+        is WatchGPTCard.Ask -> {
             Header({ card.packageName?.let { AppIcon(it, CARD_ICON) } ?: Symbol(Symbol.PHONE, accent) }, card.title, card.detail, detailLines = 4)
             Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IslandButton("Cancel", filled = false, modifier = Modifier.weight(1f)) { onDecide(false) }
@@ -165,12 +165,12 @@ private fun Card(
             }
         }
 
-        is BuddyCard.Place -> {
+        is WatchGPTCard.Place -> {
             Header({ Symbol(null, accent, R.drawable.sym_directions) }, "Directions", card.name)
             Map(card.name, accent)
         }
 
-        is BuddyCard.Messages -> {
+        is WatchGPTCard.Messages -> {
             card.lines.take(3).forEachIndexed { i, line ->
                 if (i > 0) Spacer(Modifier.height(10.dp))
                 Header({ AppIcon(line.packageName, CARD_ICON) }, line.from, line.text, detailLines = 2)
@@ -220,7 +220,7 @@ private fun Map(
     Box(Modifier.padding(top = 12.dp).fillMaxWidth().aspectRatio(2.4f).clip(RoundedCornerShape(18.dp)).background(Color.White.copy(alpha = 0.08f))) {
         map?.let {
             Image(it, contentDescription = "Map of $place", contentScale = ContentScale.Crop, colorFilter = NightMap, modifier = Modifier.fillMaxWidth().aspectRatio(2.4f))
-            // The place: a dot in Buddy's colour with a white ring, like a map pin seen from above.
+            // The place: a dot in WatchGPT's colour with a white ring, like a map pin seen from above.
             Box(Modifier.align(Alignment.Center).size(18.dp).clip(CircleShape).background(Color.White).padding(3.dp).clip(CircleShape).background(accent))
         }
         Text(
@@ -278,7 +278,7 @@ private fun liveText(state: Island.Live): String = when (state.phase) {
     VoicePhase.THINKING -> "Thinking"
     VoicePhase.SPEAKING -> "Speaking"
     VoicePhase.ERROR -> "Something went wrong"
-    VoicePhase.IDLE -> "Buddy"
+    VoicePhase.IDLE -> "WatchGPT"
 }
 
 private val SYMBOLS =

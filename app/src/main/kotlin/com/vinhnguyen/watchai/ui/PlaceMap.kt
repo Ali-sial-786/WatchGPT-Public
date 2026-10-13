@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -28,7 +28,7 @@ import kotlin.math.tan
  * the place and the phone's IP address. Their usage policy wants a real app name and light use.
  */
 object PlaceMap {
-    private const val AGENT = "Buddy/0.1 (personal assistant; https://github.com/thenguyentrong/watch-ai)"
+    private const val AGENT = "WatchGPT/0.1 (personal assistant; https://github.com/thenguyentrong/watch-ai)"
     private val HOSTS = setOf("nominatim.openstreetmap.org", "tile.openstreetmap.org")
     private const val ZOOM = 15
     private const val TILE = 256

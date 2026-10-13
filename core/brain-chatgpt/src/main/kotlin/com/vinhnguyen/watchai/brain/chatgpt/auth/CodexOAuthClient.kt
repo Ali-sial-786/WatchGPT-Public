@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain.chatgpt.auth
+package io.github.alisial786.watchgpt.brain.chatgpt.auth
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

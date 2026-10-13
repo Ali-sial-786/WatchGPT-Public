@@ -1,9 +1,9 @@
-package com.vinhnguyen.watchai.security
+package io.github.alisial786.watchgpt.security
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
-import com.vinhnguyen.watchai.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.LogEvent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before

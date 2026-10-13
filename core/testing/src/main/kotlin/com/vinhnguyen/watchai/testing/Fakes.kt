@@ -1,11 +1,11 @@
-package com.vinhnguyen.watchai.testing
+package io.github.alisial786.watchgpt.testing
 
-import com.vinhnguyen.watchai.brain.Availability
-import com.vinhnguyen.watchai.brain.Brain
-import com.vinhnguyen.watchai.brain.BrainId
-import com.vinhnguyen.watchai.brain.ChatEvent
-import com.vinhnguyen.watchai.brain.ChatRequest
-import com.vinhnguyen.watchai.brain.SecretStore
+import io.github.alisial786.watchgpt.brain.Availability
+import io.github.alisial786.watchgpt.brain.Brain
+import io.github.alisial786.watchgpt.brain.BrainId
+import io.github.alisial786.watchgpt.brain.ChatEvent
+import io.github.alisial786.watchgpt.brain.ChatRequest
+import io.github.alisial786.watchgpt.brain.SecretStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.util.concurrent.ConcurrentHashMap

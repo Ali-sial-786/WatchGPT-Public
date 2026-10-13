@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -13,13 +13,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.vinhnguyen.watchai.actions.AppLimits
-import com.vinhnguyen.watchai.actions.AppLimits.Status
+import io.github.alisial786.watchgpt.actions.AppLimits
+import io.github.alisial786.watchgpt.actions.AppLimits.Status
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * The apps Buddy may use: every app is off until the user turns it on here. The phone's settings,
+ * The apps WatchGPT may use: every app is off until the user turns it on here. The phone's settings,
  * app stores, password, sign-in code and payment apps can't be turned on at all.
  */
 @Composable
@@ -30,8 +30,8 @@ fun AppsScreen(limits: AppLimits) {
     LaunchedEffect(changed) { apps = withContext(Dispatchers.Default) { limits.apps() } }
 
     Text(
-        "Buddy only uses the apps you turn on here: it opens them, uses them for you and reads their messages. Everything else " +
-            "stays off. If you ask for an app that's off, Buddy asks you first. Your phone's settings, app stores, password, sign-in " +
+        "WatchGPT only uses the apps you turn on here: it opens them, uses them for you and reads their messages. Everything else " +
+            "stays off. If you ask for an app that's off, WatchGPT asks you first. Your phone's settings, app stores, password, sign-in " +
             "code and payment apps are always off.",
         style = MaterialTheme.typography.bodyLarge,
         color = p.textSecondary,

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.plus
+package io.github.alisial786.watchgpt.plus
 
 import android.app.Activity
 import android.content.Context
@@ -24,9 +24,9 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * Buddy Plus, through RevenueCat: extras for people who want to support Buddy. Choosing your
- * Buddy's look, a thank-you mark, and new things first (Buddy on your computer is next).
- * Everything Buddy does stays free; privacy and safety are never part of it.
+ * WatchGPT Plus, through RevenueCat: extras for people who want to support WatchGPT. Choosing your
+ * WatchGPT's look, a thank-you mark, and new things first (WatchGPT on your computer is next).
+ * Everything WatchGPT does stays free; privacy and safety are never part of it.
  *
  * RevenueCat sees an anonymous id it makes for this install and the purchases, nothing from the
  * conversations. Without a key (a build without RevenueCat) Plus isn't offered at all.
@@ -98,7 +98,7 @@ class Plus(
         activity: Activity,
         offer: Offer,
     ): Bought {
-        if (!available) return Bought.Failed("Buddy Plus isn't set up in this build")
+        if (!available) return Bought.Failed("WatchGPT Plus isn't set up in this build")
         return try {
             update(Purchases.sharedInstance.awaitPurchase(PurchaseParams.Builder(activity, offer.pkg).build()).customerInfo)
             Bought.Done

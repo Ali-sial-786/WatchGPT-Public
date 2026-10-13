@@ -1,6 +1,6 @@
 # Testing
 
-How Buddy is checked, on this machine, in CI and on the devices.
+How WatchGPT is checked, on this machine, in CI and on the devices.
 
 ---
 
@@ -40,26 +40,26 @@ Every push to `main` runs [`.github/workflows/ci.yml`](../.github/workflows/ci.y
 ## Debug hooks on the phone
 
 Debug builds have a broadcast receiver for opening screens and showing made-up pop-ups without
-tapping. It needs the `DUMP` permission, so only adb can call it. Buddy has to be open first:
+tapping. It needs the `DUMP` permission, so only adb can call it. WatchGPT has to be open first:
 
 ```bash
-adb shell am start -n com.vinhnguyen.watchai/.MainActivity -a android.intent.action.MAIN -c android.intent.category.LAUNCHER
-adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es page safety
+adb shell am start -n io.github.alisial786.watchgpt/.MainActivity -a android.intent.action.MAIN -c android.intent.category.LAUNCHER
+adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es page safety
 ```
 
 - `--es page` opens a screen: `home`, `menu`, `chat`, `abilities`, `activity`, `ai`, `settings`,
   `safety`, `inbox`, `plus`, `look`, `voice_lab`, `buddies`.
 - `--es card` shows a made-up pop-up: `timer`, `note`, `app`, `text`, `call`, `place`, `messages`.
 - `--es check speak` tries the phone's own voice (add `--ez aloud true` to hear it).
-- `--es screen <tool>` runs one screen tool through the real Guard on the app in front (Buddy's
+- `--es screen <tool>` runs one screen tool through the real Guard on the app in front (WatchGPT's
   accessibility service has to be on): `look_at_screen`, `find_on_screen`, `tap`, `type_text`,
-  `scroll`, `go_back`, `read_screen`, with `--es args '{"id":3}'`. The log (tag `BuddyTest`) shows
+  `scroll`, `go_back`, `read_screen`, with `--es args '{"id":3}'`. The log (tag `WatchGPTTest`) shows
   what ChatGPT would see; for `read_screen` only how long the phone took and how many words it said,
   never what. Add `--ez aloud true` to hear it.
 
 ```bash
-adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es screen look_at_screen
-adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es screen read_screen --es args '{"instruction":"say who wrote the newest message"}' --ez aloud true
+adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es screen look_at_screen
+adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es screen read_screen --es args '{"instruction":"say who wrote the newest message"}' --ez aloud true
 ```
 
 Gemma's calls, with made-up inputs from the command line (so no language or app is written into the
@@ -70,11 +70,11 @@ code, and the answers can be logged):
 - `--es check tap --es app <name> --es words '<label>' [--es name <view id>] [--ez list true]`:
   `moves` or `does`.
 - `--es check app --es label <name> --es pkg <package>`: `money`, `secrets` or `other`.
-- `--es limits <package>`: whether Buddy stays out of an installed app. `--es check voices`: the
+- `--es limits <package>`: whether WatchGPT stays out of an installed app. `--es check voices`: the
   phone's offline voices.
 - `--es e2e '<what the user says>'`: a conversation with the real ChatGPT planner, as a watch call's
   look-ups have it (the same tools, the same Guard, Gemma on the phone), one typed turn at a time;
-  `--es e2e_new x` starts a new one. The log (tag `BuddyE2E`) shows each tool call, what ChatGPT got
+  `--es e2e_new x` starts a new one. The log (tag `WatchGPTE2E`) shows each tool call, what ChatGPT got
   back and its answer; what the phone says privately only as a word count and its language.
   `--es e2e_message '<from>|<text>'` puts a made-up message into the inbox (from a made-up chat
   app that's on), `--es e2e_clean x` takes those and the test's notes out again.
@@ -87,25 +87,25 @@ A shell script with many of these lines, pushed with `adb push` and run with `ad
 text in any script intact (Windows can garble it on the command line).
 
 > [!WARNING]
-> Tapping Buddy on the phone starts a real ChatGPT conversation, with the microphone on.
+> Tapping WatchGPT on the phone starts a real ChatGPT conversation, with the microphone on.
 
 ## Debug hooks on the watch
 
-Opening the watch app starts a real conversation. To only switch "Hey Buddy" back on after an install,
+Opening the watch app starts a real conversation. To only switch "Hey Watch G P T" back on after an install,
 open it with `quiet`:
 
 ```bash
-adb shell am start -n com.vinhnguyen.watchai/com.vinhnguyen.watchai.wear.WearActivity --ez quiet true
+adb shell am start -n io.github.alisial786.watchgpt/io.github.alisial786.watchgpt.wear.WearActivity --ez quiet true
 ```
 
-Debug builds of the watch also have receivers for testing "Hey Buddy" with recorded clips (`HearWav`,
-`TeachWav`, `TuneWake`, `SpeakWav`) and `BuddyShowcase`, which draws Buddy without a conversation. They
+Debug builds of the watch also have receivers for testing "Hey Watch G P T" with recorded clips (`HearWav`,
+`TeachWav`, `TuneWake`, `SpeakWav`) and `WatchGPTShowcase`, which draws WatchGPT without a conversation. They
 are in [`wear/src/debug`](../wear/src/debug). Test the watch with release builds when speed matters.
 
 ## In the app
 
 **Settings → See what ChatGPT gets.** Type a message someone could send you, or pick a tricky one
-(a prompt injection, a one-time code, a fake parcel, bank details, a password). Buddy treats it like
+(a prompt injection, a one-time code, a fake parcel, bank details, a password). WatchGPT treats it like
 your real messages and shows what your phone would say and what would reach ChatGPT. Nothing is sent.
 
 ## Reports

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray

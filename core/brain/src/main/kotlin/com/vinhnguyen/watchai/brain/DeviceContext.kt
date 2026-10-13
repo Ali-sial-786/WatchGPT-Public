@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain
+package io.github.alisial786.watchgpt.brain
 
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter

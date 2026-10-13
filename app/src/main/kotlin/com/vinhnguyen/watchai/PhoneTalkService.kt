@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai
+package io.github.alisial786.watchgpt
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -50,7 +50,7 @@ class PhoneTalkService : Service() {
     private fun notification() = NotificationCompat
         .Builder(this, CHANNEL)
         .setSmallIcon(R.drawable.ic_stat_buddy)
-        .setContentTitle("Talking with Buddy")
+        .setContentTitle("Talking with WatchGPT")
         .setContentText("Still listening while you use other apps")
         .setCategory(NotificationCompat.CATEGORY_CALL)
         .setOngoing(true)
@@ -61,7 +61,7 @@ class PhoneTalkService : Service() {
     companion object {
         private const val CHANNEL = "phone_talk"
         private const val NOTIFICATION_ID = 8
-        private const val ACTION_END = "com.vinhnguyen.watchai.PHONE_TALK_END"
+        private const val ACTION_END = "io.github.alisial786.watchgpt.PHONE_TALK_END"
 
         /** Whether the service holds the mic in the foreground right now. */
         @Volatile var running: Boolean = false

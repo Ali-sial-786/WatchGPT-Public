@@ -13,6 +13,8 @@ plugins {
 val kotlinSources =
     listOf(
         "app",
+        "core/reminders",
+        "core/organizer",
         "core/brain",
         "core/brain-chatgpt",
         "core/brain-ondevice",

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -52,35 +52,36 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import com.vinhnguyen.watchai.AppGraph
-import com.vinhnguyen.watchai.BuildConfig
-import com.vinhnguyen.watchai.R
-import com.vinhnguyen.watchai.brain.Availability
-import com.vinhnguyen.watchai.brain.chatgpt.auth.AuthState
-import com.vinhnguyen.watchai.buddy.Act
-import com.vinhnguyen.watchai.buddy.Genes
-import com.vinhnguyen.watchai.buddy.ui.BuddyView
-import com.vinhnguyen.watchai.buddy.ui.accentOf
-import com.vinhnguyen.watchai.plus.Plus
+import io.github.alisial786.watchgpt.AppGraph
+import io.github.alisial786.watchgpt.BuildConfig
+import io.github.alisial786.watchgpt.R
+import io.github.alisial786.watchgpt.brain.Availability
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.AuthState
+import io.github.alisial786.watchgpt.buddy.Act
+import io.github.alisial786.watchgpt.buddy.Genes
+import io.github.alisial786.watchgpt.buddy.ui.WatchGPTView
+import io.github.alisial786.watchgpt.buddy.ui.accentOf
+import io.github.alisial786.watchgpt.plus.Plus
 
 /** Everything behind the menu; the last two are in test builds only. */
 enum class Page(
     val title: String,
     val forTesting: Boolean = false,
 ) {
+    ORGANIZER("Reminders & agenda"),
     CHAT("Chat"),
-    ABILITIES("What Buddy can do"),
-    ACTIVITY("What Buddy did"),
+    ABILITIES("What WatchGPT can do"),
+    ACTIVITY("What WatchGPT did"),
     HISTORY("History"),
     AI("Your AI"),
     SETTINGS("Settings"),
-    PLUS("Buddy Plus"),
-    LOOK("Choose your Buddy"),
+    PLUS("WatchGPT Plus"),
+    LOOK("Choose your WatchGPT"),
     SAFETY("See what ChatGPT gets"),
-    APPS("Apps Buddy can use"),
-    INBOX("Messages Buddy has"),
+    APPS("Apps WatchGPT can use"),
+    INBOX("Messages WatchGPT has"),
     VOICE_LAB("Voice lab", forTesting = true),
-    BUDDIES("More Buddies", forTesting = true),
+    BUDDIES("More Companions", forTesting = true),
 }
 
 /** Test builds: a screen to show, from `am start ... --es page settings` (home, menu or a [Page]). */
@@ -99,11 +100,11 @@ class Pages(
 )
 
 /**
- * The phone app, as calm as the watch: Buddy alone on the home screen, and everything else behind
- * one menu, a glass panel that slides over it. A page opens over the home; back returns to Buddy.
+ * The phone app, as calm as the watch: WatchGPT alone on the home screen, and everything else behind
+ * one menu, a glass panel that slides over it. A page opens over the home; back returns to WatchGPT.
  */
 @Composable
-fun BuddyApp(
+fun WatchGPTApp(
     graph: AppGraph,
     talk: TalkViewModel,
     pages: Pages,
@@ -113,8 +114,8 @@ fun BuddyApp(
     var menu by rememberSaveable { mutableStateOf(false) }
     val backdrop = rememberLayerBackdrop()
     val pageBackdrop = rememberLayerBackdrop()
-    // The Buddy changes when a Plus user picks another one, or Plus starts or ends.
-    val chosen by graph.chosenBuddy.collectAsStateWithLifecycle()
+    // The WatchGPT changes when a Plus user picks another one, or Plus starts or ends.
+    val chosen by graph.chosenWatchGPT.collectAsStateWithLifecycle()
     val plusActive by graph.plus.active.collectAsStateWithLifecycle()
     val seed by produceState<Long?>(null, chosen, plusActive) { value = talk.buddySeed() }
     val genes = remember(seed) { seed?.let { Genes.of(it) } }
@@ -170,6 +171,14 @@ fun BuddyApp(
                     buttons = !menu && island !is Island.Showing,
                 )
 
+            Page.ORGANIZER -> {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                LaunchedEffect(Unit) {
+                    io.github.alisial786.watchgpt.organizer.OrganizerActivity.open(context)
+                    page = null
+                }
+            }
+
             Page.CHAT ->
                 Page(
                     p.title,
@@ -207,7 +216,7 @@ fun BuddyApp(
 
             Page.INBOX -> Page(p.title, onBack = { page = Page.ABILITIES }, backdrop = pageBackdrop) { InboxScreen(graph.inbox) }
 
-            Page.PLUS -> Page(p.title, onBack = { page = null }, backdrop = pageBackdrop) { PlusScreen(graph, onChooseBuddy = { open(Page.LOOK) }) }
+            Page.PLUS -> Page(p.title, onBack = { page = null }, backdrop = pageBackdrop) { PlusScreen(graph, onChooseWatchGPT = { open(Page.LOOK) }) }
 
             Page.LOOK -> Page(p.title, onBack = { page = Page.PLUS }, backdrop = pageBackdrop) { LookScreen(graph, onPlus = { open(Page.PLUS) }) }
 
@@ -220,12 +229,12 @@ fun BuddyApp(
             Page.BUDDIES ->
                 Page(p.title, onBack = { page = null }, scrolls = false, backdrop = pageBackdrop) { top ->
                     Spacer(Modifier.height(top))
-                    BuddyScreen(graph, showOthers = true)
+                    WatchGPTScreen(graph, showOthers = true)
                 }
         }
 
-        // Buddy's pop-up floats over every page; away from home it only shows cards, not the conversation.
-        BuddyIsland(
+        // WatchGPT's pop-up floats over every page; away from home it only shows cards, not the conversation.
+        WatchGPTIsland(
             island = if (page == null || island is Island.Showing) island else Island.Hidden,
             backdrop = if (page == null) backdrop else pageBackdrop,
             accent = remember(genes) { genes?.let { accentOf(it) } } ?: palette.textSecondary,
@@ -273,7 +282,7 @@ private fun Menu(
         Row(Modifier.padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(44.dp).clip(CircleShape).background(p.background)) {
                 genes?.let {
-                    BuddyView(
+                    WatchGPTView(
                         genes = it,
                         act = Act.REST,
                         reaction = null,
@@ -289,7 +298,7 @@ private fun Menu(
             Spacer(Modifier.width(14.dp))
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Buddy", style = MaterialTheme.typography.titleLarge, color = p.text)
+                    Text("WatchGPT", style = MaterialTheme.typography.titleLarge, color = p.text)
                     // The thank-you mark for Plus.
                     if (supporter) {
                         Text(

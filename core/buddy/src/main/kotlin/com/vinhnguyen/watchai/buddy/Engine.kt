@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.buddy
+package io.github.alisial786.watchgpt.buddy
 
 import kotlin.math.PI
 import kotlin.math.abs
@@ -7,10 +7,10 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
-/** Where the conversation is: what Buddy does when no reaction plays. */
+/** Where the conversation is: what WatchGPT does when no reaction plays. */
 public enum class Act { REST, AWAKE, CONNECT, LISTEN, THINK, SPEAK, ERROR }
 
-/** What Buddy is doing: the conversation's [act] since [actAt], and a [reaction] since [reactionAt] (seconds). */
+/** What WatchGPT is doing: the conversation's [act] since [actAt], and a [reaction] since [reactionAt] (seconds). */
 public data class Scene(
     val act: Act,
     val actAt: Double = 0.0,
@@ -49,11 +49,11 @@ public class Feature(
 }
 
 /**
- * One picture of Buddy in body units: 1 is the radius of the ball at rest, (0, 0) its centre,
+ * One picture of WatchGPT in body units: 1 is the radius of the ball at rest, (0, 0) its centre,
  * y points down. Renderers only draw this, in order: [arcs] behind, [dots] if [dotsBehind], the
  * [body] with its [features] and the [badge] gap cut out, [dots] in front, the [badge], [arcs] in front.
  */
-public class BuddyFrame(
+public class WatchGPTFrame(
     /** [Silhouette.SAMPLES] outline points, x and y interleaved; draw as a smooth closed curve. */
     public val body: FloatArray,
     public val features: List<Feature>,
@@ -64,7 +64,7 @@ public class BuddyFrame(
 )
 
 /**
- * Buddy's animation, a port of bloub's engine by Jérémy Perret (MIT, github.com/jeremy-prt/bloub,
+ * WatchGPT's animation, a port of bloub's engine by Jérémy Perret (MIT, github.com/jeremy-prt/bloub,
  * src/bot/engine.ts): no clock inside, [sample] is a pure function of the time it is given and
  * of the state changes set before, so pausing, jumping or freezing always gives the same picture.
  * A change blends from what was on screen, frozen if it lands in the middle of another blend.
@@ -72,7 +72,7 @@ public class BuddyFrame(
  * With [still] (the system's animations are off) there is no drift, breathing or blinking, each
  * state shows its most readable moment and changes are instant.
  */
-public class BuddyEngine(
+public class WatchGPTEngine(
     private val genes: Genes,
     private val still: Boolean = false,
 ) {
@@ -131,11 +131,11 @@ public class BuddyEngine(
         return Pose.blend(from, pose, easeOutQuint(clamp01((since / cur.morph).toFloat())))
     }
 
-    /** Buddy at [now], with the voice [level] (0..1) for the mouth and the listening lean. */
+    /** WatchGPT at [now], with the voice [level] (0..1) for the mouth and the listening lean. */
     public fun sample(
         now: Double,
         level: Float = 0f,
-    ): BuddyFrame {
+    ): WatchGPTFrame {
         val pose = composed(now, level.coerceIn(0f, 1f))
         val alive = pose.faceAlpha > 0.01f
         val life = Face.life(now, if (alive) 1f else 0f, alive, still)
@@ -175,7 +175,7 @@ public class BuddyEngine(
             Badge(cos(a) * k + offX, sin(a) * k + offY, b.r, Decor.BADGE_GAP, b.heart)
         }
 
-        return BuddyFrame(
+        return WatchGPTFrame(
             body = sil.points(),
             features = features,
             dots = pose.dots.filter { it.opacity > 0.01f && it.r > 0.0005f }.map { Dot(it.x + offX, it.y + offY, it.r, it.opacity, it.depth, it.shape, it.rot) },
@@ -195,7 +195,7 @@ public class Director(
     genes: Genes,
     still: Boolean = false,
 ) {
-    private val engine = BuddyEngine(genes, still)
+    private val engine = WatchGPTEngine(genes, still)
     private var started = false
 
     /** The frame at [t]; with [blend] off (a frozen view, where time doesn't move) the state as if it had always been on. */
@@ -204,7 +204,7 @@ public class Director(
         level: Float,
         t: Double,
         blend: Boolean = true,
-    ): BuddyFrame {
+    ): WatchGPTFrame {
         val (state, since) = target(scene, t)
         if (!blend || !started) {
             engine.reset(state, since)

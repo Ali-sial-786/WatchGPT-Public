@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,21 +35,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.vinhnguyen.watchai.AppGraph
-import com.vinhnguyen.watchai.buddy.Act
-import com.vinhnguyen.watchai.buddy.Genes
-import com.vinhnguyen.watchai.buddy.Mood
-import com.vinhnguyen.watchai.buddy.Reaction
-import com.vinhnguyen.watchai.buddy.ui.BuddyView
+import io.github.alisial786.watchgpt.AppGraph
+import io.github.alisial786.watchgpt.buddy.Act
+import io.github.alisial786.watchgpt.buddy.Genes
+import io.github.alisial786.watchgpt.buddy.Mood
+import io.github.alisial786.watchgpt.buddy.Reaction
+import io.github.alisial786.watchgpt.buddy.ui.WatchGPTView
 import kotlin.random.Random
 
 /**
- * The phone's home: the user's own Buddy (made from their account) on a round black stage, like
- * the watch. A tap plays its next animation. Debug builds add a grid of other Buddies to review
+ * The phone's home: the user's own WatchGPT (made from their account) on a round black stage, like
+ * the watch. A tap plays its next animation. Debug builds add a grid of other Companions to review
  * the variety.
  */
 @Composable
-fun BuddyScreen(
+fun WatchGPTScreen(
     graph: AppGraph,
     showOthers: Boolean,
 ) {
@@ -68,7 +68,7 @@ fun BuddyScreen(
                 seed?.let { mine ->
                     Stage(Genes.of(mine), Modifier.fillMaxWidth(0.82f).widthIn(max = 360.dp).aspectRatio(1f))
                     Spacer(Modifier.height(24.dp))
-                    Text("This is your Buddy", style = MaterialTheme.typography.titleMedium)
+                    Text("This is your WatchGPT", style = MaterialTheme.typography.titleMedium)
                     Text(
                         "Made from your account, so no one else has this one. Tap it to play.",
                         style = MaterialTheme.typography.bodyMedium,
@@ -84,7 +84,7 @@ fun BuddyScreen(
     }
 }
 
-/** One Buddy on a disc; each tap plays the next animation. */
+/** One WatchGPT on a disc; each tap plays the next animation. */
 @Composable
 private fun Stage(
     genes: Genes,
@@ -99,7 +99,7 @@ private fun Stage(
             .background(p.surface)
             .clickable(onClickLabel = "Play the next animation", role = Role.Button) { next++ },
     ) {
-        BuddyView(
+        WatchGPTView(
             genes = genes,
             act = Act.REST,
             reaction = mood?.let { Reaction(it, 0.8f) },

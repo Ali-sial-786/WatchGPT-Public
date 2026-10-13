@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain
+package io.github.alisial786.watchgpt.brain
 
 /** Answers are read aloud on a watch, so every brain gets the same short-answer rules. */
 public object PromptStyle {

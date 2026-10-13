@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -19,21 +19,21 @@ import android.util.Log
 import androidx.core.content.edit
 import com.google.android.gms.wearable.ChannelClient
 import com.google.android.gms.wearable.Wearable
-import com.vinhnguyen.watchai.buddy.Genes
-import com.vinhnguyen.watchai.buddy.Mood
-import com.vinhnguyen.watchai.buddy.Reaction
-import com.vinhnguyen.watchai.watchlink.Adpcm
-import com.vinhnguyen.watchai.watchlink.Chime
-import com.vinhnguyen.watchai.watchlink.Control
-import com.vinhnguyen.watchai.watchlink.EarlySpeech
-import com.vinhnguyen.watchai.watchlink.Frame
-import com.vinhnguyen.watchai.watchlink.FrameCodec
-import com.vinhnguyen.watchai.watchlink.LinkStats
-import com.vinhnguyen.watchai.watchlink.Outbox
-import com.vinhnguyen.watchai.watchlink.Pcm
-import com.vinhnguyen.watchai.watchlink.PcmQueue
-import com.vinhnguyen.watchai.watchlink.SilenceGate
-import com.vinhnguyen.watchai.watchlink.WatchLink
+import io.github.alisial786.watchgpt.buddy.Genes
+import io.github.alisial786.watchgpt.buddy.Mood
+import io.github.alisial786.watchgpt.buddy.Reaction
+import io.github.alisial786.watchgpt.watchlink.Adpcm
+import io.github.alisial786.watchgpt.watchlink.Chime
+import io.github.alisial786.watchgpt.watchlink.Control
+import io.github.alisial786.watchgpt.watchlink.EarlySpeech
+import io.github.alisial786.watchgpt.watchlink.Frame
+import io.github.alisial786.watchgpt.watchlink.FrameCodec
+import io.github.alisial786.watchgpt.watchlink.LinkStats
+import io.github.alisial786.watchgpt.watchlink.Outbox
+import io.github.alisial786.watchgpt.watchlink.Pcm
+import io.github.alisial786.watchgpt.watchlink.PcmQueue
+import io.github.alisial786.watchgpt.watchlink.SilenceGate
+import io.github.alisial786.watchgpt.watchlink.WatchLink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -77,7 +77,7 @@ class PhoneVoiceLink private constructor(
         val answersOnWatch: Boolean = true,
         /** False while earbuds on the phone are the microphone too: the watch only shows the face. */
         val micOnWatch: Boolean = true,
-        /** Buddy's latest reaction from the phone; [reactionId] goes up with each, so a repeat plays again. */
+        /** WatchGPT's latest reaction from the phone; [reactionId] goes up with each, so a repeat plays again. */
         val reaction: Reaction? = null,
         val reactionId: Int = 0,
     )
@@ -109,7 +109,7 @@ class PhoneVoiceLink private constructor(
     /** The phone picked up (sent its first frame). Until then the mic only fills [early]. */
     @Volatile private var answered = false
 
-    /** What the user says while the phone picks up ("Hey Buddy, what time is it?" in one breath). */
+    /** What the user says while the phone picks up ("Hey WatchGPT, what time is it?" in one breath). */
     private val early = EarlySpeech(maxFrames = EARLY_FRAMES, voiceLevel = MIC_SILENCE)
 
     @Volatile private var earlySent = false
@@ -131,7 +131,7 @@ class PhoneVoiceLink private constructor(
 
     private val prefs = appContext.getSharedPreferences("wear", Context.MODE_PRIVATE)
 
-    /** This user's Buddy: kept on the watch, updated by the phone at every call. Until the first call, a Buddy of this watch's own. */
+    /** This user's WatchGPT: kept on the watch, updated by the phone at every call. Until the first call, a WatchGPT of this watch's own. */
     private val _genes = MutableStateFlow(Genes.of(prefs.getLong(SEED, 0L).takeIf { it != 0L } ?: Random.nextLong().also { seed -> prefs.edit { putLong(SEED, seed) } }))
     val genes: StateFlow<Genes> = _genes.asStateFlow()
 
@@ -218,7 +218,7 @@ class PhoneVoiceLink private constructor(
             if (!currentScopeActive(s)) return
             Log.w(TAG, "call failed: ${e::class.simpleName}")
             val detail = e.message ?: "Could not reach the phone"
-            // Hang up properly: the mic closes, "Hey Buddy" listens again and a tap tries again.
+            // Hang up properly: the mic closes, "Hey WatchGPT" listens again and a tap tries again.
             // Only showing the error left the call "on": the wake word stayed paused, taps did nothing.
             cleanup.launch {
                 stop()

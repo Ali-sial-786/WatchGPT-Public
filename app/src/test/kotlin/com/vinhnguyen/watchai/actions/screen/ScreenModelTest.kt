@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.actions.screen
+package io.github.alisial786.watchgpt.actions.screen
 
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -42,7 +42,7 @@ class ScreenModelTest {
         val content = ScreenModel.content(nodes)
         assertThat(content).contains("See you at the station")
         assertThat(content).doesNotContain("hunter2")
-        assertThat(ScreenModel.controls("Mail", nodes)).contains("[9] password field (Buddy never touches it)")
+        assertThat(ScreenModel.controls("Mail", nodes)).contains("[9] password field (WatchGPT never touches it)")
     }
 
     /** No word lists: the phone's own model judges the control's words, whatever language they're in. */

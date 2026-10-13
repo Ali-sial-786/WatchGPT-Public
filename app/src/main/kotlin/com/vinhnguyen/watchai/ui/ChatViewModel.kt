@@ -1,19 +1,19 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vinhnguyen.watchai.AppGraph
-import com.vinhnguyen.watchai.ReportStore
-import com.vinhnguyen.watchai.actions.ChatReply
-import com.vinhnguyen.watchai.brain.BrainError
-import com.vinhnguyen.watchai.brain.BrainId
-import com.vinhnguyen.watchai.brain.ChatEvent
-import com.vinhnguyen.watchai.brain.ChatRequest
-import com.vinhnguyen.watchai.brain.ChatTurn
-import com.vinhnguyen.watchai.brain.DeviceContext
-import com.vinhnguyen.watchai.brain.RoutePreference
-import com.vinhnguyen.watchai.brain.TurnStats
-import com.vinhnguyen.watchai.brain.code
+import io.github.alisial786.watchgpt.AppGraph
+import io.github.alisial786.watchgpt.ReportStore
+import io.github.alisial786.watchgpt.actions.ChatReply
+import io.github.alisial786.watchgpt.brain.BrainError
+import io.github.alisial786.watchgpt.brain.BrainId
+import io.github.alisial786.watchgpt.brain.ChatEvent
+import io.github.alisial786.watchgpt.brain.ChatRequest
+import io.github.alisial786.watchgpt.brain.ChatTurn
+import io.github.alisial786.watchgpt.brain.DeviceContext
+import io.github.alisial786.watchgpt.brain.RoutePreference
+import io.github.alisial786.watchgpt.brain.TurnStats
+import io.github.alisial786.watchgpt.brain.code
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,7 +105,7 @@ class ChatViewModel(
                                 }
                             }
                         }
-                    // The chat is part of Buddy's history. A turn only the phone's own model heard stays marked as
+                    // The chat is part of WatchGPT's history. A turn only the phone's own model heard stays marked as
                     // the phone's: History shows it, ChatGPT never gets it.
                     val answer = _state.value.messages.firstOrNull { it.id == answerId }
                     if (answer != null && answer.brain != null && answer.error == null && answer.text.isNotBlank()) {

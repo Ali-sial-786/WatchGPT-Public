@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -11,19 +11,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vinhnguyen.watchai.R
-import com.vinhnguyen.watchai.actions.ActionLogStore
-import com.vinhnguyen.watchai.actions.ConversationActions
-import com.vinhnguyen.watchai.actions.PhoneActions
-import com.vinhnguyen.watchai.actions.PhoneShortcuts
-import com.vinhnguyen.watchai.actions.ReachActions
+import io.github.alisial786.watchgpt.R
+import io.github.alisial786.watchgpt.actions.ActionLogStore
+import io.github.alisial786.watchgpt.actions.ConversationActions
+import io.github.alisial786.watchgpt.actions.PhoneActions
+import io.github.alisial786.watchgpt.actions.PhoneShortcuts
+import io.github.alisial786.watchgpt.actions.ReachActions
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Calendar
 import java.util.Date
 
 /**
- * What Buddy did, newest first: the kind of action and how it ended. Nothing of what was in it is
+ * What WatchGPT did, newest first: the kind of action and how it ended. Nothing of what was in it is
  * kept (no message text, no names), only for 30 days, encrypted on this phone.
  */
 @Composable
@@ -40,7 +40,7 @@ fun ActivityScreen(log: ActionLogStore) {
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp),
     )
     if (items.isEmpty()) {
-        Group { Item("Nothing yet", subtitle = "Ask Buddy for something, on your watch or here.", last = true) }
+        Group { Item("Nothing yet", subtitle = "Ask WatchGPT for something, on your watch or here.", last = true) }
         return
     }
     items.asReversed().take(SHOWN).groupBy { day(it.at) }.forEach { (day, entries) ->
@@ -63,17 +63,17 @@ private fun describe(e: ActionLogStore.Item): Pair<String, Int> = when (e.tool) 
     PhoneActions.LIST_NOTES -> "Read your notes" to R.drawable.sym_sticky_note_2
     PhoneActions.LIST_EVENTS -> "Read your calendar" to R.drawable.sym_event
     PhoneActions.ADD_NOTE -> "Added a note" to R.drawable.sym_sticky_note_2
-    PhoneActions.ADD_EVENT -> "Added to your calendar" to R.drawable.sym_event
+    PhoneActions.ADD_EVENT -> "Added to WatchGPT agenda" to R.drawable.sym_event
     PhoneActions.ADD_REMINDER -> "Added a reminder" to R.drawable.sym_event
-    PhoneActions.SET_TIMER -> "Set a timer" to R.drawable.sym_timer
-    PhoneActions.SET_ALARM -> "Set an alarm" to R.drawable.sym_alarm
+    PhoneActions.SET_TIMER -> "Requested a timer" to R.drawable.sym_timer
+    PhoneActions.SET_ALARM -> "Requested an alarm" to R.drawable.sym_alarm
     PhoneActions.RING_PHONE, PhoneActions.STOP_RINGING -> "Rang your phone" to R.drawable.sym_ring_volume
     PhoneActions.MEDIA, PhoneActions.SET_VOLUME -> "Music and volume" to R.drawable.sym_music_note
     PhoneActions.SET_RINGER, PhoneActions.DO_NOT_DISTURB -> "Ringer or Do Not Disturb" to R.drawable.sym_ring_volume
     PhoneActions.DEVICE_STATUS -> "Checked the battery" to R.drawable.sym_bolt
     PhoneShortcuts.OPEN_APP -> "Opened an app" to R.drawable.sym_bolt
-    PhoneShortcuts.TURN_ON_APP -> "Turned an app on for Buddy" to R.drawable.sym_lock
-    PhoneShortcuts.TURN_OFF_APP -> "Turned an app off for Buddy" to R.drawable.sym_lock
+    PhoneShortcuts.TURN_ON_APP -> "Turned an app on for WatchGPT" to R.drawable.sym_lock
+    PhoneShortcuts.TURN_OFF_APP -> "Turned an app off for WatchGPT" to R.drawable.sym_lock
     PhoneShortcuts.NAVIGATE -> "Opened directions" to R.drawable.sym_directions
     PhoneShortcuts.FLASHLIGHT -> "Flashlight" to R.drawable.sym_flashlight_on
     ReachActions.SEND_TEXT -> "A text" to R.drawable.sym_chat_bubble

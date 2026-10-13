@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.buddy.ui
+package io.github.alisial786.watchgpt.buddy.ui
 
 import android.graphics.PixelFormat
 import android.provider.Settings
@@ -18,25 +18,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
-import com.vinhnguyen.watchai.buddy.Act
-import com.vinhnguyen.watchai.buddy.Director
-import com.vinhnguyen.watchai.buddy.Genes
-import com.vinhnguyen.watchai.buddy.Reaction
-import com.vinhnguyen.watchai.buddy.Scene
+import io.github.alisial786.watchgpt.buddy.Act
+import io.github.alisial786.watchgpt.buddy.Director
+import io.github.alisial786.watchgpt.buddy.Genes
+import io.github.alisial786.watchgpt.buddy.Reaction
+import io.github.alisial786.watchgpt.buddy.Scene
 import kotlin.concurrent.thread
 
 /**
- * The same Buddy as [BuddyView], drawn on its own surface by its own thread with a software
+ * The same WatchGPT as [WatchGPTView], drawn on its own surface by its own thread with a software
  * canvas. A Compose canvas that ticks makes Android redraw the whole window each frame, and on
  * the Watch5 that alone cost about 2% CPU per frame per second (release, 28.09: an empty canvas
- * at 20 fps took 39%, Buddy 48%). Here a frame is only Buddy, drawn and handed over: 25% at
+ * at 20 fps took 39%, WatchGPT 48%). Here a frame is only WatchGPT, drawn and handed over: 25% at
  * 20 fps, 15% at 10 (the compositor's share, 15 to 25%, is the same either way).
  *
  * The thread keeps the clock and stamps changes of [act] and [reaction] (each time [reactionId]
  * goes up) on it. It stops with the surface; [ambient] draws one still picture.
  */
 @Composable
-fun BuddySurface(
+fun WatchGPTSurface(
     genes: Genes,
     act: Act,
     reaction: Reaction?,
@@ -136,7 +136,7 @@ private class SurfaceRenderer(
     ) {
         var shownGenes = genes()
         var director = Director(shownGenes, still)
-        val paths = BuddyPaths()
+        val paths = WatchGPTPaths()
         val draw = CanvasDrawScope()
         val size = Size(width.toFloat(), height.toFloat())
         val start = System.nanoTime()
@@ -162,7 +162,7 @@ private class SurfaceRenderer(
                     val frame = director.frame(scene, input.level, t, blend = !ambient)
                     draw.draw(density, direction, Canvas(canvas), size) {
                         drawRect(input.paper.takeUnless { ambient } ?: Color.Black)
-                        if (ambient) drawAmbientBuddy(frame, paths) else drawBuddy(frame, inkOf(shownGenes), accentOf(shownGenes), input.paper, paths)
+                        if (ambient) drawAmbientWatchGPT(frame, paths) else drawWatchGPT(frame, inkOf(shownGenes), accentOf(shownGenes), input.paper, paths)
                     }
                 } finally {
                     holder.unlockCanvasAndPost(canvas)

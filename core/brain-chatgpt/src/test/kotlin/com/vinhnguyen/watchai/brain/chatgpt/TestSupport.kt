@@ -1,6 +1,6 @@
-package com.vinhnguyen.watchai.brain.chatgpt
+package io.github.alisial786.watchgpt.brain.chatgpt
 
-import com.vinhnguyen.watchai.brain.chatgpt.auth.OpenAiEndpoints
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.OpenAiEndpoints
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Dns

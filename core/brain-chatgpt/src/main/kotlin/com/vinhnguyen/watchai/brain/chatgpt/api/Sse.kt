@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain.chatgpt.api
+package io.github.alisial786.watchgpt.brain.chatgpt.api
 
 import okio.BufferedSource
 

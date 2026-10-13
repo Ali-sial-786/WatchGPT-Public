@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain.guard
+package io.github.alisial786.watchgpt.brain.guard
 
 import kotlin.math.ln
 

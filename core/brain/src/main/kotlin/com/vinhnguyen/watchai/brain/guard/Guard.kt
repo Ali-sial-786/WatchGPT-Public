@@ -1,8 +1,8 @@
-package com.vinhnguyen.watchai.brain.guard
+package io.github.alisial786.watchgpt.brain.guard
 
-import com.vinhnguyen.watchai.brain.ToolContext
-import com.vinhnguyen.watchai.brain.ToolSpec
-import com.vinhnguyen.watchai.brain.Toolbox
+import io.github.alisial786.watchgpt.brain.ToolContext
+import io.github.alisial786.watchgpt.brain.ToolSpec
+import io.github.alisial786.watchgpt.brain.Toolbox
 import kotlinx.coroutines.CancellationException
 
 /** How much can go wrong if a call runs without the user wanting it. */
@@ -79,7 +79,7 @@ public fun interface PrivateReply {
     ): Boolean = tell(answer)
 }
 
-/** What Buddy did, for the user to look back at. Only the kind of action and how it ended, never its content. */
+/** What WatchGPT did, for the user to look back at. Only the kind of action and how it ended, never its content. */
 public fun interface ActionLog {
     public fun record(entry: Entry)
 
@@ -287,7 +287,7 @@ public class Guard(
         return why
     }
 
-    private fun overBudget() = "error: Buddy already sent ${budget.max} things in the last hour, so it stops here to be safe. Nothing was sent. " +
+    private fun overBudget() = "error: WatchGPT already sent ${budget.max} things in the last hour, so it stops here to be safe. Nothing was sent. " +
         "The user can still tap Send on the phone's screen."
 
     private companion object {
@@ -320,13 +320,13 @@ public class Guard(
         /** The language the cloud model says the user is speaking, for the phone's answer and its voice. */
         fun languageOf(argumentsJson: String): String? = LANGUAGE.find(argumentsJson)?.groupValues?.get(1)
 
-        const val NOT_ALLOWED = "error: Buddy isn't allowed to do that."
-        const val STOPPED = "error: the user stopped Buddy, so nothing more is done in this conversation."
+        const val NOT_ALLOWED = "error: WatchGPT isn't allowed to do that."
+        const val STOPPED = "error: the user stopped WatchGPT, so nothing more is done in this conversation."
         const val NOT_SAID =
             "error: this stays on the phone, and the phone couldn't say it aloud right now (it may be showing it on its screen). " +
                 "Tell the user to look at their phone; don't guess what it says."
         const val NOT_THERE =
-            "error: nothing was sent, because Buddy can't tell the user is there: the phone is locked and the watch isn't unlocked on " +
+            "error: nothing was sent, because WatchGPT can't tell the user is there: the phone is locked and the watch isn't unlocked on " +
                 "their wrist. Tell them to tap Send on the phone's screen, or to unlock the phone or the watch and say yes again."
 
         fun outcome(result: String): ActionLog.Outcome = when {

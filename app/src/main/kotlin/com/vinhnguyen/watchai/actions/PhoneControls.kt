@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
@@ -18,7 +18,7 @@ import android.view.KeyEvent
 import androidx.annotation.MainThread
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.vinhnguyen.watchai.WatchAiApp
+import io.github.alisial786.watchgpt.WatchAiApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -119,7 +119,7 @@ class PhoneControls(
             NotificationCompat
                 .Builder(appContext, RING_CHANNEL)
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .setContentTitle("Buddy is ringing your phone")
+                .setContentTitle("WatchGPT is ringing your phone")
                 .setContentText("Tap Stop when you've found it")
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -211,7 +211,7 @@ class PhoneControls(
         private const val RING_CHANNEL = "find_phone"
         private const val RING_NOTIFICATION = 8
         private const val NEEDS_DND_ACCESS =
-            "error: the user has to allow Buddy to change Do Not Disturb first, once, in the Buddy phone app (in the menu, What Buddy can do)"
+            "error: the user has to allow WatchGPT to change Do Not Disturb first, once, in the WatchGPT phone app (in the menu, What WatchGPT can do)"
     }
 }
 

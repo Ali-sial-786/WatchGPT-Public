@@ -1,21 +1,21 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaRecorder
 import android.os.SystemClock
-import com.vinhnguyen.watchai.brain.Brain
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.ChatEvent
-import com.vinhnguyen.watchai.brain.ChatRequest
-import com.vinhnguyen.watchai.brain.ChatTurn
-import com.vinhnguyen.watchai.brain.DeviceContext
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.ReplyStyle
-import com.vinhnguyen.watchai.brain.Toolbox
-import com.vinhnguyen.watchai.brain.chatgpt.auth.AuthSession
-import com.vinhnguyen.watchai.brain.chatgpt.auth.Bearer
-import com.vinhnguyen.watchai.brain.chatgpt.auth.OpenAiAuth
+import io.github.alisial786.watchgpt.brain.Brain
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.ChatEvent
+import io.github.alisial786.watchgpt.brain.ChatRequest
+import io.github.alisial786.watchgpt.brain.ChatTurn
+import io.github.alisial786.watchgpt.brain.DeviceContext
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.ReplyStyle
+import io.github.alisial786.watchgpt.brain.Toolbox
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.AuthSession
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.Bearer
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.OpenAiAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -257,7 +257,13 @@ class ChatGptRealtimeSession(
             throw e
         } catch (e: Exception) {
             logger.log(LogEvent.Engine("voice_failed_${e::class.simpleName}", "gpt-live"))
-            val detail = (e as? CallFailed)?.let { "OpenAI said ${it.status}: ${it.snippet}" } ?: (e::class.simpleName ?: "error")
+            val detail = when ((e as? CallFailed)?.status) {
+                401 -> "ChatGPT sign-in expired. Sign in again in WatchGPT on your phone."
+                403 -> "Live voice is unavailable for this account or region. WatchGPT uses Buddy's undocumented endpoint; subscription access is not guaranteed."
+                429 -> "ChatGPT voice usage limit reached. Try again after your allowance resets; no paid fallback is used."
+                404, 405, 410 -> "The undocumented ChatGPT voice endpoint is unavailable or changed. No API fallback was used."
+                else -> "Could not connect to ChatGPT live voice. Check the phone's internet and account status, then tap to retry."
+            }
             release()
             audio.exit()
             _level.value = 0f
@@ -386,7 +392,7 @@ class ChatGptRealtimeSession(
                 .header("thread-id", UUID.randomUUID().toString())
                 .header("x-session-id", UUID.randomUUID().toString())
                 .header("originator", OpenAiAuth.ORIGINATOR)
-                .header("User-Agent", "WatchAI/0.1 (Android)")
+                .header("User-Agent", "WatchGPT/0.1 (Android)")
                 .apply { if (bearer.fedramp) header("X-OpenAI-Fedramp", "true") }
                 .build()
         return withContext(Dispatchers.IO) {
@@ -584,12 +590,15 @@ class ChatGptRealtimeSession(
 
                 is QuicksilverWire.Event.Delegation -> delegate(event)
 
-                is QuicksilverWire.Event.Failure -> note("error event ${event.code}")
+                is QuicksilverWire.Event.Failure -> {
+                    note("voice service error")
+                    _state.update { it.copy(phase = VoicePhase.ERROR, detail = "ChatGPT voice reported an error or usage limit. End this call, check your account, and try again later.") }
+                }
 
                 is QuicksilverWire.Event.Closed -> {
                     note("call closed: ${event.reason}")
                     if (event.reason != "close_requested") {
-                        _state.update { it.copy(phase = VoicePhase.ERROR, detail = "OpenAI ended the call (${event.reason}). Tap Stop, then start again.") }
+                        _state.update { it.copy(phase = VoicePhase.ERROR, detail = "ChatGPT ended the call. Tap to reconnect; the previous conversation stays in History.") }
                     }
                 }
 
@@ -767,7 +776,7 @@ class ChatGptRealtimeSession(
                 "texting or calling someone, reading or answering the messages they got, opening an app or doing something in one " +
                 "(reading the newest chat in a chat app, the newest emails, searching in an app), directions to a place, " +
                 "or the flashlight), " +
-                "or when they tell you their job, sport or hobby or ask you to dress up or change clothes (you are Buddy, the little " +
+                "or when they tell you their job, sport or hobby or ask you to dress up or change clothes (you are WatchGPT, the little " +
                 "mascot on their watch, and the client can dress you), " +
                 "delegate it to the client and wait for the result, then say the answer in your own words. Never claim something was done " +
                 "unless the result says so. If a request misses something it needs, like how long a timer should run, ask for that first. " +

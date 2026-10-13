@@ -7,12 +7,12 @@ plugins {
 }
 
 android {
-    namespace = "com.vinhnguyen.watchai.wear"
+    namespace = "io.github.alisial786.watchgpt.wear"
     compileSdk = 37
 
     defaultConfig {
         // Same id and signing key as the phone app: that's how the Wear Data Layer pairs the two.
-        applicationId = "com.vinhnguyen.watchai"
+        applicationId = "io.github.alisial786.watchgpt"
         minSdk = 33 // Wear OS 4: Galaxy Watch4 and newer
         targetSdk = 36
         versionCode = 1
@@ -20,6 +20,8 @@ android {
         // Watches are ARM (the Galaxy Watch5 runs 32-bit); the wake word's x86 libraries would only add weight.
         ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
     }
+
+    if (providers.gradleProperty("emulator").isPresent) defaultConfig.ndk.abiFilters.add("x86_64")
 
     buildTypes {
         release {
@@ -114,7 +116,7 @@ abstract class ExtractWakeModel : DefaultTask() {
     }
 }
 
-// "Hey Buddy": sherpa-onnx keyword spotting (Apache-2.0). Its AAR isn't on Maven Central and the model
+// "Hey WatchGPT": sherpa-onnx keyword spotting (Apache-2.0). Its AAR isn't on Maven Central and the model
 // is a GitHub release file, so both are fetched into .downloads/ and checked against pinned SHA-256s.
 val fetchSherpaOnnx =
     tasks.register<PinnedDownload>("fetchSherpaOnnx") {
@@ -142,6 +144,7 @@ androidComponents {
 }
 
 dependencies {
+    implementation(project(":core:organizer"))
     implementation(project(":core:watchlink"))
     implementation(project(":core:buddy"))
     implementation(project(":core:buddy-ui"))

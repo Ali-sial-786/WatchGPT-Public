@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import android.os.SystemClock
 import androidx.compose.foundation.background
@@ -23,17 +23,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
-import com.vinhnguyen.watchai.AppGraph
-import com.vinhnguyen.watchai.brain.Availability
-import com.vinhnguyen.watchai.brain.guard.Redactor
-import com.vinhnguyen.watchai.brain.guard.TOLD_ON_PHONE
-import com.vinhnguyen.watchai.brain.guard.forModel
-import com.vinhnguyen.watchai.brain.guard.onPhone
+import io.github.alisial786.watchgpt.AppGraph
+import io.github.alisial786.watchgpt.brain.Availability
+import io.github.alisial786.watchgpt.brain.guard.Redactor
+import io.github.alisial786.watchgpt.brain.guard.TOLD_ON_PHONE
+import io.github.alisial786.watchgpt.brain.guard.forModel
+import io.github.alisial786.watchgpt.brain.guard.onPhone
 import kotlinx.coroutines.launch
 
 /**
  * Try it yourself: type a message someone could send you, and see what your phone would say about
- * it and what would reach ChatGPT if you asked Buddy about your messages. It goes through exactly
+ * it and what would reach ChatGPT if you asked WatchGPT about your messages. It goes through exactly
  * what real messages go through. Nothing is sent anywhere.
  */
 @Composable
@@ -47,7 +47,7 @@ fun SafetyCheckScreen(graph: AppGraph) {
     val scope = rememberCoroutineScope()
 
     Text(
-        "Type a message someone could send you, or pick one below. Buddy treats it like your real messages and shows what " +
+        "Type a message someone could send you, or pick one below. WatchGPT treats it like your real messages and shows what " +
             "would reach ChatGPT. Nothing is sent anywhere.",
         style = MaterialTheme.typography.bodyLarge,
         color = p.textSecondary,
@@ -67,7 +67,7 @@ fun SafetyCheckScreen(graph: AppGraph) {
             check = null
         }, placeholder = "A message to try")
     }
-    Group("Your question to Buddy") {
+    Group("Your question to WatchGPT") {
         Field(question, onChange = {
             question = it
             check = null

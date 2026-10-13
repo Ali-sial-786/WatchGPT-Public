@@ -1,10 +1,10 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.vinhnguyen.watchai.watchlink.Wav
+import io.github.alisial786.watchgpt.watchlink.Wav
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,9 +14,9 @@ import java.io.File
 /**
  * Debug builds only: "Learn my voice" from WAV takes (16 kHz mono, synthetic voices reading the
  * teach screen's sentences) instead of the mic, and logs what it learned. With --ez apply true the lesson is used, as the teach screen
- * does; --ez forget true goes back to the default phrase. "Hey Buddy" must be on.
+ * does; --ez forget true goes back to the default phrase. "Hey WatchGPT" must be on.
  *
- *   adb shell am broadcast -n com.vinhnguyen.watchai/com.vinhnguyen.watchai.wear.TeachWav --es files a.wav,b.wav --ez apply true
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/io.github.alisial786.watchgpt.wear.TeachWav --es files a.wav,b.wav --ez apply true
  */
 class TeachWav : BroadcastReceiver() {
     override fun onReceive(
@@ -40,7 +40,7 @@ class TeachWav : BroadcastReceiver() {
                 }
             val word = CallService.wakeModel()
             if (takes.isEmpty() || word == null) {
-                Log.w(TAG, if (word == null) "\"Hey Buddy\" is off" else "no takes in ${dir.path}")
+                Log.w(TAG, if (word == null) "\"Hey WatchGPT\" is off" else "no takes in ${dir.path}")
                 return@launch
             }
             val teacher = VoiceTeacher(app)

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 /**
  * Works out turn and interrupt latency from two audio levels sampled over time: the microphone

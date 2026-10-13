@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.buddy
+package io.github.alisial786.watchgpt.buddy
 
 import kotlin.math.PI
 import kotlin.math.abs
@@ -61,7 +61,7 @@ internal class BadgeSpec(
     val heart: Boolean,
 )
 
-/** What a state knows besides its own time: this Buddy's resting body and face, and the voice level (0..1). */
+/** What a state knows besides its own time: this WatchGPT's resting body and face, and the voice level (0..1). */
 internal class Cue(
     val body: FloatArray,
     val rest: Expression,
@@ -69,7 +69,7 @@ internal class Cue(
 )
 
 /**
- * Everything Buddy can do. The first seven follow the conversation ([Act]); the rest are
+ * Everything WatchGPT can do. The first seven follow the conversation ([Act]); the rest are
  * reactions ([Mood]) that play for [hold] seconds and hand back to the conversation.
  *
  * The animations are bloub's (MIT, github.com/jeremy-prt/bloub, src/bot/states.ts): the
@@ -222,7 +222,7 @@ internal object Poses {
         State.IDLE -> Pose(Silhouette(cue.body), cue.rest)
 
         State.AWAKE ->
-            // Half of the orbit's rings, quickly in and out: Buddy is up.
+            // Half of the orbit's rings, quickly in and out: WatchGPT is up.
             Pose(
                 Silhouette(cue.body),
                 cue.rest,
@@ -287,7 +287,7 @@ internal object Poses {
         }
 
         State.PROUD -> {
-            // The triangle tumbles round, rings come in one by one, then it relaxes into Buddy's own body.
+            // The triangle tumbles round, rings come in one by one, then it relaxes into WatchGPT's own body.
             val ramp = easeInOutCubic(clamp01(t / 0.35f))
             val rot = -TAU * 1.1f * t * ramp
             val back = easeInOutCubic(clamp01((t - 1.6f) / 0.9f))
@@ -339,7 +339,7 @@ internal object Poses {
         State.SAD -> Pose(Silhouette(cue.body, sy = 0.97f), SAD, offY = 0.03f)
 
         State.SLEEPY ->
-            // Buddy shrinks to a dot bouncing gently.
+            // WatchGPT shrinks to a dot bouncing gently.
             Pose(Silhouette.circle(0.16f, cy = 0.11f + sin(t * (TAU / 0.6f)) * 0.19f), cue.rest, faceAlpha = 0f)
 
         State.PLAY -> {

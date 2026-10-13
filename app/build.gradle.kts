@@ -4,15 +4,15 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-// RevenueCat's public SDK key (Test Store keys start with test_); empty means no Buddy Plus in this build.
+// RevenueCat's public SDK key (Test Store keys start with test_); empty means no WatchGPT Plus in this build.
 val revenueCatKey = providers.gradleProperty("revenuecat.apiKey").getOrElse("")
 
 android {
-    namespace = "com.vinhnguyen.watchai"
+    namespace = "io.github.alisial786.watchgpt"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.vinhnguyen.watchai"
+        applicationId = "io.github.alisial786.watchgpt"
         minSdk = 31
         targetSdk = 36
         versionCode = 1
@@ -22,8 +22,12 @@ android {
         buildConfigField("String", "REVENUECAT_KEY", "\"$revenueCatKey\"")
     }
 
+    if (providers.gradleProperty("emulator").isPresent) defaultConfig.ndk.abiFilters.add("x86_64")
+
     buildTypes {
         release {
+            // Private sideload pair: same local test certificate as wear; never commit the key.
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -53,6 +57,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":core:organizer"))
     implementation(project(":core:brain"))
     implementation(project(":core:brain-chatgpt"))
     implementation(project(":core:brain-ondevice"))

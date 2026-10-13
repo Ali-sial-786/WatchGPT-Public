@@ -1,7 +1,7 @@
-package com.vinhnguyen.watchai.brain.guard
+package io.github.alisial786.watchgpt.brain.guard
 
 import com.google.common.truth.Truth.assertThat
-import com.vinhnguyen.watchai.brain.guard.Redactor.Kind
+import io.github.alisial786.watchgpt.brain.guard.Redactor.Kind
 import org.junit.Test
 
 /** Synthetic texts only: made-up codes, test card numbers, the standard example IBAN. */

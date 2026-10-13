@@ -29,7 +29,7 @@ Goal: a real spoken conversation (talk, it answers out loud, talk over it to int
 | Screens in dark and light mode | checked on the phone; screenshots kept outside the repo |
 
 Timings are saved automatically when a session stops, to the app's own files folder
-(`Android/data/com.vinhnguyen.watchai/files/voice/voice-<time>.json`): latencies and notes only, never what was said.
+(`Android/data/io.github.alisial786.watchgpt/files/voice/voice-<time>.json`): latencies and notes only, never what was said.
 
 ## Crash found and fixed
 

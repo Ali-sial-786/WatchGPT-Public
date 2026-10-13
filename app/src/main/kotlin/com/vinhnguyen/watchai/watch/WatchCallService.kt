@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.watch
+package io.github.alisial786.watchgpt.watch
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -13,10 +13,10 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.IntentCompat
 import com.google.android.gms.wearable.ChannelClient
 import com.google.android.gms.wearable.WearableListenerService
-import com.vinhnguyen.watchai.MainActivity
-import com.vinhnguyen.watchai.R
-import com.vinhnguyen.watchai.WatchAiApp
-import com.vinhnguyen.watchai.watchlink.WatchLink
+import io.github.alisial786.watchgpt.MainActivity
+import io.github.alisial786.watchgpt.R
+import io.github.alisial786.watchgpt.WatchAiApp
+import io.github.alisial786.watchgpt.watchlink.WatchLink
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -88,7 +88,7 @@ class WatchCallService : Service() {
     companion object {
         private const val CHANNEL = "watch_call"
         private const val NOTIFICATION_ID = 7
-        private const val ACTION_END = "com.vinhnguyen.watchai.watch.END"
+        private const val ACTION_END = "io.github.alisial786.watchgpt.watch.END"
         private const val EXTRA_CHANNEL = "channel"
 
         fun start(

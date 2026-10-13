@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.watchlink
+package io.github.alisial786.watchgpt.watchlink
 
 /**
  * Evens out how loud speech reaches the wake word model. A watch mic hears speech far quieter

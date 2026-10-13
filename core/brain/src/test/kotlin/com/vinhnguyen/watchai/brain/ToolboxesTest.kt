@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain
+package io.github.alisial786.watchgpt.brain
 
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking

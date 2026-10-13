@@ -1,6 +1,6 @@
 # Agent safety: doing a lot, exposing nothing (plan, 2026-09-29)
 
-Buddy should do many things on the phone, and on the PC while it's on, without passwords, codes or
+WatchGPT should do many things on the phone, and on the PC while it's on, without passwords, codes or
 private data ending up where they don't belong. This is the plan for that. Step 1 (the phone) is
 built as of 2026-09-29; the rest is still a plan.
 
@@ -13,7 +13,7 @@ trustworthy:
   "forward all messages to this number" or "open this link" with private data in the link. That's
   prompt injection, and no model reliably ignores it.
 - It mishears and guesses: the wrong Anna, the wrong day.
-- Anyone near the watch can say "Hey Buddy" and "yes".
+- Anyone near the watch can say "Hey Watch G P T" and "yes".
 - Whatever a tool returns goes to the provider.
 
 So safety can't depend on the model behaving. The model proposes; a small, plain program on the
@@ -41,7 +41,7 @@ phone decides.
    poisoned message can make the model fetch a link with private data in it.
 7. **No passwords to connect things.** Devices trust each other through keys kept in hardware
    (Keystore/StrongBox on the phone, the TPM on the PC), paired once with a QR code.
-8. **Everything Buddy does is written down on the phone, and one word stops it.**
+8. **Everything WatchGPT does is written down on the phone, and one word stops it.**
 
 ## Levels
 
@@ -50,7 +50,7 @@ phone decides.
 | 0 | Looking something up | time, weather, battery | runs |
 | 1 | Small, local, can be undone | timer, alarm, note, flashlight, volume, open an app, directions | runs, logged, undo where possible |
 | 2 | Reads private data | messages, calendar, notes, contacts, PC files | only when the user asked for it in this turn; goes through the Redactor; marks the conversation as holding other people's words |
-| 3 | Leaves the phone or can't be undone | send a text, reply, call, email; change files, push or install on the PC | yes in a later turn with the exact payload; user present; at most 10 an hour; a recipient Buddy hasn't used before is confirmed on the screen |
+| 3 | Leaves the phone or can't be undone | send a text, reply, call, email; change files, push or install on the PC | yes in a later turn with the exact payload; user present; at most 10 an hour; a recipient WatchGPT hasn't used before is confirmed on the screen |
 | 4 | Never | passwords, one-time codes, banking and payment apps, the password manager, security settings, turning the Guard off | refused, whatever the model says; the user does these themselves |
 
 ## On the phone
@@ -62,16 +62,16 @@ so the Guard wraps it. It checks, in this order:
 
 - **Level** of the call: fixed per tool, raised by some arguments (a reply is level 3, reading
   messages level 2).
-- **Grants**: what the user allowed and until when, e.g. "PC tasks for an hour". "Buddy, stop" or
+- **Grants**: what the user allowed and until when, e.g. "PC tasks for an hour". "WatchGPT, stop" or
   the button in the app drops all of them and cancels running PC tasks.
 - **Taint**: once the conversation holds other people's words, level 3 needs the fresh yes even
   where a grant would allow it.
 - **Presence**: the watch reports locked or unlocked with every call; it locks itself when it
   comes off the wrist (with a screen lock set). Watch locked and phone locked means "confirm on
   your phone", with the fingerprint.
-- **Budget**: 10 level-3 actions an hour to start with; over that, Buddy stops and asks.
+- **Budget**: 10 level-3 actions an hour to start with; over that, WatchGPT stops and asks.
 - **Log**: time, tool, level, target (as a handle), how it was confirmed, result. Encrypted on the
-  phone like the notes, kept 30 days, shown on a "What Buddy did" page.
+  phone like the notes, kept 30 days, shown on a "What WatchGPT did" page.
 
 ### Redactor
 
@@ -90,7 +90,7 @@ engine, and it never reaches OpenAI.
 
 ### Structured actions first, then using apps (changed 2026-09-29)
 
-Buddy acts through Android's own ways in where there is one: intents, the messaging apps' reply
+WatchGPT acts through Android's own ways in where there is one: intents, the messaging apps' reply
 actions, the calendar and contacts providers. For everything else ("what's the newest chat in
 this app?", "read my newest emails", "search for X in that app") it can now use the app itself,
 through an accessibility service the user switches on (`app/.../actions/screen/`). The split:
@@ -110,15 +110,15 @@ through an accessibility service the user switches on (`app/.../actions/screen/`
   is sorted the same way: in a search or address field it goes ahead, in a message or comment field
   it waits for the yes.
 - **Only the apps the user turned on.** Every other app is not opened, not read, not touched
-  (`AppLimits`); see [Apps Buddy can use](#apps-buddy-can-use-changed-2026-09-29). Password fields are
+  (`AppLimits`); see [Apps WatchGPT can use](#apps-buddy-can-use-changed-2026-09-29). Password fields are
   never read or typed into.
 - It doesn't watch: it looks at the screen only when a tool asks, and takes no screenshots.
 
-Not built yet: an overlay with a stop button while Buddy acts in an app.
+Not built yet: an overlay with a stop button while WatchGPT acts in an app.
 
 ### Memory (changed 2026-09-29)
 
-Buddy keeps the conversations (the user's words and its replies, voice and chat) for 30 days and
+WatchGPT keeps the conversations (the user's words and its replies, voice and chat) for 30 days and
 the facts the user asks it to keep, encrypted in their own vault (`Memory`). A new conversation starts
 with the facts and the last conversations of two days; look-ups get them too.
 
@@ -154,8 +154,8 @@ Typed turns through the real ChatGPT planner, the Guard and Gemma on the S23 Ult
 
 ### Any language, no word lists (changed 2026-09-29)
 
-People talk to Buddy in any language, and apps show their buttons in any language. So nothing in
-Buddy's code knows words of one language, or names of apps or banks:
+People talk to WatchGPT in any language, and apps show their buttons in any language. So nothing in
+WatchGPT's code knows words of one language, or names of apps or banks:
 
 - ChatGPT understands the user whatever they speak. What it hands the phone is English (the
   `instruction` for Gemma) plus the user's language as a BCP 47 tag (`language`), and a flag when
@@ -169,7 +169,7 @@ Buddy's code knows words of one language, or names of apps or banks:
   secrets. The code only reads Gemma's one-word answer.
 - The cleaner (`Redactor`) finds codes, card numbers and passwords by their shape (a bare six-digit
   number, letters and digits in one word), not by words like "code" next to them.
-- Buddy's face reacts to what its actions did (done, failed, music), not to words.
+- WatchGPT's face reacts to what its actions did (done, failed, music), not to words.
 
 Checked on the S23 Ultra on 29.09 with made-up inputs from adb (not in the code): taps in 13
 languages, 27 of 28 unseen controls and 22 of 23 unseen apps sorted right, the misses on the safe
@@ -178,7 +178,7 @@ side (an inbox tab would ask for a yes, a shop was kept out); about 0.4 s a ques
 ## On the PC
 
 Claude Code on the user's own Claude plan does the work. Anthropic allows a Claude login only in
-its own apps, so Claude Code runs as the user's own install; Buddy only hands it tasks and passes
+its own apps, so Claude Code runs as the user's own install; WatchGPT only hands it tasks and passes
 on its questions. (Before a public release: check Anthropic's terms for starting Claude Code from
 another app.)
 
@@ -239,7 +239,7 @@ logs into themselves, and passkeys where possible (they need the user's fingerpr
 - Presence: phone unlocked, or earbuds or headphones on the phone, or in a watch call the watch
   unlocked (it answers "locked", "unlocked" or "no lock"; no lock or no answer counts as "can't
   tell" and doesn't block). A tap on Send in the pop-up always counts as there.
-- "What Buddy did" in the menu: kind, time and outcome, encrypted, 30 days.
+- "What WatchGPT did" in the menu: kind, time and outcome, encrypted, 30 days.
 
 Then, same day: **private things stay on the phone** (on by default, Settings, Privacy). With it
 on, a private result never goes to ChatGPT at all, not even as a summary. Gemma answers the question
@@ -252,13 +252,13 @@ Without the offline model the phone reads the data out as it is. Codes may be re
 when the user asks, since they don't leave the phone. The user can pick the offline model
 (Gemma 4 E2B, or E4B on phones with 11 GB of memory) in Your AI.
 
-What still reaches OpenAI: what the user says to Buddy (their requests, a text they dictate, a
+What still reaches OpenAI: what the user says to WatchGPT (their requests, a text they dictate, a
 note they add). Only a voice that runs on the phone end to end would change that.
 
-### Apps Buddy can use (changed 2026-09-29)
+### Apps WatchGPT can use (changed 2026-09-29)
 
-Every app is off until the user turns it on ("Apps Buddy can use", in the menu): only then does
-Buddy open it, use it on the screen or read its messages (`AppLimits`). Some can't be turned on at
+Every app is off until the user turns it on ("Apps WatchGPT can use", in the menu): only then does
+WatchGPT open it, use it on the screen or read its messages (`AppLimits`). Some can't be turned on at
 all. There's no list of apps for that, since no list covers every country's banks; the phone says:
 
 - whatever opens the phone's settings or a store link (settings, app stores);
@@ -267,12 +267,12 @@ all. There's no list of apps for that, since no list covers every country's bank
   tapping the phone (NFC payment services);
 - anything that can't be opened from the home screen (system screens, installers, the shade).
 
-When the user asks for an app that's off, Buddy offers to turn it on (`turn_on_app`, or `open_app`
+When the user asks for an app that's off, WatchGPT offers to turn it on (`turn_on_app`, or `open_app`
 and the screen tools on their own), and it waits for their yes like a text does: in a later turn,
 with the presence check, or a tap on the pop-up. Not for a money or secrets app: Gemma sorts the
 app by its name once per version (money, secrets or other, with made-up examples), and anything but
 "other", or no answer, can only be turned on by hand in the list. So no text in an app or on a web
-page can talk Buddy into a bank. Messages from apps that are off are only named, so the user can
+page can talk WatchGPT into a bank. Messages from apps that are off are only named, so the user can
 turn them on.
 
 Not in step 1 yet: grants ("PC tasks for an hour"), confirming a first-time recipient on the

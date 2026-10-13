@@ -1,17 +1,25 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
 import android.Manifest
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.CalendarContract
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.ToolSpec
-import com.vinhnguyen.watchai.brain.Toolbox
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.ToolSpec
+import io.github.alisial786.watchgpt.brain.Toolbox
+import io.github.alisial786.watchgpt.organizer.Organizer
+import io.github.alisial786.watchgpt.reminders.AlertDevice
+import io.github.alisial786.watchgpt.reminders.Entry
+import io.github.alisial786.watchgpt.reminders.Kind
+import io.github.alisial786.watchgpt.reminders.Repeat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.intOrNull
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -54,20 +62,26 @@ class PhoneActions(
             when (name) {
                 ADD_NOTE -> addNote(args)
                 LIST_NOTES -> listNotes(args)
-                ADD_EVENT -> calendar(name) { addEvent(args) }
+                ADD_EVENT -> addEvent(args)
                 LIST_EVENTS -> calendar(name) { listEvents(args) }
-                ADD_REMINDER -> calendar(name) { addReminder(args) }
+                ADD_REMINDER -> addReminder(args)
+                LIST_REMINDERS -> listReminders()
+                CHANGE_REMINDER -> changeReminder(args)
                 SET_TIMER -> setTimer(args)
                 SET_ALARM -> setAlarm(args)
-                RING_PHONE -> outcome(name, controls.ring(ActionArgs.int(args, "seconds", 5..60) ?: RING_SECONDS)) { BuddyCard.Done(Symbol.PHONE, "Ringing your phone", "Stop it from its notification") }
+                RING_PHONE -> outcome(name, controls.ring(ActionArgs.int(args, "seconds", 5..60) ?: RING_SECONDS)) { WatchGPTCard.Done(Symbol.PHONE, "Ringing your phone", "Stop it from its notification") }
                 STOP_RINGING -> outcome(name, controls.stopRinging())
-                MEDIA -> ActionArgs.choice(args, "command", PhoneControls.MEDIA_KEYS.keys)?.let { command -> outcome(name, controls.media(command)) { BuddyCard.Done(Symbol.MUSIC, MEDIA_TITLES.getValue(command)) } } ?: invalid(name, "command")
+                MEDIA -> ActionArgs.choice(args, "command", PhoneControls.MEDIA_KEYS.keys)?.let { command -> outcome(name, controls.media(command)) { WatchGPTCard.Done(Symbol.MUSIC, MEDIA_TITLES.getValue(command)) } } ?: invalid(name, "command")
                 SET_VOLUME -> setVolume(args)
-                SET_RINGER -> ActionArgs.choice(args, "mode", PhoneControls.RINGER_MODES.keys)?.let { mode -> outcome(name, controls.ringer(mode)) { BuddyCard.Done(Symbol.PHONE, "Ringer: $mode") } } ?: invalid(name, "mode")
-                DO_NOT_DISTURB -> ActionArgs.bool(args, "on")?.let { on -> outcome(name, controls.doNotDisturb(on)) { BuddyCard.Done(Symbol.PHONE, if (on) "Do Not Disturb on" else "Do Not Disturb off") } } ?: invalid(name, "on")
+                SET_RINGER -> ActionArgs.choice(args, "mode", PhoneControls.RINGER_MODES.keys)?.let { mode -> outcome(name, controls.ringer(mode)) { WatchGPTCard.Done(Symbol.PHONE, "Ringer: $mode") } } ?: invalid(name, "mode")
+                DO_NOT_DISTURB -> ActionArgs.bool(args, "on")?.let { on -> outcome(name, controls.doNotDisturb(on)) { WatchGPTCard.Done(Symbol.PHONE, if (on) "Do Not Disturb on" else "Do Not Disturb off") } } ?: invalid(name, "on")
                 DEVICE_STATUS -> outcome(name, listOfNotNull(controls.status(), watch?.battery()).joinToString("; "))
                 else -> done(name, "unknown", "error: there is no action called $name")
             }
+        } catch (e: IllegalArgumentException) {
+            done(name, "invalid", "error: invalid reminder or event details; nothing was saved")
+        } catch (e: IllegalStateException) {
+            done(name, "conflict", "error: the item changed on another device; refresh and try again")
         } catch (e: SecurityException) {
             done(name, "denied", "error: the phone refused this action")
         }
@@ -76,7 +90,7 @@ class PhoneActions(
     private suspend fun addNote(args: JsonObject): String {
         val text = ActionArgs.text(args, "text", NOTE_MAX) ?: return done(ADD_NOTE, "invalid", "error: the note needs text (up to $NOTE_MAX characters)")
         notes.add(text)
-        cards?.show(BuddyCard.Done(Symbol.NOTE, "Note saved", text))
+        cards?.show(WatchGPTCard.Done(Symbol.NOTE, "Note saved", text))
         return done(ADD_NOTE, "ok", "ok: note saved")
     }
 
@@ -94,7 +108,7 @@ class PhoneActions(
     ): String = if (calendarAllowed()) {
         block()
     } else {
-        done(name, "denied", "error: calendar access is off. Tell the user to allow it in the Buddy phone app: in the menu, What Buddy can do.")
+        done(name, "denied", "error: calendar access is off. Tell the user to allow it in the WatchGPT phone app: in the menu, What WatchGPT can do.")
     }
 
     private suspend fun addEvent(args: JsonObject): String {
@@ -106,7 +120,7 @@ class PhoneActions(
             is ActionArgs.When.Day -> {
                 if (!plausible(start.date.atStartOfDay())) return done(ADD_EVENT, "invalid", "error: that date is too far away")
                 insertEvent(title, start.date.atStartOfDay(), start.date.plusDays(1).atStartOfDay(), allDay = true, location, details, alertMinutes = null)
-                cards?.show(BuddyCard.Done(Symbol.CALENDAR, title, "${ActionArgs.say(start.date)} · all day"))
+                cards?.show(WatchGPTCard.Done(Symbol.CALENDAR, title, "${ActionArgs.say(start.date)} · all day"))
                 done(ADD_EVENT, "ok", "ok: added \"$title\" as an all-day event on ${ActionArgs.say(start.date)}")
             }
 
@@ -117,7 +131,7 @@ class PhoneActions(
                         ?: start.time.plusMinutes((ActionArgs.int(args, "duration_minutes", 5..1_440) ?: 60).toLong())
                 if (Duration.between(start.time, end) > Duration.ofDays(1)) return done(ADD_EVENT, "invalid", "error: events can be at most a day long")
                 insertEvent(title, start.time, end, allDay = false, location, details, alertMinutes = ActionArgs.int(args, "alert_minutes_before", 0..10_080))
-                cards?.show(BuddyCard.Done(Symbol.CALENDAR, title, ActionArgs.say(start.time)))
+                cards?.show(WatchGPTCard.Done(Symbol.CALENDAR, title, ActionArgs.say(start.time)))
                 done(ADD_EVENT, "ok", "ok: added \"$title\" on ${ActionArgs.say(start.time)} until ${end.toLocalTime()}")
             }
         }
@@ -127,9 +141,47 @@ class PhoneActions(
         val text = ActionArgs.text(args, "text", TITLE_MAX) ?: return done(ADD_REMINDER, "invalid", "error: the reminder needs text")
         val at = ActionArgs.time(ActionArgs.text(args, "at", 40), zone()) as? ActionArgs.When.At ?: return done(ADD_REMINDER, "invalid", "error: at must be a date and time like 2026-09-28T15:00")
         if (!plausible(at.time)) return done(ADD_REMINDER, "invalid", "error: that time is in the past or too far away")
-        insertEvent(text, at.time, at.time.plusMinutes(REMINDER_MINUTES), allDay = false, location = null, details = "Reminder from Buddy", alertMinutes = 0)
-        cards?.show(BuddyCard.Done(Symbol.CALENDAR, text, "Reminder · ${ActionArgs.say(at.time)}"))
-        return done(ADD_REMINDER, "ok", "ok: the phone will remind the user on ${ActionArgs.say(at.time)}")
+        val repeat = ActionArgs.choice(args, "repeat", setOf("none", "daily", "weekdays", "weekly", "monthly")) ?: "none"
+        val target = when (ActionArgs.choice(args, "on", PLACES)) {
+            "watch" -> AlertDevice.WATCH
+            "phone" -> AlertDevice.PHONE
+            else -> if (watch != null) AlertDevice.WATCH else AlertDevice.PHONE
+        }
+        val saved = Organizer.get(appContext).save(Entry(title = text, notes = ActionArgs.text(args, "notes", 8000).orEmpty(), localTime = at.time.toString(), zone = zone().id, repeat = Repeat.valueOf(repeat.uppercase()), alertDevice = target))
+        cards?.show(WatchGPTCard.Done(Symbol.CALENDAR, text, "Reminder · ${ActionArgs.say(at.time)}"))
+        return done(ADD_REMINDER, "ok", "ok: saved WatchGPT reminder ${saved.id} for ${ActionArgs.say(at.time)}, alert destination ${target.name.lowercase()}. Delivery needs notifications enabled on that device and device sync if it is the watch. Google sync is optional.")
+    }
+
+    private suspend fun listReminders(): String {
+        val items = Organizer.get(appContext).list().filter { it.kind == Kind.REMINDER }.take(50)
+        return done(LIST_REMINDERS, "ok", if (items.isEmpty()) "No reminders" else items.joinToString(" | ") { "${it.id}: ${it.title}, ${it.localTime}, ${it.repeat}, ${if (it.completed) "completed" else "open"}; ${it.notes}" })
+    }
+
+    private suspend fun changeReminder(args: JsonObject): String {
+        val id = ActionArgs.text(args, "id", 36) ?: return invalid(CHANGE_REMINDER, "id")
+        val organizer = Organizer.get(appContext)
+        val item = organizer.list().firstOrNull { it.id == id } ?: return done(CHANGE_REMINDER, "missing", "error: reminder not found")
+        when (ActionArgs.choice(args, "operation", setOf("complete", "snooze", "delete", "edit"))) {
+            "complete" -> organizer.complete(id)
+
+            "snooze" -> organizer.snooze(id, ActionArgs.int(args, "minutes", 1..10080) ?: 10)
+
+            "delete" -> organizer.delete(id)
+
+            "edit" -> organizer.save(
+                item.copy(
+                    title = ActionArgs.text(args, "title", 200) ?: item.title,
+                    notes = ActionArgs.text(args, "notes", 8000) ?: item.notes,
+                    monthlyDay = null,
+                    localTime = (ActionArgs.time(ActionArgs.text(args, "at", 40), zone()) as? ActionArgs.When.At)?.time?.toString() ?: item.localTime,
+                    repeat = ActionArgs.choice(args, "repeat", setOf("none", "daily", "weekdays", "weekly", "monthly"))?.let { Repeat.valueOf(it.uppercase()) } ?: item.repeat,
+                    snoozeUntil = null,
+                ),
+            )
+
+            else -> return invalid(CHANGE_REMINDER, "operation")
+        }
+        return done(CHANGE_REMINDER, "ok", "ok: reminder updated locally; device sync queued")
     }
 
     private suspend fun listEvents(args: JsonObject): String {
@@ -146,7 +198,7 @@ class PhoneActions(
         val seconds = ActionArgs.int(args, "seconds", 1..86_400) ?: return done(SET_TIMER, "invalid", "error: seconds must be between 1 and 86400")
         val clock = clockFor(args) ?: return done(SET_TIMER, "invalid", NO_WATCH)
         val label = ActionArgs.text(args, "label", TITLE_MAX)
-        return outcome(SET_TIMER, clock.setTimer(seconds, label)) { BuddyCard.Done(Symbol.TIMER, "Timer · ${length(seconds)}", label) }
+        return outcome(SET_TIMER, clock.setTimer(seconds, label)) { WatchGPTCard.Done(Symbol.TIMER, "Timer · ${length(seconds)}", label) }
     }
 
     private suspend fun setAlarm(args: JsonObject): String {
@@ -154,7 +206,10 @@ class PhoneActions(
         val minute = ActionArgs.int(args, "minute", 0..59) ?: 0
         val clock = clockFor(args) ?: return done(SET_ALARM, "invalid", NO_WATCH)
         val label = ActionArgs.text(args, "label", TITLE_MAX)
-        return outcome(SET_ALARM, clock.setAlarm(hour, minute, label)) { BuddyCard.Done(Symbol.ALARM, "Alarm · %02d:%02d".format(hour, minute), label) }
+        val rawDays = args["days"] as? JsonArray
+        val days = rawDays?.map { (it as? JsonPrimitive)?.intOrNull ?: return invalid(SET_ALARM, "days") }.orEmpty()
+        if (days.size > 7 || days.any { it !in 1..7 }) return invalid(SET_ALARM, "days")
+        return outcome(SET_ALARM, clock.setAlarm(hour, minute, label, days)) { WatchGPTCard.Done(Symbol.ALARM, "Alarm · %02d:%02d".format(hour, minute), label) }
     }
 
     /** Where the user said ("on my phone"), else the device they talk through; null if they asked for a watch that isn't in the conversation. */
@@ -168,17 +223,17 @@ class PhoneActions(
         val level = ActionArgs.int(args, "level", 0..100)
         val change = ActionArgs.choice(args, "change", setOf("up", "down"))
         if (level == null && change == null) return done(SET_VOLUME, "invalid", "error: give a level from 0 to 100, or change up or down")
-        return outcome(SET_VOLUME, controls.volume(level, change?.let { it == "up" })) { BuddyCard.Done(Symbol.MUSIC, "Volume", level?.let { "$it%" } ?: change) }
+        return outcome(SET_VOLUME, controls.volume(level, change?.let { it == "up" })) { WatchGPTCard.Done(Symbol.MUSIC, "Volume", level?.let { "$it%" } ?: change) }
     }
 
     /** [card] shows on the phone when it worked. */
     private fun outcome(
         tool: String,
         result: String,
-        card: (() -> BuddyCard)? = null,
+        card: (() -> WatchGPTCard)? = null,
     ): String {
         val failed = result.startsWith("error")
-        if (!failed) card?.let { cards?.show(it()) }
+        if (result.startsWith("ok:")) card?.let { cards?.show(it()) }
         return done(tool, if (failed) "failed" else "ok", result)
     }
 
@@ -205,57 +260,15 @@ class PhoneActions(
         details: String?,
         alertMinutes: Int?,
     ) = withContext(Dispatchers.IO) {
-        val resolver = appContext.contentResolver
-        val calendarId = defaultCalendarId() ?: throw SecurityException("no writable calendar")
-        // All-day events are stored at UTC midnight, as the calendar provider expects.
-        val eventZone = if (allDay) ZoneOffset.UTC else zone()
-        val values =
-            ContentValues().apply {
-                put(CalendarContract.Events.CALENDAR_ID, calendarId)
-                put(CalendarContract.Events.TITLE, title)
-                put(CalendarContract.Events.DTSTART, start.atZone(eventZone).toInstant().toEpochMilli())
-                put(CalendarContract.Events.DTEND, end.atZone(eventZone).toInstant().toEpochMilli())
-                put(CalendarContract.Events.EVENT_TIMEZONE, if (allDay) "UTC" else eventZone.id)
-                put(CalendarContract.Events.ALL_DAY, if (allDay) 1 else 0)
-                location?.let { put(CalendarContract.Events.EVENT_LOCATION, it) }
-                details?.let { put(CalendarContract.Events.DESCRIPTION, it) }
-            }
-        val uri = resolver.insert(CalendarContract.Events.CONTENT_URI, values) ?: throw SecurityException("insert refused")
-        val eventId = uri.lastPathSegment?.toLongOrNull() ?: return@withContext
-        if (alertMinutes != null) {
-            resolver.insert(
-                CalendarContract.Reminders.CONTENT_URI,
-                ContentValues().apply {
-                    put(CalendarContract.Reminders.EVENT_ID, eventId)
-                    put(CalendarContract.Reminders.MINUTES, alertMinutes)
-                    put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
-                },
-            )
-        }
-    }
-
-    /** The user's main calendar: the primary one of a synced account if there is one, else any writable visible one. */
-    private fun defaultCalendarId(): Long? {
-        val projection =
-            arrayOf(
-                CalendarContract.Calendars._ID,
-                CalendarContract.Calendars.IS_PRIMARY,
-                CalendarContract.Calendars.ACCOUNT_TYPE,
-            )
-        val selection = "${CalendarContract.Calendars.VISIBLE} = 1 AND ${CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL} >= ${CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR}"
-        appContext.contentResolver.query(CalendarContract.Calendars.CONTENT_URI, projection, selection, null, null)?.use { c ->
-            var best: Long? = null
-            var bestScore = -1
-            while (c.moveToNext()) {
-                val score = (if (c.getInt(1) == 1) 2 else 0) + (if (c.getString(2) == "com.google") 1 else 0)
-                if (score > bestScore) {
-                    bestScore = score
-                    best = c.getLong(0)
-                }
-            }
-            return best
-        }
-        return null
+        Organizer.get(appContext).save(
+            Entry(
+                title = title, allDay = allDay, alertMinutesBefore = alertMinutes ?: 0,
+                notes = listOfNotNull(details, location?.let { "Location: $it" }).joinToString("\n"),
+                localTime = start.toString(), zone = zone().id, kind = Kind.EVENT,
+                durationMinutes = Duration.between(start, end).toMinutes().toInt().coerceIn(1, 10080),
+                alertDevice = if (watch != null) AlertDevice.WATCH else AlertDevice.PHONE,
+            ),
+        )
     }
 
     private fun queryEvents(
@@ -329,6 +342,8 @@ class PhoneActions(
         const val ADD_EVENT = "add_calendar_event"
         const val LIST_EVENTS = "list_calendar_events"
         const val ADD_REMINDER = "add_reminder"
+        const val LIST_REMINDERS = "list_reminders"
+        const val CHANGE_REMINDER = "change_reminder"
         const val SET_TIMER = "set_timer"
         const val SET_ALARM = "set_alarm"
         const val RING_PHONE = "ring_phone"
@@ -360,7 +375,7 @@ class PhoneActions(
             listOf(
                 ToolSpec(
                     ADD_NOTE,
-                    "Save a note for the user in their Buddy notes (use for 'note that…', 'add … to my notes', shopping items, ideas).",
+                    "Save a note for the user in their WatchGPT notes (use for 'note that…', 'add … to my notes', shopping items, ideas).",
                     """{"type":"object","properties":{"text":{"type":"string","description":"The note, in the user's words."}},"required":["text"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
@@ -370,7 +385,7 @@ class PhoneActions(
                 ),
                 ToolSpec(
                     ADD_EVENT,
-                    "Add an event to the user's phone calendar (it syncs to their Google or Samsung calendar).",
+                    "Create a WatchGPT agenda event stored locally and synced to the watch. Google Calendar copies only if the user enabled sync. Date-only events start at midnight. Alerts occur at the event start.",
                     """{"type":"object","properties":{"title":{"type":"string"},"start":{"type":"string","description":"$LOCAL_TIME"},"end":{"type":"string","description":"$LOCAL_TIME Optional."},"duration_minutes":{"type":"integer","minimum":5,"maximum":1440,"description":"Used when there is no end. Default 60."},"location":{"type":"string"},"notes":{"type":"string"},"alert_minutes_before":{"type":"integer","minimum":0,"maximum":10080}},"required":["title","start"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
@@ -380,8 +395,18 @@ class PhoneActions(
                 ),
                 ToolSpec(
                     ADD_REMINDER,
-                    "Remind the user of something at a date and time: the phone notifies them then (and their watch).",
-                    """{"type":"object","properties":{"text":{"type":"string"},"at":{"type":"string","description":"Local date and time without a zone, like 2026-09-28T15:00."}},"required":["text","at"],"additionalProperties":false}""",
+                    "Create a native WatchGPT reminder, including recurrence. Stored offline; alert on the specified device, otherwise the device in this conversation. No Google Calendar required.",
+                    """{"type":"object","properties":{"text":{"type":"string"},"at":{"type":"string","description":"Local date and time without a zone, like 2026-09-28T15:00."},"notes":{"type":"string"},"repeat":{"type":"string","enum":["none","daily","weekdays","weekly","monthly"]},$ON},"required":["text","at"],"additionalProperties":false}""",
+                ),
+                ToolSpec(
+                    LIST_REMINDERS,
+                    "Read WatchGPT reminders and their IDs privately on the phone.",
+                    """{"type":"object","properties":{"instruction":{"type":"string"},"language":{"type":"string"},"details":{"type":"boolean"}},"additionalProperties":false}""",
+                ),
+                ToolSpec(
+                    CHANGE_REMINDER,
+                    "Complete, snooze, edit or delete a WatchGPT item by its exact ID. Never guess an ID. Ask before deleting if intent is unclear.",
+                    """{"type":"object","properties":{"id":{"type":"string"},"operation":{"type":"string","enum":["complete","snooze","delete","edit"]},"minutes":{"type":"integer","minimum":1,"maximum":10080},"title":{"type":"string"},"notes":{"type":"string"},"at":{"type":"string"},"repeat":{"type":"string","enum":["none","daily","weekdays","weekly","monthly"]}},"required":["id","operation"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     SET_TIMER,
@@ -393,7 +418,7 @@ class PhoneActions(
                     SET_ALARM,
                     "Set an alarm for the next time it is this hour and minute; never guess a time (if the user didn't say one, ask). " +
                         "It is set on the device the user is talking through (their watch, or the phone) unless they say where.",
-                    """{"type":"object","properties":{"hour":{"type":"integer","minimum":0,"maximum":23},"minute":{"type":"integer","minimum":0,"maximum":59},"label":{"type":"string"},$ON},"required":["hour"],"additionalProperties":false}""",
+                    """{"type":"object","properties":{"hour":{"type":"integer","minimum":0,"maximum":23},"minute":{"type":"integer","minimum":0,"maximum":59},"days":{"type":"array","items":{"type":"integer","minimum":1,"maximum":7},"description":"Repeat weekdays using Android Calendar: 1 Sunday, 2 Monday, through 7 Saturday. Omit for one alarm."},"label":{"type":"string"},$ON},"required":["hour"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     RING_PHONE,

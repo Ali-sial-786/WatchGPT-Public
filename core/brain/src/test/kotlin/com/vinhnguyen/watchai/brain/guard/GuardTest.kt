@@ -1,9 +1,9 @@
-package com.vinhnguyen.watchai.brain.guard
+package io.github.alisial786.watchgpt.brain.guard
 
 import com.google.common.truth.Truth.assertThat
-import com.vinhnguyen.watchai.brain.ToolContext
-import com.vinhnguyen.watchai.brain.ToolSpec
-import com.vinhnguyen.watchai.brain.Toolbox
+import io.github.alisial786.watchgpt.brain.ToolContext
+import io.github.alisial786.watchgpt.brain.ToolSpec
+import io.github.alisial786.watchgpt.brain.Toolbox
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -88,7 +88,7 @@ class GuardTest {
 
     @Test
     fun `errors from private tools don't mark the conversation`() = runBlocking {
-        val g = guard(FakePhone(messages = "error: Buddy can't see the user's messages yet"))
+        val g = guard(FakePhone(messages = "error: WatchGPT can't see the user's messages yet"))
         g.run("read_messages", "{}")
         assertThat(g.sharedPrivateData).isFalse()
     }

@@ -1,21 +1,21 @@
-package com.vinhnguyen.watchai.debug
+package io.github.alisial786.watchgpt.debug
 
 import android.os.SystemClock
-import com.vinhnguyen.watchai.AppGraph
-import com.vinhnguyen.watchai.actions.ConversationActions
-import com.vinhnguyen.watchai.actions.MemoryActions
-import com.vinhnguyen.watchai.actions.MessageInbox
-import com.vinhnguyen.watchai.actions.OwnerPresence
-import com.vinhnguyen.watchai.brain.ChatEvent
-import com.vinhnguyen.watchai.brain.ChatRequest
-import com.vinhnguyen.watchai.brain.ChatTurn
-import com.vinhnguyen.watchai.brain.DeviceContext
-import com.vinhnguyen.watchai.brain.ReplyStyle
-import com.vinhnguyen.watchai.brain.ToolContext
-import com.vinhnguyen.watchai.brain.ToolSpec
-import com.vinhnguyen.watchai.brain.Toolbox
-import com.vinhnguyen.watchai.brain.Toolboxes
-import com.vinhnguyen.watchai.brain.guard.PrivateReply
+import io.github.alisial786.watchgpt.AppGraph
+import io.github.alisial786.watchgpt.actions.ConversationActions
+import io.github.alisial786.watchgpt.actions.MemoryActions
+import io.github.alisial786.watchgpt.actions.MessageInbox
+import io.github.alisial786.watchgpt.actions.OwnerPresence
+import io.github.alisial786.watchgpt.brain.ChatEvent
+import io.github.alisial786.watchgpt.brain.ChatRequest
+import io.github.alisial786.watchgpt.brain.ChatTurn
+import io.github.alisial786.watchgpt.brain.DeviceContext
+import io.github.alisial786.watchgpt.brain.ReplyStyle
+import io.github.alisial786.watchgpt.brain.ToolContext
+import io.github.alisial786.watchgpt.brain.ToolSpec
+import io.github.alisial786.watchgpt.brain.Toolbox
+import io.github.alisial786.watchgpt.brain.Toolboxes
+import io.github.alisial786.watchgpt.brain.guard.PrivateReply
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
@@ -24,12 +24,12 @@ import java.util.UUID
 /**
  * Debug builds only: a conversation with the real ChatGPT planner, as a watch call's look-ups have
  * it (the same tools, the same Guard, Gemma on the phone), driven by typed turns from adb instead of
- * speech. The log (tag BuddyE2E) shows each tool call and what ChatGPT got back, and ChatGPT's
+ * speech. The log (tag WatchGPTE2E) shows each tool call and what ChatGPT got back, and ChatGPT's
  * answer; what the phone says privately only as a word count and its language, never its words.
  * Made-up messages can be put into the inbox for it ([inject]); [cleanUp] takes them out again.
  */
 object EndToEnd {
-    private const val TAG = "BuddyE2E"
+    private const val TAG = "WatchGPTE2E"
     private const val FAKE_APP = "debug.e2e.chat"
     private const val SHOWN = 240
 
@@ -71,7 +71,7 @@ object EndToEnd {
         log("buddy> $said${failure?.let { "  [failed: $it]" }.orEmpty()}  (${SystemClock.elapsedRealtime() - started} ms)")
     }
 
-    /** A made-up message in the inbox, from a made-up chat app that's turned on for Buddy. */
+    /** A made-up message in the inbox, from a made-up chat app that's turned on for WatchGPT. */
     fun inject(
         graph: AppGraph,
         from: String,

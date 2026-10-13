@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vinhnguyen.watchai.core.ondevice"
+    namespace = "io.github.alisial786.watchgpt.core.ondevice"
     compileSdk = 37
 
     defaultConfig {

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -55,12 +55,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import com.vinhnguyen.watchai.R
-import com.vinhnguyen.watchai.brain.ChatTurn
-import com.vinhnguyen.watchai.brain.RoutePreference
+import io.github.alisial786.watchgpt.R
+import io.github.alisial786.watchgpt.brain.ChatTurn
+import io.github.alisial786.watchgpt.brain.RoutePreference
 
 /**
- * Typing with Buddy, like ChatGPT: the user's words in soft bubbles on the right, Buddy's answers
+ * Typing with WatchGPT, like ChatGPT: the user's words in soft bubbles on the right, WatchGPT's answers
  * as plain text with who answered under them, and a glass bar for typing that floats over the chat.
  * The chat runs under the page's bar; [top] is the room it takes.
  */
@@ -197,7 +197,7 @@ private fun LazyItemScope.Suggestions(onPick: (String) -> Unit) {
     Column(Modifier.fillParentMaxHeight(0.78f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
         Text("What can I do for you?", style = MaterialTheme.typography.headlineSmall, color = p.text)
         Text(
-            "Ask anything, or tell Buddy to do something on your phone.",
+            "Ask anything, or tell WatchGPT to do something on your phone.",
             style = MaterialTheme.typography.bodyMedium,
             color = p.textSecondary,
             modifier = Modifier.padding(top = 6.dp, bottom = 24.dp),
@@ -237,7 +237,7 @@ private fun Composer(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.weight(1f).padding(vertical = 10.dp)) {
-            if (input.isEmpty()) Text("Ask Buddy", style = MaterialTheme.typography.bodyLarge, color = p.textTertiary)
+            if (input.isEmpty()) Text("Ask WatchGPT", style = MaterialTheme.typography.bodyLarge, color = p.textTertiary)
             BasicTextField(
                 value = input,
                 onValueChange = onInput,

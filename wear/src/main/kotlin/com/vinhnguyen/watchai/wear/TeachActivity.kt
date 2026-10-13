@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.Manifest
 import android.app.Application
@@ -51,9 +51,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * "Learn my voice": the user reads out five short sentences starting with "Hey Buddy" and the watch
- * learns how the wake word hears their voice ([VoiceTeacher]). Opened from Buddy's settings while
- * "Hey Buddy" is on. The takes never leave the watch and are dropped once learned.
+ * "Learn my voice": the user reads out five short sentences starting with "Hey WatchGPT" and the watch
+ * learns how the wake word hears their voice ([VoiceTeacher]). Opened from WatchGPT's settings while
+ * "Hey WatchGPT" is on. The takes never leave the watch and are dropped once learned.
  */
 class TeachActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,7 +113,7 @@ internal class TeachViewModel(
         viewModelScope.launch {
             _step.value =
                 when {
-                    application.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED -> Step.Failed("Allow the microphone for Buddy first")
+                    application.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED -> Step.Failed("Allow the microphone for WatchGPT first")
                     runCatching { teacher.await() }.isFailure -> Step.Failed("Couldn't get ready. Try again later")
                     else -> Step.Ready(WakeSetting.keywords(application) != null)
                 }
@@ -160,7 +160,7 @@ internal class TeachViewModel(
                 _step.value = Step.Learning
                 val word = CallService.wakeModel()
                 if (word == null) {
-                    _step.value = Step.Failed("Turn on \"Hey Buddy\" first")
+                    _step.value = Step.Failed("Turn on \"Hey WatchGPT\" first")
                     return@launch
                 }
                 val heard = spellings.awaitAll()
@@ -202,11 +202,11 @@ internal class TeachViewModel(
 /** What the user reads out, one per take: the phrase alone first, then as they'd use it. */
 private val SENTENCES =
     listOf(
-        "Hey Buddy",
-        "Hey Buddy, what time is it?",
-        "Hey Buddy, set a timer for five minutes",
-        "Hey Buddy, how's the weather today?",
-        "Hey Buddy, tell me a joke",
+        "Hey WatchGPT",
+        "Hey WatchGPT, what time is it?",
+        "Hey WatchGPT, set a timer for five minutes",
+        "Hey WatchGPT, how's the weather today?",
+        "Hey WatchGPT, tell me a joke",
     )
 private val TAKES = SENTENCES.size
 
@@ -226,7 +226,7 @@ private fun TeachScreen(
 
             is TeachViewModel.Step.Ready -> {
                 Title("Learn my voice")
-                Line("Read $TAKES short sentences out loud, so Buddy learns your voice.")
+                Line("Read $TAKES short sentences out loud, so WatchGPT learns your voice.")
                 Hint("It stays on your watch")
                 Spacer(Modifier.height(10.dp))
                 Button(onClick = vm::start, label = { Text("Start") })
@@ -256,7 +256,7 @@ private fun TeachScreen(
 
             is TeachViewModel.Step.Done -> {
                 Title("Got it")
-                Line("Buddy heard ${s.lesson.before} of ${s.lesson.takes} before, ${s.lesson.after} now.")
+                Line("WatchGPT heard ${s.lesson.before} of ${s.lesson.takes} before, ${s.lesson.after} now.")
                 Spacer(Modifier.height(10.dp))
                 Button(onClick = onClose, label = { Text("Done") })
             }

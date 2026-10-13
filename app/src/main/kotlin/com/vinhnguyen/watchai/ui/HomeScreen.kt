@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -45,17 +45,17 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
-import com.vinhnguyen.watchai.R
-import com.vinhnguyen.watchai.brain.chatgpt.auth.AuthState
-import com.vinhnguyen.watchai.buddy.Act
-import com.vinhnguyen.watchai.buddy.Genes
-import com.vinhnguyen.watchai.buddy.ui.BuddyView
-import com.vinhnguyen.watchai.buddy.ui.accentOf
-import com.vinhnguyen.watchai.voice.VoicePhase
+import io.github.alisial786.watchgpt.R
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.AuthState
+import io.github.alisial786.watchgpt.buddy.Act
+import io.github.alisial786.watchgpt.buddy.Genes
+import io.github.alisial786.watchgpt.buddy.ui.WatchGPTView
+import io.github.alisial786.watchgpt.buddy.ui.accentOf
+import io.github.alisial786.watchgpt.voice.VoicePhase
 
 /**
- * The phone's home: the user's own Buddy, a soft glow in its colour that breathes while it listens
- * and speaks, and one line of text. Tap Buddy to talk, tap again (or say bye) to stop. Glass floats
+ * The phone's home: the user's own WatchGPT, a soft glow in its colour that breathes while it listens
+ * and speaks, and one line of text. Tap WatchGPT to talk, tap again (or say bye) to stop. Glass floats
  * over it: the menu and the chat.
  */
 @Composable
@@ -102,7 +102,7 @@ fun HomeScreen(
                         .glow(accent, talking, level, strong = p.dark),
                 ) {
                     genes?.let {
-                        BuddyView(
+                        WatchGPTView(
                             genes = it,
                             act = act(state.phase),
                             reaction = state.reaction,
@@ -119,14 +119,14 @@ fun HomeScreen(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     role = Role.Button,
-                                    onClickLabel = if (talking || state.onWatch) "End the conversation" else "Talk to Buddy",
+                                    onClickLabel = if (talking || state.onWatch) "End the conversation" else "Talk to WatchGPT",
                                     onClick = onTap,
                                 ),
                         )
                     }
                 }
                 Spacer(Modifier.height(20.dp))
-                // While talking, the pop-up at the top says what Buddy is doing; here only what to do next.
+                // While talking, the pop-up at the top says what WatchGPT is doing; here only what to do next.
                 if (!talking) Text(label(state), style = MaterialTheme.typography.titleMedium, color = p.text, textAlign = TextAlign.Center)
                 hint(state, auth)?.let {
                     Text(
@@ -150,7 +150,7 @@ fun HomeScreen(
     }
 }
 
-/** A soft glow in Buddy's colour behind it; it breathes, and swells with the voice, while talking. */
+/** A soft glow in WatchGPT's colour behind it; it breathes, and swells with the voice, while talking. */
 @Composable
 private fun Modifier.glow(
     color: Color,

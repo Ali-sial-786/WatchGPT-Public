@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
@@ -28,7 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.vinhnguyen.watchai.R
+import io.github.alisial786.watchgpt.R
 
 /** First run: users are told they're talking to an AI and where their words go (EU AI Act Art. 50, GDPR). */
 @Composable
@@ -45,14 +45,14 @@ fun NoticeScreen(onAccept: () -> Unit) {
             Spacer(Modifier.height(32.dp))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Before you start", style = MaterialTheme.typography.displaySmall, color = p.text)
-                Text("Buddy is an AI assistant. It answers and acts with AI models, and it can be wrong.", style = MaterialTheme.typography.bodyLarge, color = p.textSecondary)
+                Text("WatchGPT is an AI assistant. It answers and acts with AI models, and it can be wrong.", style = MaterialTheme.typography.bodyLarge, color = p.textSecondary)
             }
             Section(
                 R.drawable.sym_neurology,
                 "Your words go to your own ChatGPT",
-                "When you talk to Buddy, on your watch or this phone, or chat with it, your words go from this phone to " +
+                "When you talk to WatchGPT, on your watch or this phone, or chat with it, your words go from this phone to " +
                     "OpenAI under your own ChatGPT account and plan. We never see them. OpenAI's terms and your ChatGPT data " +
-                    "settings apply.",
+                    "settings apply. Live voice uses Buddy’s undocumented ChatGPT endpoint. It may change or be unavailable for your account; a subscription does not guarantee access. No API key or paid fallback is used.",
             )
             Section(
                 R.drawable.sym_check_circle,
@@ -62,7 +62,7 @@ fun NoticeScreen(onAccept: () -> Unit) {
             )
             Section(
                 R.drawable.sym_graphic_eq,
-                "\"Hey Buddy\" stays on the watch",
+                "\"Hey WatchGPT\" stays on the watch",
                 "The watch listens for it only for a short while after you raise your wrist, or all the time if you switch " +
                     "that on. Nothing is recorded or sent until it hears the phrase.",
             )
@@ -70,7 +70,7 @@ fun NoticeScreen(onAccept: () -> Unit) {
                 R.drawable.sym_lock,
                 "What we keep",
                 "Your ChatGPT sign-in, encrypted with a key that never leaves this phone, and your notes. Conversations " +
-                    "aren't stored. No analytics, no ads. Settings, Delete everything removes it all.",
+                    "are kept encrypted for 30 days unless you turn History off. Reminders stay encrypted on your devices and sync between them. Google Calendar copies are optional. No analytics or ads. Delete everything queues removal from your paired device; reconnect it to finish.",
             )
             Spacer(Modifier.height(8.dp))
         }

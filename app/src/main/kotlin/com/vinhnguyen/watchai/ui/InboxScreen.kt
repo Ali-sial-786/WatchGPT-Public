@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -12,12 +12,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.vinhnguyen.watchai.R
-import com.vinhnguyen.watchai.actions.MessageInbox
+import io.github.alisial786.watchgpt.R
+import io.github.alisial786.watchgpt.actions.MessageInbox
 import kotlinx.coroutines.delay
 
 /**
- * Exactly what Buddy has from the phone's notifications right now: the chat messages it keeps in
+ * Exactly what WatchGPT has from the phone's notifications right now: the chat messages it keeps in
  * memory, with who, which app, when and the text. Updates as messages come and go. Only on this screen.
  */
 @Composable
@@ -33,7 +33,7 @@ fun InboxScreen(inbox: MessageInbox) {
     val messages = remember(now) { inbox.recent(now) }
 
     Text(
-        "Everything Buddy has from your notifications right now. Nothing else: no older messages, nothing from other apps.",
+        "Everything WatchGPT has from your notifications right now. Nothing else: no older messages, nothing from other apps.",
         style = MaterialTheme.typography.bodyLarge,
         color = p.textSecondary,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp),
@@ -59,11 +59,11 @@ fun InboxScreen(inbox: MessageInbox) {
         footer = "Only chat messages that arrive while this is allowed (WhatsApp, Signal, Telegram, SMS and similar), never banking, " +
             "payment, password or authenticator apps. Kept in memory only: at most 40, for at most 6 hours, and each one goes as " +
             "soon as its notification does (for example when you open the chat). Nothing is saved or sent anywhere until you ask " +
-            "Buddy about your messages; with \"Private things stay on this phone\" only Gemma on this phone reads them.",
+            "WatchGPT about your messages; with \"Private things stay on this phone\" only Gemma on this phone reads them.",
     ) {
         Item(
             "Forget them now",
-            subtitle = "Buddy keeps noticing new messages; turn it off in Android's notification access to stop that",
+            subtitle = "WatchGPT keeps noticing new messages; turn it off in Android's notification access to stop that",
             danger = true,
             last = true,
             onClick = {

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ondevice
+package io.github.alisial786.watchgpt.ondevice
 
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking

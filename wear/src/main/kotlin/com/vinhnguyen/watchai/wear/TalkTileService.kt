@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import androidx.concurrent.futures.CallbackToFutureAdapter
 import androidx.wear.protolayout.ActionBuilders
@@ -43,7 +43,7 @@ class TalkTileService : TileService() {
                                 .setCorner(ModifiersBuilders.Corner.Builder().setRadius(dp(BUTTON_DP / 2)).build())
                                 .build(),
                         ).setClickable(ModifiersBuilders.Clickable.Builder().setId("talk").setOnClick(open).build())
-                        .setSemantics(ModifiersBuilders.Semantics.Builder().setContentDescription("Talk to Buddy").build())
+                        .setSemantics(ModifiersBuilders.Semantics.Builder().setContentDescription("Talk to WatchGPT").build())
                         .build(),
                 ).addContent(
                     LayoutElementBuilders.Text

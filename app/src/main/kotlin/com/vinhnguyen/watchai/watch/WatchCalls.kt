@@ -1,24 +1,24 @@
-package com.vinhnguyen.watchai.watch
+package io.github.alisial786.watchgpt.watch
 
 import android.content.Context
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import com.google.android.gms.wearable.ChannelClient
-import com.vinhnguyen.watchai.AppGraph
-import com.vinhnguyen.watchai.actions.ConversationActions
-import com.vinhnguyen.watchai.actions.MemoryActions
-import com.vinhnguyen.watchai.actions.OwnerPresence
-import com.vinhnguyen.watchai.actions.PhoneActions
-import com.vinhnguyen.watchai.actions.ReachActions
-import com.vinhnguyen.watchai.actions.VoiceReply
-import com.vinhnguyen.watchai.actions.screen.ScreenActions
-import com.vinhnguyen.watchai.brain.Toolboxes
-import com.vinhnguyen.watchai.brain.chatgpt.ChatGptHttp
-import com.vinhnguyen.watchai.buddy.Mood
-import com.vinhnguyen.watchai.buddy.Reaction
-import com.vinhnguyen.watchai.voice.ChatGptRealtimeSession
-import com.vinhnguyen.watchai.voice.VoiceState
+import io.github.alisial786.watchgpt.AppGraph
+import io.github.alisial786.watchgpt.actions.ConversationActions
+import io.github.alisial786.watchgpt.actions.MemoryActions
+import io.github.alisial786.watchgpt.actions.OwnerPresence
+import io.github.alisial786.watchgpt.actions.PhoneActions
+import io.github.alisial786.watchgpt.actions.ReachActions
+import io.github.alisial786.watchgpt.actions.VoiceReply
+import io.github.alisial786.watchgpt.actions.screen.ScreenActions
+import io.github.alisial786.watchgpt.brain.Toolboxes
+import io.github.alisial786.watchgpt.brain.chatgpt.ChatGptHttp
+import io.github.alisial786.watchgpt.buddy.Mood
+import io.github.alisial786.watchgpt.buddy.Reaction
+import io.github.alisial786.watchgpt.voice.ChatGptRealtimeSession
+import io.github.alisial786.watchgpt.voice.VoiceState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -112,7 +112,7 @@ class WatchCalls(
                     listOf(
                         // Timers and alarms go to the watch unless the user asks for the phone: it's on the wrist, and on screen.
                         PhoneActions(graph.appContext, graph.notes, graph.controls, graph.phoneClock, onCall, graph.logger, cards = graph.cards),
-                        // A call started from here takes over the phone's audio: Buddy makes way.
+                        // A call started from here takes over the phone's audio: WatchGPT makes way.
                         ReachActions(graph.appContext, graph.contacts, graph.inbox, graph.pending, graph.logger, onCalling = { session?.endSoon() }, cards = graph.cards, limits = graph.limits),
                         graph.shortcuts,
                         graph.screen,
@@ -121,7 +121,7 @@ class WatchCalls(
                     ),
                 ) { name, result -> afterTool(watch, name, result) }
             warmth = graph.warmReader()
-            // The call starts knowing what Buddy remembers, and its turns go to the history.
+            // The call starts knowing what WatchGPT remembers, and its turns go to the history.
             val conversation = UUID.randomUUID().toString()
             val remembered = graph.remembered()
             val s =
@@ -134,7 +134,7 @@ class WatchCalls(
                     graph.logger,
                     voice = graph.settings.voice,
                     external = watch,
-                    idleHangUpMs = IDLE_HANG_UP_MS,
+                    idleHangUpMs = graph.settings.conversationTimeoutSeconds.takeIf { it > 0 }?.times(1000L),
                     onIdle = { graph.scope.launch { hangUp() } },
                     instructions = listOfNotNull(ChatGptRealtimeSession.VOICE_INSTRUCTIONS, remembered).joinToString("\n"),
                     onUserWords = graph.userTurns::heard,
@@ -157,7 +157,7 @@ class WatchCalls(
     /** Debug builds: plays [pcm] into the current call as if said on the watch. False if there's no call. */
     fun say(pcm: ShortArray): Boolean = audio?.say(pcm) != null
 
-    /** Buddy after an action: proud when it's done, an oops when it failed, the play triangle for music; reading things shows nothing. */
+    /** WatchGPT after an action: proud when it's done, an oops when it failed, the play triangle for music; reading things shows nothing. */
     private fun afterTool(
         watch: WatchAudio,
         name: String,
@@ -259,11 +259,10 @@ class WatchCalls(
 
     private companion object {
         /** Like a smart speaker: back to sleep after 10 s with nobody talking. */
-        const val IDLE_HANG_UP_MS = 10_000L
         const val ON_WATCH = "on the watch"
         val QUIET_TOOLS =
             setOf(PhoneActions.LIST_NOTES, PhoneActions.LIST_EVENTS, PhoneActions.DEVICE_STATUS, ReachActions.READ_MESSAGES, MemoryActions.RECALL, ConversationActions.END) +
-                // The steps of using an app: Buddy is proud once the whole thing is done, not at every tap.
+                // The steps of using an app: WatchGPT is proud once the whole thing is done, not at every tap.
                 ScreenActions.SPECS.map { it.name }
     }
 }

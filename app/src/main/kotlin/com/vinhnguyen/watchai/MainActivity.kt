@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai
+package io.github.alisial786.watchgpt
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,17 +12,17 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.vinhnguyen.watchai.security.protectScreen
-import com.vinhnguyen.watchai.ui.AbilitiesViewModel
-import com.vinhnguyen.watchai.ui.BenchmarkViewModel
-import com.vinhnguyen.watchai.ui.BrainsViewModel
-import com.vinhnguyen.watchai.ui.BuddyApp
-import com.vinhnguyen.watchai.ui.ChatViewModel
-import com.vinhnguyen.watchai.ui.NoticeScreen
-import com.vinhnguyen.watchai.ui.Pages
-import com.vinhnguyen.watchai.ui.TalkViewModel
-import com.vinhnguyen.watchai.ui.VoiceLabViewModel
-import com.vinhnguyen.watchai.ui.WatchAiTheme
+import io.github.alisial786.watchgpt.security.protectScreen
+import io.github.alisial786.watchgpt.ui.AbilitiesViewModel
+import io.github.alisial786.watchgpt.ui.BenchmarkViewModel
+import io.github.alisial786.watchgpt.ui.BrainsViewModel
+import io.github.alisial786.watchgpt.ui.ChatViewModel
+import io.github.alisial786.watchgpt.ui.NoticeScreen
+import io.github.alisial786.watchgpt.ui.Pages
+import io.github.alisial786.watchgpt.ui.TalkViewModel
+import io.github.alisial786.watchgpt.ui.VoiceLabViewModel
+import io.github.alisial786.watchgpt.ui.WatchAiTheme
+import io.github.alisial786.watchgpt.ui.WatchGPTApp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +30,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Answers, codes and account details: no screenshots or recents thumbnails in release builds.
         protectScreen(!BuildConfig.DEBUG)
+        io.github.alisial786.watchgpt.organizer.Organizer.get(this).requestSync()
+        if (savedInstanceState == null && intent.getBooleanExtra("organizer", false)) {
+            io.github.alisial786.watchgpt.organizer.OrganizerActivity.open(this, BuildConfig.DEBUG && intent.getBooleanExtra("watch_preview", false))
+        }
         val graph = (application as WatchAiApp).graph
         val factory =
             viewModelFactory {
@@ -60,7 +64,7 @@ class MainActivity : ComponentActivity() {
                         voiceLab = if (BuildConfig.DEBUG) viewModel<VoiceLabViewModel>(factory = factory) else null,
                     )
                 val testPage by graph.testPage.collectAsState()
-                BuddyApp(graph, talk = viewModel(factory = factory), pages = pages, testPage = testPage)
+                WatchGPTApp(graph, talk = viewModel(factory = factory), pages = pages, testPage = testPage)
             }
         }
     }

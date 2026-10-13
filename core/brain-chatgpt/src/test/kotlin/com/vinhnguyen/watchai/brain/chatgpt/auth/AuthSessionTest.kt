@@ -1,14 +1,14 @@
-package com.vinhnguyen.watchai.brain.chatgpt.auth
+package io.github.alisial786.watchgpt.brain.chatgpt.auth
 
 import com.google.common.truth.Truth.assertThat
-import com.vinhnguyen.watchai.brain.BrainError
-import com.vinhnguyen.watchai.brain.BrainException
-import com.vinhnguyen.watchai.brain.chatgpt.TestClock
-import com.vinhnguyen.watchai.brain.chatgpt.endpoints
-import com.vinhnguyen.watchai.brain.chatgpt.json
-import com.vinhnguyen.watchai.brain.chatgpt.testAuthClient
-import com.vinhnguyen.watchai.testing.InMemorySecretStore
-import com.vinhnguyen.watchai.testing.Synthetic
+import io.github.alisial786.watchgpt.brain.BrainError
+import io.github.alisial786.watchgpt.brain.BrainException
+import io.github.alisial786.watchgpt.brain.chatgpt.TestClock
+import io.github.alisial786.watchgpt.brain.chatgpt.endpoints
+import io.github.alisial786.watchgpt.brain.chatgpt.json
+import io.github.alisial786.watchgpt.brain.chatgpt.testAuthClient
+import io.github.alisial786.watchgpt.testing.InMemorySecretStore
+import io.github.alisial786.watchgpt.testing.Synthetic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

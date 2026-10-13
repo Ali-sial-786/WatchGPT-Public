@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain.chatgpt
+package io.github.alisial786.watchgpt.brain.chatgpt
 
 import okhttp3.ConnectionSpec
 import okhttp3.Interceptor

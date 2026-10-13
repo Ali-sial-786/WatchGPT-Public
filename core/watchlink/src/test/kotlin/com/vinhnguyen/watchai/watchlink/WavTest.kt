@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.watchlink
+package io.github.alisial786.watchgpt.watchlink
 
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test

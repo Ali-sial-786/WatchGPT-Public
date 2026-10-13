@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 /**
  * Cuts a streamed answer into speakable pieces so speech can start after the first sentence

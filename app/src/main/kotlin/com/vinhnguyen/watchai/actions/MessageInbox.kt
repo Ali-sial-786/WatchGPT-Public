@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
 import android.app.Notification
 import android.app.RemoteInput
@@ -9,11 +9,11 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.vinhnguyen.watchai.WatchAiApp
+import io.github.alisial786.watchgpt.WatchAiApp
 
 /**
  * Messages the user got, as their notifications show them, from any messaging app (WhatsApp,
- * Signal, Telegram, Messages…), so Buddy can read them out and reply through the app's own reply
+ * Signal, Telegram, Messages…), so WatchGPT can read them out and reply through the app's own reply
  * button, like a car or a watch does. Only with the user's OK (notification access). Kept in memory
  * for a few hours at most, never stored, never logged; gone once the notification is.
  */
@@ -79,7 +79,7 @@ class MessageInbox {
 }
 
 /** Fills [MessageInbox] from the phone's notifications (the user turns it on in Android's settings). */
-class BuddyNotificationListener : NotificationListenerService() {
+class WatchGPTNotificationListener : NotificationListenerService() {
     private val graph get() = (application as WatchAiApp).graph
     private val inbox get() = graph.inbox
 

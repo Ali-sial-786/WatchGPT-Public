@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 import java.nio.ByteBuffer
 
@@ -25,7 +25,7 @@ interface ExternalAudio {
 
     /**
      * True while this device still has speech from before the conversation connected (said right
-     * after "Hey Buddy"): it goes to the model first, even while a headset on the phone is the mic.
+     * after "Hey WatchGPT"): it goes to the model first, even while a headset on the phone is the mic.
      */
     val catchingUp: Boolean get() = false
 

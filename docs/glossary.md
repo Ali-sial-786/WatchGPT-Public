@@ -5,15 +5,15 @@ Words used in the code and the docs.
 ---
 
 - **ADPCM**: A compact audio format. The watch and the phone send each other audio in it.
-- **Buddy**: The app, and the character on the watch and the phone.
-- **Buddy Plus**: Optional extras for people who want to support Buddy, sold through RevenueCat. It
+- **WatchGPT**: The app, and the character on the watch and the phone.
+- **WatchGPT Plus**: Optional extras for people who want to support WatchGPT, sold through RevenueCat. It
   unlocks the `plus` entitlement.
-- **Data Layer**: Wear OS's channel between a watch and its phone. Buddy streams audio over it.
-- **Gemma**: Google's open AI model. Buddy runs it on the phone to read what's private.
-- **GPT-Live**: ChatGPT's realtime voice. Buddy's conversations run on it, under your own account.
+- **Data Layer**: Wear OS's channel between a watch and its phone. WatchGPT streams audio over it.
+- **Gemma**: Google's open AI model. WatchGPT runs it on the phone to read what's private.
+- **GPT-Live**: ChatGPT's realtime voice. WatchGPT's conversations run on it, under your own account.
 - **Guard**: The safety gate. Every tool call goes through it (`core/brain/.../guard/Guard.kt`).
-- **"Hey Buddy"**: The wake phrase, heard on the watch itself with sherpa-onnx keyword spotting.
-- **Learn my voice**: Five sentences you read on the watch, so "Hey Buddy" hears you better.
+- **"Hey Watch G P T"**: The wake phrase, heard on the watch itself with sherpa-onnx keyword spotting.
+- **Learn my voice**: Five sentences you read on the watch, so "Hey Watch G P T" hears you better.
 - **Level**: How much can go wrong if a tool runs without you wanting it: `LOOKUP`, `LOCAL`,
   `PRIVATE`, `OUTBOUND` or `NEVER`. See [How it works](architecture.md#the-safety-gate).
 - **Leveller**: Lifts the quiet watch microphone to a level the wake word model can hear.

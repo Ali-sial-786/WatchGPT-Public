@@ -1,8 +1,8 @@
-package com.vinhnguyen.watchai.security
+package io.github.alisial786.watchgpt.security
 
 import android.util.Log
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.LogEvent
 import timber.log.Timber
 
 /** Brain events go to Timber at info level; release builds strip info logs entirely. */

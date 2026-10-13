@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 /**
  * Talking over the answer should silence it at once. GPT-Live stops an answer only when its own

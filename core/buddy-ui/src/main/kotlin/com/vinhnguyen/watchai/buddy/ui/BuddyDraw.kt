@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.buddy.ui
+package io.github.alisial786.watchgpt.buddy.ui
 
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -13,18 +13,18 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
-import com.vinhnguyen.watchai.buddy.Arc
-import com.vinhnguyen.watchai.buddy.Badge
-import com.vinhnguyen.watchai.buddy.BuddyFrame
-import com.vinhnguyen.watchai.buddy.Dot
-import com.vinhnguyen.watchai.buddy.Feature
-import com.vinhnguyen.watchai.buddy.Genes
+import io.github.alisial786.watchgpt.buddy.Arc
+import io.github.alisial786.watchgpt.buddy.Badge
+import io.github.alisial786.watchgpt.buddy.WatchGPTFrame
+import io.github.alisial786.watchgpt.buddy.Dot
+import io.github.alisial786.watchgpt.buddy.Feature
+import io.github.alisial786.watchgpt.buddy.Genes
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
 /**
- * Draws Buddy the way bloub draws its bot (MIT, github.com/jeremy-prt/bloub, BloubBot.vue): a
+ * Draws WatchGPT the way bloub draws its bot (MIT, github.com/jeremy-prt/bloub, BloubBot.vue): a
  * flat body in [ink] with the eyes and mouth cut out, so they show [paper], the background.
  * The back half of every orbit is drawn first and the body hides it. Eyes and mouth are
  * painted in [paper] (the same as cutting them out, on a plain background) as a rounded rect or
@@ -34,12 +34,12 @@ import kotlin.math.sin
  *
  * Body units: 1 is the radius of the ball at rest, drawn [scale] pixels, centred on [center].
  */
-fun DrawScope.drawBuddy(
-    frame: BuddyFrame,
+fun DrawScope.drawWatchGPT(
+    frame: WatchGPTFrame,
     ink: Color,
     accent: Color,
     paper: Color,
-    paths: BuddyPaths,
+    paths: WatchGPTPaths,
     scale: Float = size.minDimension * BALL,
     center: Offset = this.center,
     eyes: Color = paper,
@@ -56,9 +56,9 @@ fun DrawScope.drawBuddy(
 }
 
 /** Always-on screens: only an outline and the face, in grey, so almost every pixel stays off. */
-fun DrawScope.drawAmbientBuddy(
-    frame: BuddyFrame,
-    paths: BuddyPaths,
+fun DrawScope.drawAmbientWatchGPT(
+    frame: WatchGPTFrame,
+    paths: WatchGPTPaths,
     scale: Float = size.minDimension * BALL,
 ) {
     val s = Space(center, scale)
@@ -70,13 +70,13 @@ fun DrawScope.drawAmbientBuddy(
 /** The ball's radius as a share of the smaller side: leaves room for the rings (up to 1.3 body units). */
 const val BALL: Float = 0.34f
 
-/** Buddy's colours: the body, and a stronger shade of its hue for the badge. */
+/** WatchGPT's colours: the body, and a stronger shade of its hue for the badge. */
 fun inkOf(genes: Genes): Color = Color(genes.color.body)
 
 fun accentOf(genes: Genes): Color = Color.hsl(genes.color.hue, 0.8f, 0.6f)
 
 /** Paths and a matrix reused from frame to frame. */
-class BuddyPaths {
+class WatchGPTPaths {
     internal val body = Path()
     internal val shape = Path()
     internal val lens = Path()
@@ -136,7 +136,7 @@ private fun Path.polygon(
 private fun DrawScope.drawFeature(
     f: Feature,
     s: Space,
-    paths: BuddyPaths,
+    paths: WatchGPTPaths,
     color: Color,
 ) {
     val alpha = f.alpha.coerceIn(0f, 1f)
@@ -181,7 +181,7 @@ private fun DrawScope.drawFeature(
 private fun DrawScope.drawArc(
     arc: Arc,
     s: Space,
-    paths: BuddyPaths,
+    paths: WatchGPTPaths,
     front: Boolean,
 ) {
     val runs = if (front) arc.front else arc.back
@@ -194,7 +194,7 @@ private fun DrawScope.drawArc(
 private fun DrawScope.drawDot(
     dot: Dot,
     s: Space,
-    paths: BuddyPaths,
+    paths: WatchGPTPaths,
     ink: Color,
     paper: Color,
 ) {
@@ -222,7 +222,7 @@ private fun DrawScope.drawDot(
 private fun DrawScope.drawBadge(
     badge: Badge,
     s: Space,
-    paths: BuddyPaths,
+    paths: WatchGPTPaths,
     accent: Color,
 ) {
     if (!badge.heart) {

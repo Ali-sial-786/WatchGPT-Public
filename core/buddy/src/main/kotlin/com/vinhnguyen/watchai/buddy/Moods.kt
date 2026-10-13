@@ -1,9 +1,9 @@
-package com.vinhnguyen.watchai.buddy
+package io.github.alisial786.watchgpt.buddy
 
 import java.util.Locale
 
 /**
- * How Buddy reacts. The phone picks the mood from what the actions did (done, failed, music); the
+ * How WatchGPT reacts. The phone picks the mood from what the actions did (done, failed, music); the
  * user sets none of this.
  */
 public enum class Mood {

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
@@ -17,8 +17,8 @@ import android.util.Log
 import android.view.Display
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
-import com.vinhnguyen.watchai.watchlink.Leveller
-import com.vinhnguyen.watchai.watchlink.Pcm
+import io.github.alisial786.watchgpt.watchlink.Leveller
+import io.github.alisial786.watchgpt.watchlink.Pcm
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +39,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * Listens for "Hey Buddy". Normally only while the watch screen is on: from when it comes on (a
+ * Listens for "Hey WatchGPT". Normally only while the watch screen is on: from when it comes on (a
  * raised wrist) for [WINDOW_MS], never with the screen off, so it costs nothing while the watch
  * sleeps. "Always listening" keeps the mic on with the screen off too, for when there's no hand
  * free, and costs battery for it. Never during a conversation. The audio stays on the watch, and
@@ -352,7 +352,7 @@ internal class WakeListener(
         private const val WINDOW_MS = 30_000L
         private const val RETRY_MS = 5_000L
 
-        // Sweep of 29.09 (491 synthetic takes, the watch's model and loop): 0.0012 instead of 0.002 hears "Hey Buddy"
+        // Sweep of 29.09 (491 synthetic takes, the watch's model and loop): 0.0012 instead of 0.002 hears "Hey WatchGPT"
         // from across the room 59% instead of 43% of the time, at the same false alarms; the room-relative floor still applies.
         private const val GATE = 0.0012f
         private const val ALWAYS_GATE = 0.004f
@@ -362,12 +362,12 @@ internal class WakeListener(
 
         private val _listening = MutableStateFlow(false)
 
-        /** The microphone is open for "Hey Buddy" right now (for the face's hint). */
+        /** The microphone is open for "Hey WatchGPT" right now (for the face's hint). */
         val listening: StateFlow<Boolean> = _listening.asStateFlow()
     }
 }
 
-/** Whether the user switched "Hey Buddy" on (and how); kept across restarts so opening the app turns it back on. */
+/** Whether the user switched "Hey WatchGPT" on (and how); kept across restarts so opening the app turns it back on. */
 internal object WakeSetting {
     private const val PREFS = "wear"
     private const val SWITCH = "hey_buddy"

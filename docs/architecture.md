@@ -1,24 +1,24 @@
 # How it works
 
-![How Buddy works](media/architecture.png)
+![How WatchGPT works](media/architecture.png)
 
-Buddy has three parts: the **watch** is the microphone, speaker and face; the **phone** runs the
+WatchGPT has three parts: the **watch** is the microphone, speaker and face; the **phone** runs the
 conversation, the safety gate and the actions; the **cloud** is your own ChatGPT account, plus
-RevenueCat for Buddy Plus and a one-time model download.
+RevenueCat for WatchGPT Plus and a one-time model download.
 
 ---
 
 ## The watch (`wear`)
 
-- **Buddy's face** shows what's happening: listening, thinking, talking. The character is drawn from
+- **WatchGPT's face** shows what's happening: listening, thinking, talking. The character is drawn from
   the app's own animation engine (`core/buddy`, ported from bloub, MIT).
-- **"Hey Buddy"** is heard on the watch itself, with sherpa-onnx keyword spotting. Nothing is recorded
+- **"Hey Watch G P T"** is heard on the watch itself, with sherpa-onnx keyword spotting. Nothing is recorded
   or sent until it hears the phrase. A leveller lifts the quiet watch microphone, and the gates follow
   the room's noise. **Learn my voice** stores only the spellings the model heard in your five takes.
 - **Audio** goes to the phone and back over a Wear Data Layer channel, as ADPCM, with a 0.1 to 0.5 s
   round trip. With earbuds in, they take over the sound.
 
-**What it sends:** your voice, after "Hey Buddy" or a tap. **What it gets:** Buddy's voice and face.
+**What it sends:** your voice, after "Hey Watch G P T" or a tap. **What it gets:** WatchGPT's voice and face.
 
 ## The phone (`app`)
 
@@ -26,7 +26,7 @@ RevenueCat for Buddy Plus and a one-time model download.
 
 ChatGPT's realtime voice (GPT-Live over WebRTC, `core/voice`), signed in with your own ChatGPT account
 (`core/brain-chatgpt`: PKCE in a Custom Tab with a loopback listener, or a device code). ChatGPT hears
-what you ask and calls Buddy's tools. On the phone alone, the time from the end of your sentence to the
+what you ask and calls WatchGPT's tools. On the phone alone, the time from the end of your sentence to the
 first sound was 1.1 to 1.5 s in a live test ([voice spike report](test-reports/voice-spike.md)).
 
 ### The safety gate
@@ -53,7 +53,7 @@ When a `PRIVATE` tool runs (reading messages, notes, the calendar), the result n
 
 1. **Gemma on the phone** (LiteRT-LM, `core/brain-ondevice`) answers your question from the data, in a
    few spoken sentences. Codes, numbers and links are only read out if you asked for them. On the S23
-   Ultra that takes about 3 s with the model warm, 9 to 11 s cold; Buddy warms it at the start of each
+   Ultra that takes about 3 s with the model warm, 9 to 11 s cold; WatchGPT warms it at the start of each
    conversation.
 2. **The phone's own voice** (Android's offline speech) says the answer. ChatGPT's voice is muted and
    its microphone hears silence meanwhile, so nothing slips back in.
@@ -75,7 +75,7 @@ payment, password and authenticator apps are never read.
 The ChatGPT sign-in is stored with Tink, under a key in Android's Keystore (StrongBox when the phone
 has it). Nothing is backed up to the cloud. See [Key management](security/key-management.md).
 
-### Buddy Plus
+### WatchGPT Plus
 
 The RevenueCat SDK loads the offers, runs the purchase and unlocks the `plus` entitlement. RevenueCat
 sees an anonymous id and the purchase, never the conversations.
@@ -87,15 +87,15 @@ messages, notes, calendar and sign-in keys.
 
 - **OpenAI, under your own account.** Hears your requests and decides what to do. No servers of mine
   sit in between.
-- **RevenueCat.** Offers and purchases for Buddy Plus.
+- **RevenueCat.** Offers and purchases for WatchGPT Plus.
 - **Hugging Face.** The on-device model, downloaded once, checked against a pinned SHA-256.
 
 ---
 
 ## Three examples
 
-**"Text Alex I'm running ten minutes late."** The watch hears "Hey Buddy" and streams your voice to the
-phone. ChatGPT calls `send_text_message`. The gate sees `OUTBOUND`, so Buddy reads the text back and
+**"Text Alex I'm running ten minutes late."** The watch hears "Hey Watch G P T" and streams your voice to the
+phone. ChatGPT calls `send_text_message`. The gate sees `OUTBOUND`, so WatchGPT reads the text back and
 waits. You say "Yes." in the next turn; the gate checks you're there and the hourly budget, and the
 text goes out. A pop-up on the phone shows it.
 
@@ -126,10 +126,10 @@ the phone, starts with it and with the last conversations, so "text my sister" f
 | `core/brain-ondevice` | Gemma via LiteRT-LM (chat and private reading), Gemini Nano via ML Kit, verified model download. |
 | `core/voice` | ChatGPT voice (GPT-Live over WebRTC), hand-offs to the tools, the phone's own voice for private answers. |
 | `core/watchlink` | The watch-phone audio link: frames, ADPCM, outbox, jitter buffers, leveller. |
-| `core/buddy`, `core/buddy-ui` | Buddy's shapes, faces, moods and drawing (ported from bloub, MIT). |
+| `core/buddy`, `core/buddy-ui` | WatchGPT's shapes, faces, moods and drawing (ported from bloub, MIT). |
 | `core/security` | Keystore + Tink vault, log redaction, screen protection. |
 | `core/testing` | Fakes and synthetic test data. |
-| `app` | Phone app: Buddy, conversations, actions (incl. using apps on screen), the gate, memory and History, the apps Buddy can use, privacy screens, Buddy Plus. |
-| `wear` | Watch app: face, conversations through the phone, "Hey Buddy", Learn my voice. |
+| `app` | Phone app: WatchGPT, conversations, actions (incl. using apps on screen), the gate, memory and History, the apps WatchGPT can use, privacy screens, WatchGPT Plus. |
+| `wear` | Watch app: face, conversations through the phone, "Hey Watch G P T", Learn my voice. |
 
 The decisions behind the big choices are in [docs/adr](adr/).

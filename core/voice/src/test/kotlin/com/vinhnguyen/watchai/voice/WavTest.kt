@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test

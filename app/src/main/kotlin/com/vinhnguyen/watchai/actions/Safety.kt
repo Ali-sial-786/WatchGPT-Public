@@ -1,14 +1,14 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
 import android.app.KeyguardManager
 import android.content.Context
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
-import com.vinhnguyen.watchai.actions.screen.ScreenActions
-import com.vinhnguyen.watchai.brain.guard.Level
-import com.vinhnguyen.watchai.brain.guard.Presence
+import io.github.alisial786.watchgpt.actions.screen.ScreenActions
+import io.github.alisial786.watchgpt.brain.guard.Level
+import io.github.alisial786.watchgpt.brain.guard.Presence
 
-/** How much each of Buddy's actions can do (see docs/security/agent-safety.md). A new tool isn't offered until it's in here. */
+/** How much each of WatchGPT's actions can do (see docs/security/agent-safety.md). A new tool isn't offered until it's in here. */
 object Safety {
     val LEVELS: Map<String, Level> =
         mapOf(
@@ -17,6 +17,8 @@ object Safety {
             PhoneActions.ADD_NOTE to Level.LOCAL,
             PhoneActions.ADD_EVENT to Level.LOCAL,
             PhoneActions.ADD_REMINDER to Level.LOCAL,
+            PhoneActions.CHANGE_REMINDER to Level.LOCAL,
+            PhoneActions.LIST_REMINDERS to Level.PRIVATE,
             PhoneActions.SET_TIMER to Level.LOCAL,
             PhoneActions.SET_ALARM to Level.LOCAL,
             PhoneActions.RING_PHONE to Level.LOCAL,
@@ -33,7 +35,7 @@ object Safety {
             PhoneShortcuts.NAVIGATE to Level.LOCAL,
             PhoneShortcuts.FLASHLIGHT to Level.LOCAL,
             // Using an app: looking at its controls, tapping, typing and scrolling. A tap that sends, pays,
-            // posts or deletes waits for a yes (the phone's model judges it), and apps Buddy stays out of are refused (AppLimits).
+            // posts or deletes waits for a yes (the phone's model judges it), and apps WatchGPT stays out of are refused (AppLimits).
             ScreenActions.LOOK to Level.LOCAL,
             ScreenActions.FIND to Level.LOCAL,
             ScreenActions.TAP to Level.LOCAL,
@@ -50,7 +52,7 @@ object Safety {
             ReachActions.CALL to Level.OUTBOUND,
             // A no is harmless; the Guard checks a yes as outbound.
             ReachActions.CONFIRM to Level.LOCAL,
-            // Buddy's memory, on the phone: only what the user just said is kept (MemoryActions), and the
+            // WatchGPT's memory, on the phone: only what the user just said is kept (MemoryActions), and the
             // conversations it finds were ChatGPT's own already.
             MemoryActions.REMEMBER to Level.LOCAL,
             MemoryActions.FORGET to Level.LOCAL,
@@ -61,6 +63,7 @@ object Safety {
     val READABLE: Map<String, String> =
         mapOf(
             ReachActions.READ_MESSAGES to "messages people sent",
+            PhoneActions.LIST_REMINDERS to "WatchGPT reminders and their identifiers",
             PhoneActions.LIST_NOTES to "notes",
             PhoneActions.LIST_EVENTS to "calendar events",
             ScreenActions.READ to "phone screen (an app the user opened: their chats, emails, whatever it shows)",
@@ -70,7 +73,7 @@ object Safety {
      * Private tools whose data may go to ChatGPT (cleaned) when the user turns "Private on the phone"
      * off in Settings. What's on an app's screen isn't one of them: it always stays on the phone.
      */
-    val MAY_GO_TO_CLOUD: Set<String> = setOf(ReachActions.READ_MESSAGES, PhoneActions.LIST_NOTES, PhoneActions.LIST_EVENTS)
+    val MAY_GO_TO_CLOUD: Set<String> = setOf(PhoneActions.LIST_REMINDERS, ReachActions.READ_MESSAGES, PhoneActions.LIST_NOTES, PhoneActions.LIST_EVENTS)
 }
 
 /**

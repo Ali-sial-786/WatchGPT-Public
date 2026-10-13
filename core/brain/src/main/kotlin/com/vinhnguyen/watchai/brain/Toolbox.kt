@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain
+package io.github.alisial786.watchgpt.brain
 
 /**
  * Things a brain may do on the user's behalf (add a note, a calendar event, a timer…). The brain
@@ -45,7 +45,7 @@ public data class ToolSpec(
 )
 
 /**
- * Several toolboxes offered as one (e.g. the phone's actions and Buddy's outfits). [onResult] sees
+ * Several toolboxes offered as one (e.g. the phone's actions and WatchGPT's outfits). [onResult] sees
  * every call's result, so the app can react to what the tools did.
  */
 public class Toolboxes(

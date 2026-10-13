@@ -1,7 +1,7 @@
-package com.vinhnguyen.watchai.brain.chatgpt.auth
+package io.github.alisial786.watchgpt.brain.chatgpt.auth
 
 import com.google.common.truth.Truth.assertThat
-import com.vinhnguyen.watchai.testing.Synthetic
+import io.github.alisial786.watchgpt.testing.Synthetic
 import org.junit.Test
 
 class JwtClaimsTest {

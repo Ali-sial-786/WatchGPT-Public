@@ -1,9 +1,9 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
-import com.vinhnguyen.watchai.brain.guard.PrivateReply
-import com.vinhnguyen.watchai.voice.ChatGptRealtimeSession
-import com.vinhnguyen.watchai.voice.LanguageId
-import com.vinhnguyen.watchai.voice.LocalSpeech
+import io.github.alisial786.watchgpt.brain.guard.PrivateReply
+import io.github.alisial786.watchgpt.voice.ChatGptRealtimeSession
+import io.github.alisial786.watchgpt.voice.LanguageId
+import io.github.alisial786.watchgpt.voice.LocalSpeech
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -33,12 +33,12 @@ class VoiceReply(
     ): Boolean {
         val s = session() ?: return false
         val text = answer()
-        cards.show(BuddyCard.Done(Symbol.PRIVATE, "Read on this phone", text))
+        cards.show(WatchGPTCard.Done(Symbol.PRIVATE, "Read on this phone", text))
         val spoken = languages.of(text) ?: language
         val audio = speech.synthesize(text, spoken)
         if (audio == null) {
             val name = spoken?.let { Locale.forLanguageTag(it).getDisplayLanguage(Locale.ENGLISH) }.orEmpty().ifEmpty { "this language" }
-            cards.show(BuddyCard.Done(Symbol.PRIVATE, "No offline voice for $name: add one in Text-to-speech settings", text))
+            cards.show(WatchGPTCard.Done(Symbol.PRIVATE, "No offline voice for $name: add one in Text-to-speech settings", text))
             return false
         }
         // Said once the model has finished its "Here you go"; the tool doesn't wait for it.

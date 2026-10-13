@@ -1,69 +1,55 @@
-# Getting started
+# Install WatchGPT
 
-How to build Buddy and put it on your phone and watch.
+WatchGPT needs an Android phone (Android 12+) paired through Galaxy Wearable with a Wear OS watch (Wear OS 4+). The intended devices are the S24 Ultra and Galaxy Watch9; device-specific verification is separate from software builds.
 
----
+## Get the matching pair
 
-## What you need
+Use the **WatchGPT-phone-and-watch** artifact from a successful private GitHub Actions build, or the APKs produced together in your local build:
 
-- A **Wear OS watch** paired with an **Android phone** (minimum Android 12). I build and test on a
-  Galaxy Watch5 and a Galaxy S23 Ultra.
-- A **ChatGPT Plus or Pro** account. Buddy runs on your plan; there are no API keys.
-- The **Android SDK** with platform 37, and adb on the phone and the watch (wireless debugging works).
-- **JDK 17.** The Gradle daemon picks it through `gradle/gradle-daemon-jvm.properties`.
+- `app/build/outputs/apk/release/app-release.apk`
+- `wear/build/outputs/apk/release/wear-release.apk`
 
-## 1. Point Gradle at the SDK
+Both use `io.github.alisial786.watchgpt` and the same developer test signing key. Release optimization and release privacy protections are enabled. This is a sideload build, not a Play Store signing arrangement. Keep your local `$HOME/.android/debug.keystore` private and backed up if you want to build updates with the same certificate. CI supports the optional private repository secret `WATCHGPT_SIGNING_KEYSTORE` (base64 of the backed-up debug keystore). The GitHub connection available during setup cannot manage secrets (HTTP 403), so this secret must be set by the repository owner. Until then, CI produces a fresh matching test pair on each runner. Keystore contents are never committed or logged. A different local build machine must use your backed-up key; switching signing keys requires uninstalling both apps, which erases local data. Do not uninstall a device that holds unsynchronized reminders.
 
-Put the SDK path in `local.properties` at the repository root:
+## Install
 
-```properties
-sdk.dir=C:\\path\\to\\Android\\Sdk
-```
+1. On the phone enable Developer options and USB debugging. Connect it to your computer and authorize the computer.
+2. On the watch enable Developer options and Wireless debugging. Use the pairing address and code displayed on the watch: `adb pair ADDRESS:PAIRING_PORT`, then `adb connect ADDRESS:DEBUGGING_PORT`. Pairing and debugging ports are different and can change.
+3. Find serials with `adb devices`. Install with explicit serials:
 
-## 2. Optional: Buddy Plus
+   ```sh
+   adb -s PHONE_SERIAL install -r app/build/outputs/apk/release/app-release.apk
+   adb -s WATCH_SERIAL install -r wear/build/outputs/apk/release/wear-release.apk
+   ```
 
-Plus needs a RevenueCat project with an entitlement called `plus` and an offering with at least one
-package. RevenueCat's Test Store works without any store account. Add its public key to
-`~/.gradle/gradle.properties`:
+4. Open WatchGPT on both devices once. The phone menu contains **Reminders & agenda**. On the watch scroll below the mascot to **Reminders**. Reminders do not require ChatGPT sign-in.
 
-```properties
-revenuecat.apiKey=test_...
-```
+## Permissions
 
-Without a key, Plus just isn't shown.
+- **Notifications**, on each alerting device: reminder alerts and background Clock request prompts. If denied, items still save. Re-enable from app settings.
+- **Alarms & reminders / exact alarms** special access, on each alerting device: timely delivery. The reminders screen links to the system control. Without it Android may delay reminders; the app uses an inexact fallback.
+- **Microphone**, for voice and optional wake listening. Start listening from the visible app. After reboot, reopen WatchGPT to rearm wake listening; reminder scheduling itself recovers automatically after unlock.
+- **Calendar read/write**, phone only, if you choose Google sync. Select the writable Google calendar in Reminders & agenda → Google Calendar. This is off by default. Google must already be configured and calendar synchronization enabled on the phone.
+- Existing optional permissions (contacts, notifications access, accessibility, appearing on top, etc.) remain individually controlled in **What WatchGPT can do**. They are not required for manual reminders.
+- Samsung battery restrictions can delay background sync. If this happens, allow background usage / unrestricted battery for WatchGPT on the phone and review watch power-saving settings. Force-stop suspends Android delivery until the app is reopened.
 
-> [!IMPORTANT]
-> A Test Store key only goes into **debug** builds. RevenueCat's SDK crashes on purpose when a Test Store
-> key is used in a release build, so release builds leave Plus out when the key starts with `test_`.
+## Sign in and talk
 
-## 3. Install
+In the phone menu choose **Your AI → Sign in with ChatGPT** and complete the browser sign-in yourself. Do not provide credentials or tokens to anyone. Enable cloud use in the app when you want ChatGPT. Start a conversation on the phone first, then on the watch.
 
-```bash
-gradlew :app:installDebug      # phone
-gradlew :wear:installRelease   # watch (release is much faster on it)
-```
+The watch microphone/speaker stream through the phone; supported headphones connected to the phone use Buddy's existing route selection. Watch-connected headphones and Samsung firmware behavior require hardware testing. Phone internet and an active account are required for subscription live voice. Account expiration, access refusal, usage limits, endpoint changes and lost connections are shown explicitly. Tap to reconnect after failure; an automatic retry never repeats prior reminder or alarm commands.
 
-Both builds are signed with the same debug key. The watch-phone link needs that: the two apps only
-talk to each other when their signatures match.
+Set **Settings → Conversation timeout** on the phone. The choice applies to subsequent phone and watch calls.
 
-## 4. First run
+## Activation
 
-1. Open Buddy on the phone and sign in with ChatGPT under **Your AI**.
-2. Under **What Buddy can do**, allow what you want: contacts, texts, calls, notification access (for
-   reading and answering messages), calendar. You can take any of it back later.
-3. Optional: in **Your AI**, download an offline model for private readouts. The picker shows which one
-   fits your phone.
-4. On the watch, open Buddy once and switch on **"Hey Buddy"**. **Learn my voice** helps if it misses
-   you.
+- Add the **WatchGPT** talk tile from your watch's tile picker.
+- On Samsung, open **Settings → Advanced features → Customize buttons → Home button → Double press**, then choose **WatchGPT** (labels can vary with One UI Watch). The existing launcher activity starts a conversation when opened, subject to microphone permission and phone connectivity.
+- Say **“Hey Watch G P T”**, spelling the three letters. Enable wake listening first; **Learn my voice** can adapt the recognizer. Always listening costs battery and may generate false activations. This is a longer phrase than Buddy's original wake word.
+- An Android `ACTION_ASSIST` entry point is registered for the phone. OEM availability in assistant settings varies. No unverified Wear OS `VoiceInteractionService`, long-press replacement, or privileged default-assistant claim is made. Samsung does not provide an ordinary app API to silently assign its hardware button.
 
-Now raise your wrist and say "Hey Buddy".
+## Build
 
-## 5. Check the build
+Use JDK 17, SDK platform 37 / `platforms;android-37.0`, and build-tools 36.0.0. Run `./gradlew :app:assembleRelease :wear:assembleRelease` from the repository. The wake model and sherpa library are fetched with pinned SHA-256 checks. No RevenueCat key, API token, hosted database, or OAuth cloud project is required.
 
-```bash
-gradlew test testDebugUnitTest      # JVM tests, no phone needed
-gradlew lintDebug spotlessCheck checkSyntheticFixtures
-gradlew assembleDebug assembleRelease
-```
-
-More in [Testing](testing.md). If something doesn't work, see [Troubleshooting](troubleshooting.md).
+For emulator development only: `./gradlew :app:assembleDebug :wear:assembleDebug -Pemulator` adds x86_64. Debug builds allow screenshots and include existing debug hooks; use release builds for normal private use.

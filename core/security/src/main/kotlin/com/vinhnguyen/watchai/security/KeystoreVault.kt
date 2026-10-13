@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.security
+package io.github.alisial786.watchgpt.security
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -15,10 +15,10 @@ import com.google.crypto.tink.TinkProtoKeysetFormat
 import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.aead.PredefinedAeadParameters
 import com.google.crypto.tink.integration.android.AndroidKeystore
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.SecretStore
-import com.vinhnguyen.watchai.brain.code
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.SecretStore
+import io.github.alisial786.watchgpt.brain.code
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

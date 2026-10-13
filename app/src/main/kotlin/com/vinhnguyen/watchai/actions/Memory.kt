@@ -1,7 +1,7 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
-import com.vinhnguyen.watchai.brain.SecretStore
-import com.vinhnguyen.watchai.brain.guard.Redactor
+import io.github.alisial786.watchgpt.brain.SecretStore
+import io.github.alisial786.watchgpt.brain.guard.Redactor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,11 +19,11 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 /**
- * What Buddy remembers, encrypted on the phone in its own vault (own Keystore key):
+ * What WatchGPT remembers, encrypted on the phone in its own vault (own Keystore key):
  *
- * - the conversations, for 30 days: the user's words and Buddy's replies as ChatGPT had them,
+ * - the conversations, for 30 days: the user's words and WatchGPT's replies as ChatGPT had them,
  *   never what the phone read out privately (that never reaches ChatGPT, so it isn't here either);
- * - the things the user asked Buddy to keep ("remember that my sister is Mai"), until they're forgotten.
+ * - the things the user asked WatchGPT to keep ("remember that my sister is Mai"), until they're forgotten.
  *
  * A new conversation starts with both ([context]): ChatGPT saw all of it before, and codes, numbers
  * and links are taken out again on the way.
@@ -111,7 +111,7 @@ class Memory(
         writeLocked()
     }
 
-    /** Keeps [text] as something the user asked Buddy to remember; the same text twice is kept once. */
+    /** Keeps [text] as something the user asked WatchGPT to remember; the same text twice is kept once. */
     suspend fun remember(text: String): Fact = mutex.withLock {
         val kept = loadLocked()
         val said = text.trim().take(FACT_MAX)

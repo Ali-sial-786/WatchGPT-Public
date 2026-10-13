@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import android.content.ComponentName
 import android.content.Intent
@@ -26,19 +26,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import com.vinhnguyen.watchai.AppGraph
-import com.vinhnguyen.watchai.R
-import com.vinhnguyen.watchai.actions.BuddyNotificationListener
-import com.vinhnguyen.watchai.actions.MessageInbox
-import com.vinhnguyen.watchai.actions.NoteStore
-import com.vinhnguyen.watchai.actions.PhoneActions
-import com.vinhnguyen.watchai.actions.ReachActions
+import io.github.alisial786.watchgpt.AppGraph
+import io.github.alisial786.watchgpt.R
+import io.github.alisial786.watchgpt.actions.MessageInbox
+import io.github.alisial786.watchgpt.actions.NoteStore
+import io.github.alisial786.watchgpt.actions.PhoneActions
+import io.github.alisial786.watchgpt.actions.ReachActions
+import io.github.alisial786.watchgpt.actions.WatchGPTNotificationListener
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** Which of Buddy's actions the user has allowed, and the notes it keeps. */
+/** Which of WatchGPT's actions the user has allowed, and the notes it keeps. */
 class AbilitiesViewModel(
     private val graph: AppGraph,
 ) : ViewModel() {
@@ -77,7 +77,7 @@ class AbilitiesViewModel(
 }
 
 /**
- * What Buddy can do, in plain words with an example each, and the OKs some of it needs. The same
+ * What WatchGPT can do, in plain words with an example each, and the OKs some of it needs. The same
  * on the watch and in chat. Messages and calls always wait for the user's yes.
  */
 @Composable
@@ -93,7 +93,7 @@ fun AbilitiesScreen(
     val openSettings = { intent: Intent -> runCatching { context.startActivity(intent) } }
     val appSettings = { openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))) }
     var askedAt by remember { mutableLongStateOf(0L) }
-    // The OKs Android didn't give when asked here: from then on, their button opens Buddy's settings.
+    // The OKs Android didn't give when asked here: from then on, their button opens WatchGPT's settings.
     var viaSettings by rememberSaveable { mutableStateOf(emptySet<String>()) }
     val ask =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -101,7 +101,7 @@ fun AbilitiesScreen(
             if (result.values.all { it }) return@rememberLauncherForActivityResult
             viaSettings = viaSettings + result.keys
             // No at once means Android didn't show its question at all (a no before, or a restricted setting):
-            // only Buddy's page in the phone's settings can allow it now, so go there.
+            // only WatchGPT's page in the phone's settings can allow it now, so go there.
             if (SystemClock.elapsedRealtime() - askedAt < NO_QUESTION_MS) appSettings()
         }
     val askFor = { permissions: Array<String> ->
@@ -119,7 +119,7 @@ fun AbilitiesScreen(
         onPauseOrDispose { }
     }
     val askMessages = {
-        val listener = ComponentName(context, BuddyNotificationListener::class.java).flattenToString()
+        val listener = ComponentName(context, WatchGPTNotificationListener::class.java).flattenToString()
         openSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS).putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, listener))
             .onFailure { openSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
         Unit
@@ -198,7 +198,7 @@ fun AbilitiesScreen(
     }
     Group("On your watch") {
         Item(
-            "Hey Buddy",
+            "Hey WatchGPT",
             painter = painterResource(R.drawable.sym_watch),
             subtitle = "Raise your wrist and say it. \"Always listening\" needs no wrist (more battery), \"Learn my voice\" helps it hear you. Say \"bye\" to finish.",
             last = true,
@@ -207,7 +207,7 @@ fun AbilitiesScreen(
 }
 
 /**
- * One thing Buddy does; [allowed] null means it needs no OK. [onAllow] comes last, so a trailing
+ * One thing WatchGPT does; [allowed] null means it needs no OK. [onAllow] comes last, so a trailing
  * lambda is the Allow button (with [onSee] last, Allow did nothing until 29.09).
  */
 @Composable
@@ -240,5 +240,5 @@ private fun Ability(
 private const val NO_QUESTION_MS = 400L
 
 private const val SETTINGS_HINT =
-    "Android didn't let Buddy ask here. In Buddy's settings, open Permissions and allow Contacts, Phone and SMS. If it says " +
-        "the setting is restricted, tap ⋮ at the top of Buddy's settings and allow restricted settings first."
+    "Android didn't let WatchGPT ask here. In WatchGPT's settings, open Permissions and allow Contacts, Phone and SMS. If it says " +
+        "the setting is restricted, tap ⋮ at the top of WatchGPT's settings and allow restricted settings first."

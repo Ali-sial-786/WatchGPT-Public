@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ondevice
+package io.github.alisial786.watchgpt.ondevice
 
 import android.content.Context
 import com.google.mlkit.common.MlKit
@@ -13,18 +13,18 @@ import com.google.mlkit.genai.prompt.TextPart
 import com.google.mlkit.genai.prompt.generateContentRequest
 import com.google.mlkit.genai.prompt.generationConfig
 import com.google.mlkit.genai.prompt.modelConfig
-import com.vinhnguyen.watchai.brain.Availability
-import com.vinhnguyen.watchai.brain.Brain
-import com.vinhnguyen.watchai.brain.BrainError
-import com.vinhnguyen.watchai.brain.BrainId
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.ChatEvent
-import com.vinhnguyen.watchai.brain.ChatRequest
-import com.vinhnguyen.watchai.brain.ChatTurn
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.PromptStyle
-import com.vinhnguyen.watchai.brain.TurnStats
-import com.vinhnguyen.watchai.brain.UnavailableReason
+import io.github.alisial786.watchgpt.brain.Availability
+import io.github.alisial786.watchgpt.brain.Brain
+import io.github.alisial786.watchgpt.brain.BrainError
+import io.github.alisial786.watchgpt.brain.BrainId
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.ChatEvent
+import io.github.alisial786.watchgpt.brain.ChatRequest
+import io.github.alisial786.watchgpt.brain.ChatTurn
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.PromptStyle
+import io.github.alisial786.watchgpt.brain.TurnStats
+import io.github.alisial786.watchgpt.brain.UnavailableReason
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

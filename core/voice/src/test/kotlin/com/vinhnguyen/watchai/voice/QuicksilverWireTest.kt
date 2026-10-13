@@ -1,7 +1,7 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 import com.google.common.truth.Truth.assertThat
-import com.vinhnguyen.watchai.voice.QuicksilverWire.Event
+import io.github.alisial786.watchgpt.voice.QuicksilverWire.Event
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.LocalContentColor
@@ -18,10 +18,10 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.vinhnguyen.watchai.R
+import io.github.alisial786.watchgpt.R
 
 /**
- * Buddy's look on the phone: calm neutrals, one typeface (Inter), and the user's own Buddy as the
+ * WatchGPT's look on the phone: calm neutrals, one typeface (Inter), and the user's own WatchGPT as the
  * only colour. Light and dark follow the system. Material components pick these up, so they come
  * out monochrome too.
  */
@@ -39,7 +39,7 @@ data class Palette(
     val danger: Color,
     /** What glass is tinted with over this background. */
     val glass: Color,
-    /** Buddy's face: dark on a light background, cut out (the background) on a dark one. */
+    /** WatchGPT's face: dark on a light background, cut out (the background) on a dark one. */
     val eyes: Color,
     val dark: Boolean,
 )

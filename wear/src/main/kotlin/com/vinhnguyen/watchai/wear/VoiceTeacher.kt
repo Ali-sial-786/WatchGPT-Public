@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -8,15 +8,15 @@ import android.media.MediaRecorder
 import android.util.Log
 import com.k2fsa.sherpa.onnx.OnlineRecognizer
 import com.k2fsa.sherpa.onnx.OnlineRecognizerConfig
-import com.vinhnguyen.watchai.watchlink.Leveller
-import com.vinhnguyen.watchai.watchlink.Pcm
+import io.github.alisial786.watchgpt.watchlink.Leveller
+import io.github.alisial786.watchgpt.watchlink.Pcm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 /**
- * "Learn my voice": the user reads out a few sentences that start with "Hey Buddy", and this learns
- * how the wake word model hears their voice saying it. The "Hey Buddy" of each take is decoded as
+ * "Learn my voice": the user reads out a few sentences that start with "Hey WatchGPT", and this learns
+ * how the wake word model hears their voice saying it. The "Hey WatchGPT" of each take is decoded as
  * speech with the same model, and what it heard in at least two takes is listened for next to the
  * default phrase (once-only versions only if that isn't enough, and a little more loosely only
  * after that). The same for every voice, and nothing about the person is assumed. The takes stay
@@ -118,7 +118,7 @@ internal class VoiceTeacher(
     }
 
     /**
-     * The "Hey Buddy" of a take: its first stretch of speech, up to the first pause (the comma
+     * The "Hey WatchGPT" of a take: its first stretch of speech, up to the first pause (the comma
      * after it). The whole take if there's none. Quiet is measured against the take's own
      * loudest part.
      */
@@ -247,15 +247,15 @@ internal class VoiceTeacher(
         fun shape(spelling: List<String>): List<String>? {
             if (spelling.isEmpty()) return null
             val starts = spelling.indices.filter { it == 0 || spelling[it].startsWith("▁") }
-            val s = if (starts.size > 3) spelling.take(starts[2]) else spelling
+            val s = if (starts.size > 5) spelling.take(starts[5]) else spelling
             val words = s.indices.count { it == 0 || s[it].startsWith("▁") }
-            return s.takeIf { words in 2..3 && it.size in MIN_PIECES..10 }
+            return s.takeIf { words in 2..5 && it.size in MIN_PIECES..20 }
         }
 
         /** keywords.txt lines for [spellings] at a boost and threshold, "/" between them. */
         fun keywords(
             spellings: List<List<String>>,
             step: Pair<Float, Float>,
-        ): String = spellings.joinToString("/") { "${it.joinToString(" ")} :${step.first} #${step.second} @HEY_BUDDY" }
+        ): String = spellings.joinToString("/") { "${it.joinToString(" ")} :${step.first} #${step.second} @HEY_WATCHGPT" }
     }
 }

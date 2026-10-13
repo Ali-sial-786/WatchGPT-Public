@@ -1,6 +1,6 @@
-package com.vinhnguyen.watchai
+package io.github.alisial786.watchgpt
 
-import com.vinhnguyen.watchai.brain.SecretStore
+import io.github.alisial786.watchgpt.brain.SecretStore
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json

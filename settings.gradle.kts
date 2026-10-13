@@ -36,10 +36,12 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "watch-ai"
+rootProject.name = "WatchGPT"
 
 include(
     ":app",
+    ":core:reminders",
+    ":core:organizer",
     ":core:brain",
     ":core:brain-chatgpt",
     ":core:brain-ondevice",

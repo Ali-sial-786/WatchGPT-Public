@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.content.Context
 import com.k2fsa.sherpa.onnx.FeatureConfig
@@ -7,11 +7,11 @@ import com.k2fsa.sherpa.onnx.KeywordSpotterConfig
 import com.k2fsa.sherpa.onnx.OnlineModelConfig
 import com.k2fsa.sherpa.onnx.OnlineStream
 import com.k2fsa.sherpa.onnx.OnlineTransducerModelConfig
-import com.vinhnguyen.watchai.watchlink.Leveller
-import com.vinhnguyen.watchai.watchlink.Pcm
+import io.github.alisial786.watchgpt.watchlink.Leveller
+import io.github.alisial786.watchgpt.watchlink.Pcm
 
 /**
- * "Hey Buddy", heard on the watch itself: sherpa-onnx keyword spotting with a small English model
+ * "Hey WatchGPT", heard on the watch itself: sherpa-onnx keyword spotting with a small English model
  * (assets/kws, the phrase in keywords.txt, or the user's own spellings once taught, see
  * [VoiceTeacher]). Loading takes about 20 s on a Galaxy Watch5 and listening keeps about 0.7 of
  * a core busy, so it's loaded once and fed only in short windows. The native side isn't

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -23,12 +23,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vinhnguyen.watchai.CustomTabLauncher
-import com.vinhnguyen.watchai.brain.chatgpt.auth.AuthState
-import com.vinhnguyen.watchai.ondevice.ModelSpec
-import com.vinhnguyen.watchai.ondevice.ModelState
+import io.github.alisial786.watchgpt.CustomTabLauncher
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.AuthState
+import io.github.alisial786.watchgpt.ondevice.ModelSpec
+import io.github.alisial786.watchgpt.ondevice.ModelState
 
-/** The AI behind Buddy: the user's ChatGPT account, and the optional models that run on the phone. */
+/** The AI behind WatchGPT: the user's ChatGPT account, and the optional models that run on the phone. */
 @Composable
 fun BrainsScreen(vm: BrainsViewModel) {
     val p = LocalPalette.current
@@ -47,7 +47,7 @@ fun BrainsScreen(vm: BrainsViewModel) {
 
     state.message?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = p.textSecondary, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) }
 
-    Group("ChatGPT", footer = "Buddy talks and acts with your own ChatGPT plan, through OpenAI's sign-in. Your words go to OpenAI, never to us.") {
+    Group("ChatGPT", footer = "Uses your ChatGPT account; no API key. Live voice relies on Buddy’s undocumented endpoint, which may change or be unavailable. Account sign-in alone does not verify live voice access. Your words go to OpenAI.") {
         when (val a = auth) {
             is AuthState.SignedIn -> {
                 Item(

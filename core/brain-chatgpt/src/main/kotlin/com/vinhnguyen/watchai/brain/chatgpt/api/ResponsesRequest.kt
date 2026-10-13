@@ -1,10 +1,10 @@
-package com.vinhnguyen.watchai.brain.chatgpt.api
+package io.github.alisial786.watchgpt.brain.chatgpt.api
 
-import com.vinhnguyen.watchai.brain.ChatRequest
-import com.vinhnguyen.watchai.brain.ChatTurn
-import com.vinhnguyen.watchai.brain.PromptStyle
-import com.vinhnguyen.watchai.brain.chatgpt.auth.Bearer
-import com.vinhnguyen.watchai.brain.chatgpt.auth.OpenAiAuth
+import io.github.alisial786.watchgpt.brain.ChatRequest
+import io.github.alisial786.watchgpt.brain.ChatTurn
+import io.github.alisial786.watchgpt.brain.PromptStyle
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.Bearer
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.OpenAiAuth
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add

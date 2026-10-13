@@ -1,7 +1,7 @@
-package com.vinhnguyen.watchai.voice
+package io.github.alisial786.watchgpt.voice
 
 import com.google.common.truth.Truth.assertThat
-import com.vinhnguyen.watchai.voice.BargeIn.Action
+import io.github.alisial786.watchgpt.voice.BargeIn.Action
 import org.junit.Test
 
 class BargeInTest {

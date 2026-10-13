@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.security
+package io.github.alisial786.watchgpt.security
 
 import android.app.Activity
 import android.os.Build

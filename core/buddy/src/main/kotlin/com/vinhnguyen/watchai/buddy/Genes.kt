@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.buddy
+package io.github.alisial786.watchgpt.buddy
 
 import java.security.MessageDigest
 import kotlin.math.PI
@@ -6,11 +6,11 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * What makes one user's Buddy theirs: body shape, colour and resting face, all from one seed.
- * The seed comes from a hash of the user's id, so every user gets their own Buddy and keeps it
+ * What makes one user's WatchGPT theirs: body shape, colour and resting face, all from one seed.
+ * The seed comes from a hash of the user's id, so every user gets their own WatchGPT and keeps it
  * for good; the id itself never leaves the phone.
  *
- * Changing what a seed produces changes every existing Buddy, so [Rng] and the order of the
+ * Changing what a seed produces changes every existing WatchGPT, so [Rng] and the order of the
  * draws in [of] are fixed: add new traits at the end only.
  */
 public data class Genes(
@@ -25,7 +25,7 @@ public data class Genes(
     public val body: FloatArray get() = shape.radii
 
     public companion object {
-        /** A Buddy for [userId] (e.g. the ChatGPT account id): the same id always gives the same Buddy. */
+        /** A WatchGPT for [userId] (e.g. the ChatGPT account id): the same id always gives the same WatchGPT. */
         public fun forUser(userId: String): Genes = of(seedFor(userId))
 
         /** SHA-256 of a fixed prefix and the id, first 8 bytes: stable, and the id can't be read back. */
@@ -106,7 +106,7 @@ internal object Shapes {
 
 /**
  * Body colours, picked to read on a black watch screen with black eyes cut out of them, and the
- * hue their rings and sparks take: one colour per Buddy, never a rainbow.
+ * hue their rings and sparks take: one colour per WatchGPT, never a rainbow.
  */
 public enum class Tint(
     public val body: Long,
@@ -126,7 +126,7 @@ public enum class Tint(
     SAND(0xFFE8C9A0, 35f),
 }
 
-/** The resting faces a Buddy is born with. Eyes are pills, the mouth a band below them. */
+/** The resting faces a WatchGPT is born with. Eyes are pills, the mouth a band below them. */
 public enum class RestFace(
     public val face: Expression,
 ) {
@@ -149,7 +149,7 @@ private fun pair(
 
 /**
  * SplitMix64: tiny, fast, and fixed by its definition (Steele, Lea and Flood, OOPSLA 2014), so
- * a seed gives the same Buddy on every device and every Kotlin version. kotlin.random makes no
+ * a seed gives the same WatchGPT on every device and every Kotlin version. kotlin.random makes no
  * such promise across versions.
  */
 internal class Rng(

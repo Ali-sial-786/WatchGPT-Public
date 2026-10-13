@@ -1,7 +1,7 @@
-package com.vinhnguyen.watchai.actions.screen
+package io.github.alisial786.watchgpt.actions.screen
 
 /**
- * One thing on the phone's screen, as Android's accessibility tree has it. [id] is Buddy's own
+ * One thing on the phone's screen, as Android's accessibility tree has it. [id] is WatchGPT's own
  * number for it in this look at the screen.
  */
 data class ScreenNode(
@@ -42,7 +42,7 @@ object ScreenModel {
         val lines =
             nodes.mapNotNull { node ->
                 when {
-                    node.password -> "[${node.id}] password field (Buddy never touches it)"
+                    node.password -> "[${node.id}] password field (WatchGPT never touches it)"
                     node.editable -> "[${node.id}] text field${label(node)?.let { " \"$it\"" } ?: ""}"
                     node.inList && node.clickable -> "[${node.id}] item ${++item} in the list"
                     node.clickable -> label(node)?.let { "[${node.id}] ${node.kind} \"$it\"" }

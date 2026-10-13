@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain.chatgpt.auth
+package io.github.alisial786.watchgpt.brain.chatgpt.auth
 
 /**
  * "Sign in with ChatGPT" through OpenAI's public Codex OAuth client. OpenAI supports using a

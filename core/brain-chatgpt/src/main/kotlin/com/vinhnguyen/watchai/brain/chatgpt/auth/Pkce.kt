@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain.chatgpt.auth
+package io.github.alisial786.watchgpt.brain.chatgpt.auth
 
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.security.MessageDigest

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
 import android.app.KeyguardManager
 import android.content.ActivityNotFoundException
@@ -9,10 +9,10 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.net.Uri
 import android.provider.Settings
-import com.vinhnguyen.watchai.brain.BrainLogger
-import com.vinhnguyen.watchai.brain.LogEvent
-import com.vinhnguyen.watchai.brain.ToolSpec
-import com.vinhnguyen.watchai.brain.Toolbox
+import io.github.alisial786.watchgpt.brain.BrainLogger
+import io.github.alisial786.watchgpt.brain.LogEvent
+import io.github.alisial786.watchgpt.brain.ToolSpec
+import io.github.alisial786.watchgpt.brain.Toolbox
 import kotlinx.coroutines.delay
 
 /**
@@ -23,10 +23,10 @@ import kotlinx.coroutines.delay
 class PhoneShortcuts(
     context: Context,
     private val logger: BrainLogger = BrainLogger.None,
-    /** The Buddy app is on screen: Android lets it open things then without the OK. */
+    /** The WatchGPT app is on screen: Android lets it open things then without the OK. */
     private val foreground: () -> Boolean = { false },
     private val cards: CardHub? = null,
-    /** Buddy only opens the apps the user turned on. */
+    /** WatchGPT only opens the apps the user turned on. */
     private val limits: AppLimits? = null,
     /** Turning an app on waits for the user's yes, like a text. */
     private val pending: Pending? = null,
@@ -59,7 +59,7 @@ class PhoneShortcuts(
         val (pkg, label) = find(said).let { found -> found.singleOrNull() ?: return done(OPEN_APP, "invalid", unclear(said, found)) }
         val limits = limits
         if (limits != null && !limits.allowed(pkg)) {
-            val pending = pending ?: return done(OPEN_APP, "refused", "error: $label is off for Buddy; the user can turn it on in Buddy's app, Apps Buddy can use")
+            val pending = pending ?: return done(OPEN_APP, "refused", "error: $label is off for WatchGPT; the user can turn it on in WatchGPT's app, Apps WatchGPT can use")
             return limits.whenOff(pkg, pending, cards) { open(pkg, label) }.let { done(OPEN_APP, outcome(it), it) }
         }
         return open(pkg, label)
@@ -68,18 +68,18 @@ class PhoneShortcuts(
     private suspend fun turnOn(said: String): String {
         val (pkg, label) = find(said).let { found -> found.singleOrNull() ?: return done(TURN_ON_APP, "invalid", unclear(said, found)) }
         val limits = limits ?: return done(TURN_ON_APP, "failed", "error: apps can't be turned on here")
-        if (limits.allowed(pkg)) return done(TURN_ON_APP, "ok", "ok: $label is already on for Buddy")
-        val pending = pending ?: return done(TURN_ON_APP, "refused", "error: the user can turn $label on in Buddy's app, Apps Buddy can use")
-        return limits.whenOff(pkg, pending, cards) { "ok: $label is on for Buddy now; go on with what the user asked" }.let { done(TURN_ON_APP, outcome(it), it) }
+        if (limits.allowed(pkg)) return done(TURN_ON_APP, "ok", "ok: $label is already on for WatchGPT")
+        val pending = pending ?: return done(TURN_ON_APP, "refused", "error: the user can turn $label on in WatchGPT's app, Apps WatchGPT can use")
+        return limits.whenOff(pkg, pending, cards) { "ok: $label is on for WatchGPT now; go on with what the user asked" }.let { done(TURN_ON_APP, outcome(it), it) }
     }
 
-    /** Off right away, no yes needed: it only takes Buddy's access away. */
+    /** Off right away, no yes needed: it only takes WatchGPT's access away. */
     private fun turnOff(said: String): String {
         val (pkg, label) = find(said).let { found -> found.singleOrNull() ?: return done(TURN_OFF_APP, "invalid", unclear(said, found)) }
         val limits = limits ?: return done(TURN_OFF_APP, "failed", "error: apps can't be turned off here")
-        if (!limits.allowed(pkg)) return done(TURN_OFF_APP, "ok", "ok: $label is already off for Buddy")
+        if (!limits.allowed(pkg)) return done(TURN_OFF_APP, "ok", "ok: $label is already off for WatchGPT")
         limits.choose(pkg, false)
-        return done(TURN_OFF_APP, "ok", "ok: $label is off for Buddy now: Buddy won't open it, use it or read its messages")
+        return done(TURN_OFF_APP, "ok", "ok: $label is off for WatchGPT now: WatchGPT won't open it, use it or read its messages")
     }
 
     /** The apps on the home screen whose names match what the user said. */
@@ -108,7 +108,7 @@ class PhoneShortcuts(
         val intent = appContext.packageManager.getLaunchIntentForPackage(pkg) ?: return done(OPEN_APP, "failed", "error: $label can't be opened from here")
         val result = show(OPEN_APP, intent, "opened $label on the phone")
         if (result.startsWith("ok")) {
-            cards?.show(BuddyCard.App(pkg, "Opened $label"))
+            cards?.show(WatchGPTCard.App(pkg, "Opened $label"))
             delay(OPEN_SETTLE_MS)
         }
         return result
@@ -134,7 +134,7 @@ class PhoneShortcuts(
                 .appendQueryParameter("travelmode", MODES[mode ?: "driving"])
                 .appendQueryParameter("dir_action", "navigate")
                 .build()
-        return show(NAVIGATE, Intent(Intent.ACTION_VIEW, uri), "directions to $place are open on the phone").also { if (it.startsWith("ok")) cards?.show(BuddyCard.Place(place)) }
+        return show(NAVIGATE, Intent(Intent.ACTION_VIEW, uri), "directions to $place are open on the phone").also { if (it.startsWith("ok")) cards?.show(WatchGPTCard.Place(place)) }
     }
 
     private fun flashlight(on: Boolean): String {
@@ -143,7 +143,7 @@ class PhoneShortcuts(
             ?: return done(FLASHLIGHT, "failed", "error: this phone has no flashlight")
         return try {
             cameras.setTorchMode(id, on)
-            cards?.show(BuddyCard.Done(Symbol.LIGHT, if (on) "Flashlight on" else "Flashlight off"))
+            cards?.show(WatchGPTCard.Done(Symbol.LIGHT, if (on) "Flashlight on" else "Flashlight off"))
             done(FLASHLIGHT, "ok", "ok: flashlight ${if (on) "on" else "off"}")
         } catch (e: CameraAccessException) {
             done(FLASHLIGHT, "failed", "error: the camera is busy, so the flashlight can't be switched now")
@@ -157,7 +157,7 @@ class PhoneShortcuts(
         what: String,
     ): String {
         if (!foreground() && !Settings.canDrawOverlays(appContext)) {
-            return done(tool, "denied", "error: Android only lets Buddy open things on the phone with its OK. Tell the user to allow \"Open apps and directions\" in the Buddy phone app: in the menu, What Buddy can do.")
+            return done(tool, "denied", "error: Android only lets WatchGPT open things on the phone with its OK. Tell the user to allow \"Open apps and directions\" in the WatchGPT phone app: in the menu, What WatchGPT can do.")
         }
         return try {
             appContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -195,20 +195,20 @@ class PhoneShortcuts(
                     OPEN_APP,
                     "Open an app on the user's phone by its name ('open Spotify'). It shows on the phone's screen. To do something in it " +
                         "(find a chat, read the newest message or email, search for something), go on with look_at_screen, then " +
-                        "find_on_screen, tap and type_text step by step, and finish with read_screen and an exact instruction. Buddy only " +
+                        "find_on_screen, tap and type_text step by step, and finish with read_screen and an exact instruction. WatchGPT only " +
                         "uses the apps the user turned on: for one that's off, this reads back turning it on and waits for their yes.",
                     """{"type":"object","properties":{"name":{"type":"string","description":"The app's name as the user said it."}},"required":["name"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     TURN_ON_APP,
-                    "Turn an app on for Buddy when the user wants Buddy to use it or read its messages: Buddy only uses the apps the user " +
+                    "Turn an app on for WatchGPT when the user wants WatchGPT to use it or read its messages: WatchGPT only uses the apps the user " +
                         "turned on. Reads back and waits for the user's yes. Banking, payment, password and settings apps can't be turned " +
-                        "on this way: the user does that by hand in Buddy's app.",
+                        "on this way: the user does that by hand in WatchGPT's app.",
                     """{"type":"object","properties":{"name":{"type":"string","description":"The app's name as the user said it."}},"required":["name"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     TURN_OFF_APP,
-                    "Turn an app off for Buddy when the user wants Buddy out of it: Buddy then won't open it, use it or read its " +
+                    "Turn an app off for WatchGPT when the user wants WatchGPT out of it: WatchGPT then won't open it, use it or read its " +
                         "messages. Right away, no yes needed.",
                     """{"type":"object","properties":{"name":{"type":"string","description":"The app's name as the user said it."}},"required":["name"],"additionalProperties":false}""",
                 ),

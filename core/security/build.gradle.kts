@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vinhnguyen.watchai.core.security"
+    namespace = "io.github.alisial786.watchgpt.core.security"
     compileSdk = 37
 
     defaultConfig {

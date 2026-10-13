@@ -1,6 +1,6 @@
-package com.vinhnguyen.watchai.brain.chatgpt.api
+package io.github.alisial786.watchgpt.brain.chatgpt.api
 
-import com.vinhnguyen.watchai.brain.BrainError
+import io.github.alisial786.watchgpt.brain.BrainError
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject

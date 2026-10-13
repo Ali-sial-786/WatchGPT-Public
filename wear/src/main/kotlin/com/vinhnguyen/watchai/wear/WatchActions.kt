@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
@@ -7,7 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
 import android.provider.AlarmClock
-import com.vinhnguyen.watchai.watchlink.Control
+import io.github.alisial786.watchgpt.watchlink.Control
 
 /**
  * What the watch does itself when the phone asks during a call: timers and alarms in its own clock
@@ -53,32 +53,17 @@ internal class WatchActions(
     private fun clock(
         request: Control,
         onScreen: Boolean,
-    ): String {
-        if (!onScreen) return "error: Buddy isn't on the watch screen, so it can't open the watch's clock. Ask the user to open it and try again."
-        val (intent, done) =
-            when (request.type) {
-                "timer" -> {
-                    val seconds = request.seconds ?: return "error: the timer needs a length"
-                    Intent(AlarmClock.ACTION_SET_TIMER).putExtra(AlarmClock.EXTRA_LENGTH, seconds) to "ok: timer set on the watch for $seconds seconds"
-                }
-
-                "alarm" -> {
-                    val hour = request.hour ?: return "error: the alarm needs an hour"
-                    val minute = request.minute ?: 0
-                    Intent(AlarmClock.ACTION_SET_ALARM)
-                        .putExtra(AlarmClock.EXTRA_HOUR, hour)
-                        .putExtra(AlarmClock.EXTRA_MINUTES, minute) to "ok: alarm set on the watch for ${"%02d:%02d".format(hour, minute)}"
-                }
-
-                else -> return "error: the watch can't do ${request.type}"
-            }
-        intent.putExtra(AlarmClock.EXTRA_SKIP_UI, true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        request.label?.let { intent.putExtra(AlarmClock.EXTRA_MESSAGE, it) }
-        return try {
-            appContext.startActivity(intent)
-            done
-        } catch (e: ActivityNotFoundException) {
-            "error: the watch has no clock app for that"
-        }
+    ): String = try {
+        io.github.alisial786.watchgpt.organizer.NativeClock.request(
+            appContext,
+            onScreen,
+            seconds = if (request.type == "timer") request.seconds else null,
+            hour = request.hour,
+            minute = request.minute ?: 0,
+            label = request.label,
+            days = request.days,
+        )
+    } catch (_: IllegalArgumentException) {
+        "error: invalid alarm or timer details"
     }
 }

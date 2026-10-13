@@ -1,19 +1,19 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.vinhnguyen.watchai.watchlink.Wav
+import io.github.alisial786.watchgpt.watchlink.Wav
 import java.io.File
 
 /**
- * Debug builds only: plays a WAV (16 kHz, mono, 16-bit) to "Hey Buddy" as if the watch heard it,
- * to test the wake word without talking. Use synthetic speech only; "Hey Buddy" must be on. A heard
+ * Debug builds only: plays a WAV (16 kHz, mono, 16-bit) to "Hey WatchGPT" as if the watch heard it,
+ * to test the wake word without talking. Use synthetic speech only; "Hey WatchGPT" must be on. A heard
  * phrase only ticks and logs ("dry", on unless --ez dry false) instead of calling the phone.
  *
- *   adb push hey.wav /sdcard/Android/data/com.vinhnguyen.watchai/files/hey.wav
- *   adb shell am broadcast -n com.vinhnguyen.watchai/com.vinhnguyen.watchai.wear.HearWav --es file hey.wav
+ *   adb push hey.wav /sdcard/Android/data/io.github.alisial786.watchgpt/files/hey.wav
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/io.github.alisial786.watchgpt.wear.HearWav --es file hey.wav
  *
  * --ef level 0.02 plays it as loud as speech reaches a watch mic (its loudest 100 ms at that RMS).
  */
@@ -36,7 +36,7 @@ class HearWav : BroadcastReceiver() {
             Log.w(TAG, "not a 16 kHz mono 16-bit WAV")
             return
         }
-        Log.i(TAG, if (CallService.testWakeWord(pcm)) "playing ${pcm.size / 16} ms of ${file.name} to the wake word" else "\"Hey Buddy\" is off")
+        Log.i(TAG, if (CallService.testWakeWord(pcm)) "playing ${pcm.size / 16} ms of ${file.name} to the wake word" else "\"Hey WatchGPT\" is off")
     }
 
     private fun scaled(

@@ -1,21 +1,21 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vinhnguyen.watchai.AppGraph
-import com.vinhnguyen.watchai.PhoneTalkService
-import com.vinhnguyen.watchai.actions.BuddyCard
-import com.vinhnguyen.watchai.actions.ConversationActions
-import com.vinhnguyen.watchai.actions.OwnerPresence
-import com.vinhnguyen.watchai.actions.Pending
-import com.vinhnguyen.watchai.actions.VoiceReply
-import com.vinhnguyen.watchai.brain.Toolboxes
-import com.vinhnguyen.watchai.brain.chatgpt.ChatGptHttp
-import com.vinhnguyen.watchai.brain.chatgpt.auth.AuthState
-import com.vinhnguyen.watchai.buddy.Reaction
-import com.vinhnguyen.watchai.voice.ChatGptRealtimeSession
-import com.vinhnguyen.watchai.voice.VoicePhase
-import com.vinhnguyen.watchai.voice.VoiceState
+import io.github.alisial786.watchgpt.AppGraph
+import io.github.alisial786.watchgpt.PhoneTalkService
+import io.github.alisial786.watchgpt.actions.ConversationActions
+import io.github.alisial786.watchgpt.actions.OwnerPresence
+import io.github.alisial786.watchgpt.actions.Pending
+import io.github.alisial786.watchgpt.actions.VoiceReply
+import io.github.alisial786.watchgpt.actions.WatchGPTCard
+import io.github.alisial786.watchgpt.brain.Toolboxes
+import io.github.alisial786.watchgpt.brain.chatgpt.ChatGptHttp
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.AuthState
+import io.github.alisial786.watchgpt.buddy.Reaction
+import io.github.alisial786.watchgpt.voice.ChatGptRealtimeSession
+import io.github.alisial786.watchgpt.voice.VoicePhase
+import io.github.alisial786.watchgpt.voice.VoiceState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,8 +32,8 @@ import kotlinx.coroutines.sync.withLock
 import java.util.UUID
 
 /**
- * Talking to Buddy on the phone, like on the watch: tap Buddy, talk, tap again or say bye. ChatGPT
- * voice on the user's own plan, with everything Buddy can do. A conversation from the watch shows
+ * Talking to WatchGPT on the phone, like on the watch: tap WatchGPT, talk, tap again or say bye. ChatGPT
+ * voice on the user's own plan, with everything WatchGPT can do. A conversation from the watch shows
  * here too, and a tap ends it. It keeps going when the user switches apps (the talk service holds
  * the mic); without that service, it ends after a short while in the background.
  */
@@ -49,7 +49,7 @@ class TalkViewModel(
         val reactionId: Int = 0,
     )
 
-    /** What a tap on Buddy did. */
+    /** What a tap on WatchGPT did. */
     enum class Tap { TALKING, ENDED, NEEDS_SIGN_IN, NEEDS_MIC }
 
     private val _state = MutableStateFlow(State())
@@ -57,9 +57,9 @@ class TalkViewModel(
 
     private val _island = MutableStateFlow<Island>(Island.Hidden)
 
-    /** The pop-up at the top: the conversation, or a card for what Buddy just did. */
+    /** The pop-up at the top: the conversation, or a card for what WatchGPT just did. */
     val island: StateFlow<Island> = _island.asStateFlow()
-    private var card: BuddyCard? = null
+    private var card: WatchGPTCard? = null
     private var cardJob: Job? = null
     private val _level = MutableStateFlow(0f)
     val level: StateFlow<Float> = _level.asStateFlow()
@@ -121,7 +121,7 @@ class TalkViewModel(
         viewModelScope.launch {
             lock.withLock {
                 endLocked()
-                // The conversation starts knowing what Buddy remembers, and its turns go to the history.
+                // The conversation starts knowing what WatchGPT remembers, and its turns go to the history.
                 val conversation = UUID.randomUUID().toString()
                 val remembered = graph.remembered()
                 val s =
@@ -137,7 +137,7 @@ class TalkViewModel(
                         ),
                         graph.logger,
                         voice = graph.settings.voice,
-                        idleHangUpMs = IDLE_HANG_UP_MS,
+                        idleHangUpMs = graph.settings.conversationTimeoutSeconds.takeIf { it > 0 }?.times(1000L),
                         onIdle = { end() },
                         instructions = listOfNotNull(ChatGptRealtimeSession.VOICE_INSTRUCTIONS, remembered).joinToString("\n"),
                         onUserWords = graph.userTurns::heard,
@@ -172,14 +172,14 @@ class TalkViewModel(
         refreshIsland()
     }
 
-    private fun showCard(next: BuddyCard) {
+    private fun showCard(next: WatchGPTCard) {
         card = next
         cardJob?.cancel()
         // A text or call waits for its answer as long as the yes may come; the rest go after a few seconds.
         val keep =
             when (next) {
-                is BuddyCard.Ask -> Pending.TTL_MS
-                is BuddyCard.Place, is BuddyCard.Messages -> LONG_CARD_MS
+                is WatchGPTCard.Ask -> Pending.TTL_MS
+                is WatchGPTCard.Place, is WatchGPTCard.Messages -> LONG_CARD_MS
                 else -> CARD_MS
             }
         cardJob =
@@ -211,7 +211,7 @@ class TalkViewModel(
         _state.update { State(reaction = it.reaction, reactionId = it.reactionId) }
     }
 
-    /** Buddy follows the conversation: listening, thinking, talking. */
+    /** WatchGPT follows the conversation: listening, thinking, talking. */
     private fun show(
         voice: VoiceState,
         onWatch: Boolean,
@@ -244,7 +244,6 @@ class TalkViewModel(
 
     private companion object {
         /** Like on the watch: back to rest after 10 s with nobody talking. */
-        const val IDLE_HANG_UP_MS = 10_000L
         const val BACKGROUND_GRACE_MS = 30_000L
         const val ON_PHONE = "on the phone"
         const val CARD_MS = 6_000L

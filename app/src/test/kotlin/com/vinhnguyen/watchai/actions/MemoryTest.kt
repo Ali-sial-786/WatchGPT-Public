@@ -1,7 +1,7 @@
-package com.vinhnguyen.watchai.actions
+package io.github.alisial786.watchgpt.actions
 
 import com.google.common.truth.Truth.assertThat
-import com.vinhnguyen.watchai.brain.SecretStore
+import io.github.alisial786.watchgpt.brain.SecretStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

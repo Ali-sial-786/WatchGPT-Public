@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.watchlink
+package io.github.alisial786.watchgpt.watchlink
 
 import kotlin.math.PI
 import kotlin.math.exp
@@ -6,7 +6,7 @@ import kotlin.math.min
 import kotlin.math.sin
 
 /**
- * A short rising two-note chime (G5 then D6, about a quarter second): Buddy is listening now.
+ * A short rising two-note chime (G5 then D6, about a quarter second): WatchGPT is listening now.
  * Without it nothing said so, apart from the face, which nobody looks at with earbuds in (28.09).
  */
 public object Chime {

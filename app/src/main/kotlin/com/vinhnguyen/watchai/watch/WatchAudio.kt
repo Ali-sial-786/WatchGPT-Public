@@ -1,24 +1,24 @@
-package com.vinhnguyen.watchai.watch
+package io.github.alisial786.watchgpt.watch
 
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
 import android.os.SystemClock
 import android.util.Log
-import com.vinhnguyen.watchai.buddy.Reaction
-import com.vinhnguyen.watchai.voice.ExternalAudio
-import com.vinhnguyen.watchai.voice.VoicePhase
-import com.vinhnguyen.watchai.watchlink.Adpcm
-import com.vinhnguyen.watchai.watchlink.Chime
-import com.vinhnguyen.watchai.watchlink.Control
-import com.vinhnguyen.watchai.watchlink.Frame
-import com.vinhnguyen.watchai.watchlink.FrameCodec
-import com.vinhnguyen.watchai.watchlink.LinkStats
-import com.vinhnguyen.watchai.watchlink.Outbox
-import com.vinhnguyen.watchai.watchlink.Pcm
-import com.vinhnguyen.watchai.watchlink.PcmQueue
-import com.vinhnguyen.watchai.watchlink.SilenceGate
-import com.vinhnguyen.watchai.watchlink.WatchLink
+import io.github.alisial786.watchgpt.buddy.Reaction
+import io.github.alisial786.watchgpt.voice.ExternalAudio
+import io.github.alisial786.watchgpt.voice.VoicePhase
+import io.github.alisial786.watchgpt.watchlink.Adpcm
+import io.github.alisial786.watchgpt.watchlink.Chime
+import io.github.alisial786.watchgpt.watchlink.Control
+import io.github.alisial786.watchgpt.watchlink.Frame
+import io.github.alisial786.watchgpt.watchlink.FrameCodec
+import io.github.alisial786.watchgpt.watchlink.LinkStats
+import io.github.alisial786.watchgpt.watchlink.Outbox
+import io.github.alisial786.watchgpt.watchlink.Pcm
+import io.github.alisial786.watchgpt.watchlink.PcmQueue
+import io.github.alisial786.watchgpt.watchlink.SilenceGate
+import io.github.alisial786.watchgpt.watchlink.WatchLink
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
@@ -57,7 +57,7 @@ class WatchAudio(
      * Ends once that has played out, or soon after the call started if nothing was said.
      *
      * With earbuds as the mic the watch keeps listening until then too: the earbuds only hear
-     * once GPT-Live is connected, about 5 s after "Hey Buddy" (28.09), and what was said to the
+     * once GPT-Live is connected, about 5 s after "Hey WatchGPT" (28.09), and what was said to the
      * watch meanwhile was lost. Once caught up, the watch is told to hand over.
      */
     @Volatile private var catchUp = true
@@ -115,7 +115,7 @@ class WatchAudio(
         }
     }
 
-    /** Buddy on the watch: a reaction (played once, for a few seconds) and/or the seed of this user's Buddy. */
+    /** WatchGPT on the watch: a reaction (played once, for a few seconds) and/or the seed of this user's WatchGPT. */
     fun mascot(
         reaction: Reaction? = null,
         seed: Long? = null,

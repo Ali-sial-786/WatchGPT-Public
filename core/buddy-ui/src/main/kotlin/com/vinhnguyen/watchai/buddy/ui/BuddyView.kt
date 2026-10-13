@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.buddy.ui
+package io.github.alisial786.watchgpt.buddy.ui
 
 import android.provider.Settings
 import androidx.compose.foundation.Canvas
@@ -15,26 +15,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.vinhnguyen.watchai.buddy.Act
-import com.vinhnguyen.watchai.buddy.Director
-import com.vinhnguyen.watchai.buddy.Genes
-import com.vinhnguyen.watchai.buddy.Reaction
-import com.vinhnguyen.watchai.buddy.Scene
+import io.github.alisial786.watchgpt.buddy.Act
+import io.github.alisial786.watchgpt.buddy.Director
+import io.github.alisial786.watchgpt.buddy.Genes
+import io.github.alisial786.watchgpt.buddy.Reaction
+import io.github.alisial786.watchgpt.buddy.Scene
 import kotlinx.coroutines.delay
 
 /**
- * A living Buddy: the [Director] sampled on the view's own clock, drawn by [drawBuddy]. Callers
- * say what Buddy is doing ([act], and a [reaction] each time [reactionId] goes up) and the voice
+ * A living WatchGPT: the [Director] sampled on the view's own clock, drawn by [drawWatchGPT]. Callers
+ * say what WatchGPT is doing ([act], and a [reaction] each time [reactionId] goes up) and the voice
  * [level]; the view notes when each change happened on its clock. [paper] is the colour behind
  * the view: the eyes and mouth show it.
  *
  * [fps] caps how often it redraws, [busyFps] while a reaction plays (rings, bursts, the comet).
- * For the phone and for frozen screenshots: on the watch [BuddySurface] draws the same Buddy for
+ * For the phone and for frozen screenshots: on the watch [WatchGPTSurface] draws the same WatchGPT for
  * about half the CPU. [frozenAt] stops the clock at that many seconds into the act and reaction,
- * for screenshots and tests. With the system's animations off Buddy holds still.
+ * for screenshots and tests. With the system's animations off WatchGPT holds still.
  */
 @Composable
-fun BuddyView(
+fun WatchGPTView(
     genes: Genes,
     act: Act,
     reaction: Reaction?,
@@ -52,7 +52,7 @@ fun BuddyView(
     val context = LocalContext.current
     val still = remember { Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }
     val director = remember(genes, still) { Director(genes, still) }
-    val paths = remember { BuddyPaths() }
+    val paths = remember { WatchGPTPaths() }
     val ink = remember(genes) { inkOf(genes) }
     val accent = remember(genes) { accentOf(genes) }
     var t by remember { mutableDoubleStateOf(frozenAt ?: 0.0) }
@@ -75,10 +75,10 @@ fun BuddyView(
             t = (System.nanoTime() - start) / 1e9
         }
     }
-    // Its own layer: a tick re-records only Buddy, not the screen around it.
+    // Its own layer: a tick re-records only WatchGPT, not the screen around it.
     Canvas(modifier.graphicsLayer()) {
         val frame = director.frame(scene, level, t, blend = frozenAt == null && !ambient)
-        if (ambient) drawAmbientBuddy(frame, paths) else drawBuddy(frame, ink, accent, paper, paths, eyes = eyes)
+        if (ambient) drawAmbientWatchGPT(frame, paths) else drawWatchGPT(frame, ink, accent, paper, paths, eyes = eyes)
     }
 }
 

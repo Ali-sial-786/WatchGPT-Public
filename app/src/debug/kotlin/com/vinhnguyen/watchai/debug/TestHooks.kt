@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.debug
+package io.github.alisial786.watchgpt.debug
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -6,11 +6,11 @@ import android.content.Intent
 import android.os.SystemClock
 import android.provider.Telephony
 import android.telecom.TelecomManager
-import com.vinhnguyen.watchai.WatchAiApp
-import com.vinhnguyen.watchai.actions.BuddyCard
-import com.vinhnguyen.watchai.actions.Symbol
-import com.vinhnguyen.watchai.brain.guard.onPhone
-import com.vinhnguyen.watchai.ui.TestPage
+import io.github.alisial786.watchgpt.WatchAiApp
+import io.github.alisial786.watchgpt.actions.Symbol
+import io.github.alisial786.watchgpt.actions.WatchGPTCard
+import io.github.alisial786.watchgpt.brain.guard.onPhone
+import io.github.alisial786.watchgpt.ui.TestPage
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -19,19 +19,19 @@ import timber.log.Timber
  * made-up pop-up in the running app, or checks the phone's own model and voice on made-up messages.
  * A broadcast, not an activity extra, so nothing sticks to the app's launch and comes back later.
  *
- *   adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es page settings
- *   adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es card place
- *   adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es check speak [--ez aloud true]
- *   adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es check icon   (then adb pull files/icon.png)
- *   adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es screen look_at_screen
- *   adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es screen tap --es args '{"id":3}'
- *   adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es screen read_screen --es args '{"instruction":"say the newest message"}' [--ez aloud true]
- *   adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es check answer --es data '<made-up messages>' --es language <tag>
- *   adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es check tap --es app <name> --es words '<label>' [--ez list true]
- *   adb shell am broadcast -n com.vinhnguyen.watchai/.debug.TestHooks --es limits <package>
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es page settings
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es card place
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es check speak [--ez aloud true]
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es check icon   (then adb pull files/icon.png)
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es screen look_at_screen
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es screen tap --es args '{"id":3}'
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es screen read_screen --es args '{"instruction":"say the newest message"}' [--ez aloud true]
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es check answer --es data '<made-up messages>' --es language <tag>
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es check tap --es app <name> --es words '<label>' [--ez list true]
+ *   adb shell am broadcast -n io.github.alisial786.watchgpt/.debug.TestHooks --es limits <package>
  *
  * Pages: home, menu, chat, abilities, activity, ai, settings, safety, inbox, plus, look, voice_lab, buddies. Cards:
- * timer, note, app, text, call, place, messages. Checks log to tag BuddyTest and show nothing.
+ * timer, note, app, text, call, place, messages. Checks log to tag WatchGPTTest and show nothing.
  */
 class TestHooks : BroadcastReceiver() {
     override fun onReceive(
@@ -69,7 +69,7 @@ class TestHooks : BroadcastReceiver() {
                         if (aloud) graph.speech.synthesize(said)?.let { graph.speech.play(it) }
                         true
                     }
-                val result = guard.run(tool, args, com.vinhnguyen.watchai.brain.ToolContext(intent.getStringExtra("question").orEmpty()))
+                val result = guard.run(tool, args, io.github.alisial786.watchgpt.brain.ToolContext(intent.getStringExtra("question").orEmpty()))
                 val ms = SystemClock.elapsedRealtime() - started
                 val words = said.split(' ').count { it.isNotBlank() }
                 val shown = if (private) leakCheck(result) else result
@@ -97,7 +97,7 @@ class TestHooks : BroadcastReceiver() {
         if (intent.getStringExtra("check") == "tap") {
             // The phone's model judging a made-up control: --es app, --es words, [--es name view_id] [--ez list true], or Enter in a field [--ez enter true].
             val node =
-                com.vinhnguyen.watchai.actions.screen.ScreenNode(
+                io.github.alisial786.watchgpt.actions.screen.ScreenNode(
                     id = 1,
                     kind = "button",
                     text = intent.getStringExtra("words").orEmpty(),
@@ -108,13 +108,13 @@ class TestHooks : BroadcastReceiver() {
             val app = intent.getStringExtra("app") ?: "an app"
             val question =
                 if (intent.getBooleanExtra("enter", false)) {
-                    com.vinhnguyen.watchai.actions.screen.ScreenModel.enterQuestion(app, node)
+                    io.github.alisial786.watchgpt.actions.screen.ScreenModel.enterQuestion(app, node)
                 } else {
-                    com.vinhnguyen.watchai.actions.screen.ScreenModel.tapQuestion(app, node)
+                    io.github.alisial786.watchgpt.actions.screen.ScreenModel.tapQuestion(app, node)
                 }
             graph.scope.launch {
                 val started = SystemClock.elapsedRealtime()
-                val yes = question?.let { graph.reader.pick(it, com.vinhnguyen.watchai.actions.screen.ScreenModel.TAP_CHOICES) }
+                val yes = question?.let { graph.reader.pick(it, io.github.alisial786.watchgpt.actions.screen.ScreenModel.TAP_CHOICES) }
                 val ms = SystemClock.elapsedRealtime() - started
                 Timber.tag(TAG).i("tap %s: %s (%d ms)", node.text, yes ?: "unknown", ms)
             }
@@ -122,15 +122,15 @@ class TestHooks : BroadcastReceiver() {
         if (intent.getStringExtra("check") == "app") {
             // The phone's model judging an app by a made-up --es label and --es pkg, installed or not.
             val label = intent.getStringExtra("label").orEmpty()
-            val question = com.vinhnguyen.watchai.actions.AppLimits.question(label, intent.getStringExtra("pkg").orEmpty())
+            val question = io.github.alisial786.watchgpt.actions.AppLimits.question(label, intent.getStringExtra("pkg").orEmpty())
             graph.scope.launch {
                 val started = SystemClock.elapsedRealtime()
-                val yes = graph.reader.pick(question, com.vinhnguyen.watchai.actions.AppLimits.CHOICES)
+                val yes = graph.reader.pick(question, io.github.alisial786.watchgpt.actions.AppLimits.CHOICES)
                 Timber.tag(TAG).i("app %s: %s (%d ms)", label, yes ?: "unknown", SystemClock.elapsedRealtime() - started)
             }
         }
         intent.getStringExtra("limits")?.let { pkg ->
-            // Whether Buddy may use one app (turned on, and not one that is always off), by its package name.
+            // Whether WatchGPT may use one app (turned on, and not one that is always off), by its package name.
             graph.scope.launch {
                 val started = SystemClock.elapsedRealtime()
                 val out = "allowed ${graph.limits.allowed(pkg)}, always off ${graph.limits.alwaysOff(pkg)}"
@@ -151,7 +151,7 @@ class TestHooks : BroadcastReceiver() {
         // --es e2e_new x, --es e2e_message "<from>|<text>" (made up), --es e2e_clean x.
         // The windows the accessibility service sees: type, whether active or focused, and whose they are (no content).
         if (intent.getStringExtra("check") == "windows") {
-            val service = com.vinhnguyen.watchai.actions.screen.BuddyAccessibility.current
+            val service = io.github.alisial786.watchgpt.actions.screen.WatchGPTAccessibility.current
             val windows = runCatching { service?.windows }.getOrNull().orEmpty()
             windows.forEachIndexed { i, w ->
                 Timber.tag(TAG).i("window %d: type %d, active %s, focused %s, layer %d, app %s", i, w.type, w.isActive, w.isFocused, w.layer, w.root?.packageName)
@@ -224,7 +224,7 @@ class TestHooks : BroadcastReceiver() {
      */
     private fun leakCheck(result: String): String {
         val nodes =
-            com.vinhnguyen.watchai.actions.screen.BuddyAccessibility.current
+            io.github.alisial786.watchgpt.actions.screen.WatchGPTAccessibility.current
                 ?.look()
                 ?.nodes
                 .orEmpty()
@@ -259,26 +259,26 @@ class TestHooks : BroadcastReceiver() {
     private fun card(
         context: Context,
         name: String?,
-    ): BuddyCard? {
+    ): WatchGPTCard? {
         val sms = runCatching { Telephony.Sms.getDefaultSmsPackage(context) }.getOrNull() ?: context.packageName
         return when (name) {
-            "timer" -> BuddyCard.Done(Symbol.TIMER, "Timer · 10 minutes", "Pasta")
+            "timer" -> WatchGPTCard.Done(Symbol.TIMER, "Timer · 10 minutes", "Pasta")
 
-            "note" -> BuddyCard.Done(Symbol.NOTE, "Note saved", "Buy oat milk and batteries")
+            "note" -> WatchGPTCard.Done(Symbol.NOTE, "Note saved", "Buy oat milk and batteries")
 
-            "app" -> BuddyCard.App("com.android.chrome", "Opened Chrome")
+            "app" -> WatchGPTCard.App("com.android.chrome", "Opened Chrome")
 
-            "text" -> BuddyCard.Ask("Text Alex", "Running ten minutes late, see you at the station", "Send", sms)
+            "text" -> WatchGPTCard.Ask("Text Alex", "Running ten minutes late, see you at the station", "Send", sms)
 
-            "call" -> BuddyCard.Ask("Call Alex", "Mobile", "Call", context.getSystemService(TelecomManager::class.java).defaultDialerPackage)
+            "call" -> WatchGPTCard.Ask("Call Alex", "Mobile", "Call", context.getSystemService(TelecomManager::class.java).defaultDialerPackage)
 
-            "place" -> BuddyCard.Place("Aachen Hauptbahnhof")
+            "place" -> WatchGPTCard.Place("Aachen Hauptbahnhof")
 
             "messages" ->
-                BuddyCard.Messages(
+                WatchGPTCard.Messages(
                     listOf(
-                        BuddyCard.Messages.Line(sms, "Sam", "Are we still on for dinner tonight?"),
-                        BuddyCard.Messages.Line(sms, "Alex", "On my way, ten minutes"),
+                        WatchGPTCard.Messages.Line(sms, "Sam", "Are we still on for dinner tonight?"),
+                        WatchGPTCard.Messages.Line(sms, "Alex", "On my way, ten minutes"),
                     ),
                 )
 
@@ -287,7 +287,7 @@ class TestHooks : BroadcastReceiver() {
     }
 
     private companion object {
-        const val TAG = "BuddyTest"
+        const val TAG = "WatchGPTTest"
         const val DEMO = "debug-demo"
 
         /** Made up: none of these people, numbers or sites exist. */

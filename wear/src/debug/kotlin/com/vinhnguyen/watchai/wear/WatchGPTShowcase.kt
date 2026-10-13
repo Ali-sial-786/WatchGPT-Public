@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.wear
+package io.github.alisial786.watchgpt.wear
 
 import android.content.Intent
 import android.os.Bundle
@@ -16,23 +16,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.vinhnguyen.watchai.buddy.Act
-import com.vinhnguyen.watchai.buddy.Genes
-import com.vinhnguyen.watchai.buddy.Mood
-import com.vinhnguyen.watchai.buddy.Reaction
-import com.vinhnguyen.watchai.buddy.ui.BuddySurface
-import com.vinhnguyen.watchai.buddy.ui.BuddyView
+import io.github.alisial786.watchgpt.buddy.Act
+import io.github.alisial786.watchgpt.buddy.Genes
+import io.github.alisial786.watchgpt.buddy.Mood
+import io.github.alisial786.watchgpt.buddy.Reaction
+import io.github.alisial786.watchgpt.buddy.ui.WatchGPTSurface
+import io.github.alisial786.watchgpt.buddy.ui.WatchGPTView
 
 /**
- * Debug builds only: one Buddy, frozen at a moment, for screenshots. Every extra is optional:
+ * Debug builds only: one WatchGPT, frozen at a moment, for screenshots. Every extra is optional:
  *
- *   adb shell am start -n com.vinhnguyen.watchai/com.vinhnguyen.watchai.wear.BuddyShowcase \
+ *   adb shell am start -n io.github.alisial786.watchgpt/io.github.alisial786.watchgpt.wear.WatchGPTShowcase \
  *     --el seed 42 --es mood happy --es act speak --ef t 0.4 --ef level 0.5
  *
  * Live instead of frozen: --ez live true --ei fps 10 --ei busy 24, and --ez surface true for the
- * watch's own renderer (BuddySurface).
+ * watch's own renderer (WatchGPTSurface).
  */
-class BuddyShowcase : ComponentActivity() {
+class WatchGPTShowcase : ComponentActivity() {
     private var shown by mutableStateOf<Intent?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +47,7 @@ class BuddyShowcase : ComponentActivity() {
             val live = extras.getBooleanExtra("live", false)
             Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
                 if (live && extras.getBooleanExtra("surface", false)) {
-                    BuddySurface(
+                    WatchGPTSurface(
                         genes = Genes.of(seed),
                         act = act,
                         reaction = mood?.let { Reaction(it, extras.getFloatExtra("intensity", 0.8f)) },
@@ -60,7 +60,7 @@ class BuddyShowcase : ComponentActivity() {
                     )
                     return@Box
                 }
-                BuddyView(
+                WatchGPTView(
                     genes = Genes.of(seed),
                     act = act,
                     reaction = mood?.let { Reaction(it, extras.getFloatExtra("intensity", 0.8f)) },

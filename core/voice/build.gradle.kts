@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vinhnguyen.watchai.core.voice"
+    namespace = "io.github.alisial786.watchgpt.core.voice"
     compileSdk = 37
 
     defaultConfig {

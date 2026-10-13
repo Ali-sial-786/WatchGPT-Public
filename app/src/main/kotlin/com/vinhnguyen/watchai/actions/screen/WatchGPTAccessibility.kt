@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.actions.screen
+package io.github.alisial786.watchgpt.actions.screen
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
@@ -12,12 +12,12 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * Buddy's hands on the phone's screen, once the user switches it on in Android's accessibility
+ * WatchGPT's hands on the phone's screen, once the user switches it on in Android's accessibility
  * settings: it reads the app in front and taps, types and scrolls in it for the voice. It doesn't
  * watch in the background: it looks only when a tool asks ([ScreenActions]), and never at all in
- * the apps [com.vinhnguyen.watchai.actions.AppLimits] keeps it out of.
+ * the apps [io.github.alisial786.watchgpt.actions.AppLimits] keeps it out of.
  */
-class BuddyAccessibility : AccessibilityService() {
+class WatchGPTAccessibility : AccessibilityService() {
     override fun onServiceConnected() {
         current = this
     }
@@ -155,7 +155,7 @@ class BuddyAccessibility : AccessibilityService() {
 
     companion object {
         /** The running service, or null while the user hasn't switched it on. */
-        @Volatile var current: BuddyAccessibility? = null
+        @Volatile var current: WatchGPTAccessibility? = null
             private set
 
         private const val MAX_DEPTH = 40

@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.ui
+package io.github.alisial786.watchgpt.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -14,13 +14,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vinhnguyen.watchai.AppSettings
-import com.vinhnguyen.watchai.actions.Memory
+import io.github.alisial786.watchgpt.AppSettings
+import io.github.alisial786.watchgpt.actions.Memory
 import kotlinx.coroutines.launch
 
 /**
- * What Buddy remembers: what the user asked it to keep, and the conversations of the last 30 days
- * (their words and Buddy's replies), encrypted on this phone. Everything can be turned off or deleted here.
+ * What WatchGPT remembers: what the user asked it to keep, and the conversations of the last 30 days
+ * (their words and WatchGPT's replies), encrypted on this phone. Everything can be turned off or deleted here.
  */
 @Composable
 fun HistoryScreen(
@@ -35,7 +35,7 @@ fun HistoryScreen(
     LaunchedEffect(memory) { memory.load() }
 
     Text(
-        "Kept 30 days, encrypted on this phone. A new conversation starts knowing the last ones and what you asked Buddy to " +
+        "Kept 30 days, encrypted on this phone. A new conversation starts knowing the last ones and what you asked WatchGPT to " +
             "remember, with codes and numbers taken out. What your phone read out to you itself is never kept.",
         style = MaterialTheme.typography.bodyLarge,
         color = p.textSecondary,
@@ -45,7 +45,7 @@ fun HistoryScreen(
     Group {
         Item(
             "Remember conversations",
-            subtitle = if (on) "Buddy knows what you talked about lately." else "Off: every conversation starts fresh. What you asked Buddy to remember is still used.",
+            subtitle = if (on) "WatchGPT knows what you talked about lately." else "Off: every conversation starts fresh. What you asked WatchGPT to remember is still used.",
             last = true,
             trailing = {
                 Switch(
@@ -60,9 +60,9 @@ fun HistoryScreen(
         )
     }
 
-    Group("What Buddy remembers", footer = "Say \"remember that…\" or \"forget that…\" to Buddy, in any language.") {
+    Group("What WatchGPT remembers", footer = "Say \"remember that…\" or \"forget that…\" to WatchGPT, in any language.") {
         if (kept.facts.isEmpty()) {
-            Item("Nothing yet", subtitle = "Tell Buddy something about you and ask it to remember it.", last = true)
+            Item("Nothing yet", subtitle = "Tell WatchGPT something about you and ask it to remember it.", last = true)
         } else {
             val facts = kept.facts.asReversed()
             facts.forEachIndexed { i, fact ->
@@ -77,7 +77,7 @@ fun HistoryScreen(
     }
 
     if (kept.conversations.isEmpty()) {
-        Group("Conversations") { Item("Nothing yet", subtitle = "Talk to Buddy on your watch or here.", last = true) }
+        Group("Conversations") { Item("Nothing yet", subtitle = "Talk to WatchGPT on your watch or here.", last = true) }
         return
     }
     kept.conversations.asReversed().take(SHOWN).groupBy { day(it.startedAt) }.forEach { (day, conversations) ->
@@ -94,7 +94,7 @@ fun HistoryScreen(
                 if (open == c.id) {
                     c.turns.forEach { t ->
                         Text(
-                            (if (t.user) "You: " else "Buddy: ") + t.text + if (t.local) " (on this phone only)" else "",
+                            (if (t.user) "You: " else "WatchGPT: ") + t.text + if (t.local) " (on this phone only)" else "",
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (t.user) p.text else p.textSecondary,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),

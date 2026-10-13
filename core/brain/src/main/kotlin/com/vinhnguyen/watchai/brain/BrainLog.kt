@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai.brain
+package io.github.alisial786.watchgpt.brain
 
 /**
  * The only way brains log. Events carry codes, counts and timings - never prompts, answers,

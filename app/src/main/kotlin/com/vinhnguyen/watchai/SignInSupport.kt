@@ -1,4 +1,4 @@
-package com.vinhnguyen.watchai
+package io.github.alisial786.watchgpt
 
 import android.app.Activity
 import android.app.Notification
@@ -14,7 +14,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.net.toUri
-import com.vinhnguyen.watchai.brain.chatgpt.auth.BrowserLauncher
+import io.github.alisial786.watchgpt.brain.chatgpt.auth.BrowserLauncher
 
 /** OpenAI's sign-in page in a Custom Tab: the real browser, address bar visible, no WebView. */
 class CustomTabLauncher(

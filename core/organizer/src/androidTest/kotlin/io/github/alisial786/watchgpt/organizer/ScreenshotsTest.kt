@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.SystemClock
 import android.provider.MediaStore
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onFirst
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import io.github.alisial786.watchgpt.reminders.AlertDevice
@@ -41,11 +43,13 @@ class ScreenshotsTest {
         organizer.db.all().filterNot { it.deleted }.forEach { organizer.db.save(it.copy(deleted = true)) }
         organizer.save(Entry(title = "Take an afternoon walk", notes = "A little fresh air", localTime = LocalDateTime.now().plusHours(2).withSecond(0).withNano(0).toString(), repeat = Repeat.DAILY, alertDevice = AlertDevice.PHONE))
         organizer.save(Entry(title = "Coffee with Alex", notes = "Synthetic preview event", localTime = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0).toString(), kind = Kind.EVENT, alertDevice = AlertDevice.PHONE))
+        var scenario: ActivityScenario<OrganizerActivity>? = null
         fun open(watch: Boolean = false) {
             val intent = Intent(context, OrganizerActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra("watch_preview", watch)
-            instrumentation.runOnMainSync { context.startActivity(intent) }
+            scenario?.close()
+            scenario = ActivityScenario.launch(intent)
+            compose.waitUntil(15000) { runCatching { compose.onNodeWithText(if (watch) "‹ WatchGPT" else "Your day").assertExists() }.isSuccess }
             compose.waitForIdle()
-            compose.onNodeWithText("Your day").assertExists()
             SystemClock.sleep(1000)
         }
         fun click(text: String) {
@@ -90,6 +94,7 @@ class ScreenshotsTest {
             device.executeShellCommand("wm size 450x450")
             device.executeShellCommand("wm density 320")
             open(true)
+            compose.onNodeWithText("+ New reminder").assertIsDisplayed()
             shot("watch-reminders-preview")
             click("+ New reminder")
             shot("watch-editor-preview")
@@ -100,6 +105,7 @@ class ScreenshotsTest {
             click("Agenda")
             shot("watch-agenda-preview")
         } finally {
+            scenario?.close()
             device.executeShellCommand("wm size reset")
             device.executeShellCommand("wm density reset")
         }

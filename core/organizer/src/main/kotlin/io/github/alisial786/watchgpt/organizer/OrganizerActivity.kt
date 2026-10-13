@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,6 +65,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.alisial786.watchgpt.reminders.AlertDevice
@@ -80,10 +83,11 @@ class OrganizerActivity : ComponentActivity() {
         enableEdgeToEdge()
         if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         val organizer = Organizer.get(this)
+        val watch = organizer.isWatch || (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0 && intent.getBooleanExtra("watch_preview", false))
+        if (watch) WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
         setContent {
-            val watch = organizer.isWatch || (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0 && intent.getBooleanExtra("watch_preview", false))
             val dark = watch || androidx.compose.foundation.isSystemInDarkTheme()
-            MaterialTheme(colorScheme = if (dark) darkColorScheme(primary = Color.White, onPrimary = Color.Black, background = Color(0xFF0B0B0D), surface = Color(0xFF17171A)) else lightColorScheme(primary = Color(0xFF0A0A0B), onPrimary = Color.White, background = Color.White, surface = Color(0xFFF4F4F5))) {
+            MaterialTheme(colorScheme = if (dark) darkColorScheme(primary = Color.White, onPrimary = Color.Black, background = Color(0xFF0B0B0D), surface = Color(0xFF17171A), surfaceContainerHighest = Color(0xFF17171A), secondaryContainer = Color(0xFF29292D), onSecondaryContainer = Color.White) else lightColorScheme(primary = Color(0xFF0A0A0B), onPrimary = Color.White, background = Color.White, surface = Color(0xFFF4F4F5), surfaceContainerHighest = Color(0xFFF4F4F5), secondaryContainer = Color(0xFFEAEAEA), onSecondaryContainer = Color.Black)) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { OrganizerPanel(organizer, onClose = ::finish, watch = watch) }
             }
         }
@@ -156,7 +160,7 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
     val padding = if (watch) 30.dp else 20.dp
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = padding).padding(top = if (watch) 32.dp else 48.dp, bottom = if (watch) 40.dp else 32.dp), horizontalAlignment = if (watch) Alignment.CenterHorizontally else Alignment.Start, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         TextButton(onClick = if (calendarPage) ({ calendarPage = false }) else onClose) { Text("‹ WatchGPT") }
-        Text(if (calendarPage) "Calendar sync" else "Your day", style = if (watch) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
+        if (!watch || calendarPage) Text(if (calendarPage) "Calendar sync" else "Your day", style = if (watch) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
         if (calendarPage) {
             var calendars by remember { mutableStateOf<List<CalendarSync.Calendar>>(emptyList()) }
             var calendarLoading by remember { mutableStateOf(true) }
@@ -165,6 +169,10 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
                 calendarLoading = true
                 try {
                     calendars = organizer.calendar.calendars()
+                } catch (_: Exception) {
+                    calendars = emptyList()
+                    calendarPermission = organizer.calendar.permitted()
+                    error = "Calendars are unavailable. Check calendar permission and try again."
                 } finally {
                     calendarLoading = false
                 }
@@ -199,14 +207,14 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
         } else {
             if (watch) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    TextButton(onClick = { tab = "Reminders" }) { Text("Tasks") }
-                    TextButton(onClick = { tab = "Agenda" }) { Text("Agenda") }
+                    TextButton(onClick = { tab = "Reminders" }) { Text("Tasks", fontWeight = if (tab == "Reminders") FontWeight.Bold else FontWeight.Normal) }
+                    TextButton(onClick = { tab = "Agenda" }) { Text("Agenda", fontWeight = if (tab == "Agenda") FontWeight.Bold else FontWeight.Normal) }
                 }
-                TextButton(onClick = { tab = if (tab == "Done") "Reminders" else "Done" }) { Text(if (tab == "Done") "Show active" else "Completed") }
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf("Reminders", "Agenda", "Done").forEach { name -> FilterChip(selected = tab == name, onClick = { tab = name }, label = { Text(name) }) } }
             }
             Button(onClick = { creating = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("+ New ${if (tab == "Agenda") "item" else "reminder"}") }
+            if (watch) TextButton(onClick = { tab = if (tab == "Done") "Reminders" else "Done" }) { Text(if (tab == "Done") "Show active" else "Completed") }
             val visible = entries.filter { if (tab == "Done") it.completed else !it.completed && (tab == "Agenda" || it.kind == Kind.REMINDER) }.sortedBy { it.snoozeUntil ?: it.initialInstant().toEpochMilli() }
             if (visible.isEmpty()) {
                 Text(if (tab == "Done") "Nothing completed yet" else "A little space in your day", style = MaterialTheme.typography.titleMedium, textAlign = if (watch) TextAlign.Center else TextAlign.Start)
@@ -220,18 +228,11 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
                         Text("${entry.kind.name.lowercase().replaceFirstChar { it.uppercase() }} · ${entry.repeat.name.lowercase()} · alerts: ${entry.alertDevice.name.lowercase()}", style = MaterialTheme.typography.labelSmall)
                         entry.snoozeUntil?.let { Text("Snoozed until ${java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("HH:mm"))}", style = MaterialTheme.typography.bodySmall) }
                         if (entry.notes.isNotBlank()) Text(entry.notes, style = MaterialTheme.typography.bodySmall)
-                        if (watch) {
-                            if (!entry.completed) OutlinedButton(onClick = { run { organizer.complete(entry.id) } }, modifier = Modifier.fillMaxWidth()) { Text("Done") }
-                            TextButton(onClick = { selectedId = entry.id }, modifier = Modifier.fillMaxWidth()) { Text("Edit") }
-                            if (!entry.completed) TextButton(onClick = { run { organizer.snooze(entry.id) } }, modifier = Modifier.fillMaxWidth()) { Text("Snooze 10 min") }
-                            TextButton(onClick = { confirmDelete = entry }, modifier = Modifier.fillMaxWidth()) { Text("Delete") }
-                        } else {
-                            Row {
-                                if (!entry.completed) TextButton(onClick = { run { organizer.complete(entry.id) } }) { Text("Done") }
-                                TextButton(onClick = { selectedId = entry.id }) { Text("Edit") }
-                                if (!entry.completed) TextButton(onClick = { run { organizer.snooze(entry.id) } }) { Text("Snooze 10 min") }
-                                TextButton(onClick = { confirmDelete = entry }) { Text("Delete") }
-                            }
+                        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp, if (watch) Alignment.CenterHorizontally else Alignment.Start)) {
+                            if (!entry.completed) TextButton(onClick = { run { organizer.complete(entry.id) } }) { Text("Done") }
+                            TextButton(onClick = { selectedId = entry.id }) { Text("Edit") }
+                            if (!entry.completed) TextButton(onClick = { run { organizer.snooze(entry.id) } }) { Text(if (watch) "Snooze" else "Snooze 10 min") }
+                            TextButton(onClick = { confirmDelete = entry }) { Text("Delete") }
                         }
                     }
                 }

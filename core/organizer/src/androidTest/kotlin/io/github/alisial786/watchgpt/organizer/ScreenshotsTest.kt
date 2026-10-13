@@ -25,6 +25,9 @@ class ScreenshotsTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         val device = UiDevice.getInstance(instrumentation)
+        device.wakeUp()
+        device.executeShellCommand("wm dismiss-keyguard")
+        device.executeShellCommand("settings put global stay_on_while_plugged_in 3")
         val organizer = Organizer.get(context)
         organizer.calendar.select(null)
         organizer.db.all().filterNot { it.deleted }.forEach { organizer.db.save(it.copy(deleted = true)) }

@@ -15,7 +15,7 @@ Private Android + Wear OS fork of [Buddy / watch-ai](https://github.com/thenguye
 
 ## Use and build
 
-[Installation and permissions](docs/getting-started.md) · [Behavior and limitations](docs/WATCHGPT_BEHAVIOR.md) · [Implementation plan](docs/WATCHGPT_PLAN.md) · [Verification](docs/WATCHGPT_VERIFICATION.md)
+[Installation and permissions](docs/getting-started.md) · [Completed screen previews](docs/screenshots/README.md) · [Behavior and limitations](docs/WATCHGPT_BEHAVIOR.md) · [Implementation plan](docs/WATCHGPT_PLAN.md) · [Verification](docs/WATCHGPT_VERIFICATION.md)
 
 ```sh
 git clone https://github.com/Ali-sial-786/WatchGPT.git
@@ -24,7 +24,7 @@ git remote add upstream https://github.com/thenguyentrong/watch-ai.git
 ./gradlew spotlessCheck checkSyntheticFixtures test testDebugUnitTest lintDebug :app:assembleRelease :wear:assembleRelease
 ```
 
-JDK 17 and Android SDK 37 are required; the Gradle wrapper and SDK manager resolve the pinned dependencies. Phone and watch APKs must use matching signing certificates. An optional private CI signing secret preserves the installation identity across builds; owner setup is documented. CI produces both APKs together in a private Actions artifact. Never install a watch build from one job with a phone build from another.
+JDK 17 and Android SDK 37 are required; the Gradle wrapper and SDK manager resolve the pinned dependencies. Phone and watch APKs must use matching signing certificates. An optional private CI signing secret preserves the installation identity across builds; owner setup is documented. CI builds both APKs together and stores verified main-branch pairs in private draft releases, with an additional private Actions upload attempt. The owner account currently has no artifact quota available; private draft releases and the local handoff bypass that quota. Download both APKs from the same release or handoff. Never install a watch build from one job with a phone build from another.
 
 ## Upstream and licensing
 

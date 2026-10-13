@@ -20,6 +20,8 @@ concurrency:
 
 jobs:
   build:
+    permissions:
+      contents: write # Private draft APK delivery after verification; checkout credentials are disabled.
     if: (github.event_name != 'workflow_dispatch' || !inputs.android_only) && (github.event_name != 'push' || github.ref != 'refs/heads/watchgpt/setup')
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -61,6 +63,34 @@ jobs:
           "$SDK/zipalign" -c -P 16 -v 4 "$WATCH" > /dev/null
       - name: Checksums
         run: sha256sum app/build/outputs/apk/release/*.apk wear/build/outputs/apk/release/*.apk > apk.sha256
+      - name: Deliver verified APK pair in a private draft release
+        if: github.event.repository.private && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p delivery
+          cp app/build/outputs/apk/release/app-release.apk delivery/WatchGPT-phone.apk
+          cp wear/build/outputs/apk/release/wear-release.apk delivery/WatchGPT-watch.apk
+          cp docs/getting-started.md delivery/INSTALL.md
+          cp docs/WATCHGPT_BEHAVIOR.md delivery/BEHAVIOR.md
+          (cd delivery && sha256sum WatchGPT-phone.apk WatchGPT-watch.apk > SHA256SUMS)
+          {
+            echo "Private sideload pair built from commit $GITHUB_SHA."
+            echo
+            echo "Download both APKs from this same release. Follow INSTALL.md and verify SHA256SUMS."
+            echo "Live ChatGPT voice uses Buddy's undocumented account endpoint and remains unverified on the owner's devices."
+            echo "Manual reminders work without ChatGPT or a hosted database."
+            echo
+            echo "Shared signing certificate:"
+            grep 'certificate SHA-256 digest:' phone-cert.txt
+            echo
+            echo "Without the optional persistent CI signing secret, this pair can have a different certificate from the local handoff or later runs; do not mix pairs."
+          } > delivery/RELEASE-NOTES.md
+          gh release create "watchgpt-build-$GITHUB_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --draft --prerelease --title "WatchGPT private sideload $GITHUB_RUN_ID" \
+            --notes-file delivery/RELEASE-NOTES.md delivery/WatchGPT-phone.apk delivery/WatchGPT-watch.apk \
+            delivery/SHA256SUMS delivery/INSTALL.md delivery/BEHAVIOR.md
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         continue-on-error: true # Preserve check results when the account artifact quota is full.
         with:

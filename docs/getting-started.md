@@ -4,7 +4,7 @@ WatchGPT needs an Android phone (Android 12+) paired through Galaxy Wearable wit
 
 ## Get the matching pair
 
-Use the **WatchGPT-phone-and-watch** artifact from a successful private GitHub Actions build, or the APKs produced together in your local build:
+Use the delivered **WatchGPT-phone.apk** and **WatchGPT-watch.apk** pair. Verify the files against the supplied `SHA256SUMS` before installation. GitHub Actions also builds a matching pair as **WatchGPT-phone-and-watch-COMMIT**, but artifact storage is currently exhausted on the owner account; upload warnings do not mean that a downloadable artifact exists. Verified main-branch builds also create a **private draft release** containing both APKs, checksums, and install instructions; repository collaborators can download it from GitHub Releases while signed in. These private releases and the handoff APKs are independent of the Actions artifact quota. Always use the pair from one release or one handoff, since CI may use a different signing certificate until the optional secret is configured. If building locally, the output paths are:
 
 - `app/build/outputs/apk/release/app-release.apk`
 - `wear/build/outputs/apk/release/wear-release.apk`
@@ -18,9 +18,11 @@ Both use `io.github.alisial786.watchgpt` and the same developer test signing key
 3. Find serials with `adb devices`. Install with explicit serials:
 
    ```sh
-   adb -s PHONE_SERIAL install -r app/build/outputs/apk/release/app-release.apk
-   adb -s WATCH_SERIAL install -r wear/build/outputs/apk/release/wear-release.apk
+   adb -s PHONE_SERIAL install -r WatchGPT-phone.apk
+   adb -s WATCH_SERIAL install -r WatchGPT-watch.apk
    ```
+
+   Run these commands from the delivered APK folder; for your own builds substitute the output paths above.
 
 4. Open WatchGPT on both devices once. The phone menu contains **Reminders & agenda**. On the watch scroll below the mascot to **Reminders**. Reminders do not require ChatGPT sign-in.
 

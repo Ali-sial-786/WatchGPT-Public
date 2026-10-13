@@ -11,7 +11,7 @@ The fork imports upstream commit `ccf9dd26a28badac5f78debc11d5079e13161ddf` with
 - The wake smoke test recognizes the natural synthetic “Hey Watch G P T” fixture and rejects the negative fixture. A robotic eSpeak positive is a recorded miss, retained as a limitation.
 - GitHub secret scanning and source/dependency scans passed after the inherited CI-only PyJWT dependency was updated to 2.15.0. Artifact storage is exhausted on the GitHub account; report and APK upload failures are reported without hiding test failures.
 
-The Android UI suite recorded 7 tests, 0 failures and 0 errors in [run 38417852218](https://github.com/Ali-sial-786/WatchGPT/actions/runs/38417852218), and captured nine screens. A final capture checks the subsequent small-screen layout refinements. Output remains in the job log if artifacts are unavailable. Screenshots use synthetic records only.
+The final Android UI suite recorded 7 tests, 0 failures and 0 errors in [run 38424993120](https://github.com/Ali-sial-786/WatchGPT/actions/runs/38424993120), and captured nine screens after the small-screen layout refinements. The retained [screen previews](screenshots/README.md) show the actual Compose interfaces. Output remains in the job log if artifacts are unavailable. Screenshots use synthetic records only.
 
 ## APK pair
 

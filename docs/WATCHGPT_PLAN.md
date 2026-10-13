@@ -12,3 +12,5 @@ Destination: Ali-sial-786/WatchGPT (private). Preserve upstream history, Apache-
 7. Automated unit checks, lint, paired signed APKs, CI artifacts, UI previews and device-only verification instructions.
 
 Decisions: no cloud database; two apps, reminders integrated into each; local records are authoritative; calendar sync only touches explicitly owned projections. Conflicting concurrent edits use logical revision and device ID, deletion wins permanently. Each reminder selects its alert device; no disconnected automatic failover that could cause duplicate alerts. Cloud voice remains dependent on the phone and undocumented provider access.
+
+Implementation steps 1–7 are complete for all unblocked software work. Release builds, unit checks, lint, and seven Android integration tests are verified. The final handoff includes the matching APKs, private screen previews, owner install instructions, and explicit hardware-only checks. No hosted database is needed.

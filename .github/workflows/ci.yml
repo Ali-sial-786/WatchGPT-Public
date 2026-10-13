@@ -180,7 +180,7 @@ jobs:
             mkdir -p docs/screenshots
             adb pull /sdcard/Pictures/WatchGPT_Demos/. docs/screenshots/
       - name: Save synthetic screenshots to the private preview branch
-        if: always() && github.event.repository.private && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/watchgpt/setup')
+        if: always() && github.event.repository.private && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/watchgpt/setup' || (github.event_name == 'pull_request' && github.head_ref == 'watchgpt/setup' && github.event.pull_request.head.repo.full_name == github.repository))
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

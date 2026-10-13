@@ -37,6 +37,7 @@ class ScreenshotsTest {
         val device = UiDevice.getInstance(instrumentation)
         device.wakeUp()
         device.executeShellCommand("wm dismiss-keyguard")
+        device.executeShellCommand("settings put secure immersive_mode_confirmations confirmed")
         device.executeShellCommand("settings put global stay_on_while_plugged_in 3")
         val organizer = Organizer.get(context)
         organizer.calendar.select(null)

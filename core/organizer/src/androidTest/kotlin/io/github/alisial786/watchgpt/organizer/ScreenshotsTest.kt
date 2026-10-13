@@ -1,0 +1,82 @@
+package io.github.alisial786.watchgpt.organizer
+
+import android.content.Intent
+import android.graphics.Bitmap
+import android.os.SystemClock
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiScrollable
+import androidx.test.uiautomator.UiSelector
+import io.github.alisial786.watchgpt.reminders.AlertDevice
+import io.github.alisial786.watchgpt.reminders.Entry
+import io.github.alisial786.watchgpt.reminders.Kind
+import io.github.alisial786.watchgpt.reminders.Repeat
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.io.File
+import java.time.LocalDateTime
+
+/** Captures actual Compose screens and checks manual offline creation through Android accessibility. */
+class ScreenshotsTest {
+    @Test fun offlineEditorAndPhoneWatchLayoutPreviews() = runBlocking {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        val device = UiDevice.getInstance(instrumentation)
+        val organizer = Organizer.get(context)
+        organizer.calendar.select(null)
+        organizer.db.all().filterNot { it.deleted }.forEach { organizer.db.save(it.copy(deleted = true)) }
+        organizer.save(Entry(title = "Take an afternoon walk", notes = "A little fresh air", localTime = LocalDateTime.now().plusHours(2).withSecond(0).withNano(0).toString(), repeat = Repeat.DAILY, alertDevice = AlertDevice.PHONE))
+        organizer.save(Entry(title = "Coffee with Alex", notes = "Synthetic preview event", localTime = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0).toString(), kind = Kind.EVENT, alertDevice = AlertDevice.PHONE))
+        fun open(watch: Boolean = false) {
+            val intent = Intent(context, OrganizerActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra("watch_preview", watch)
+            instrumentation.runOnMainSync { context.startActivity(intent) }
+            device.waitForIdle()
+            SystemClock.sleep(1500)
+        }
+        fun click(text: String) {
+            val item = device.findObject(UiSelector().text(text))
+            if (!item.exists()) UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text(text))
+            device.findObject(UiSelector().text(text)).click()
+            device.waitForIdle()
+        }
+        fun shot(name: String) {
+            SystemClock.sleep(600)
+            val bitmap = instrumentation.uiAutomation.takeScreenshot() ?: error("Screenshot unavailable")
+            val dir = context.getExternalFilesDir("screenshots")!!
+            dir.mkdirs()
+            File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            bitmap.recycle()
+        }
+        try {
+            open()
+            shot("phone-reminders")
+            click("+ New reminder")
+            shot("phone-editor")
+            val title = device.findObject(UiSelector().className("android.widget.EditText").instance(0))
+            title.setText("Synthetic offline UI reminder")
+            device.pressBack()
+            click("Save on this device")
+            assertTrue(organizer.list().any { it.title == "Synthetic offline UI reminder" })
+            open()
+            click("Google Calendar · optional")
+            shot("phone-calendar-off")
+            open()
+            click("Agenda")
+            shot("phone-agenda")
+            device.executeShellCommand("wm size 450x450")
+            device.executeShellCommand("wm density 320")
+            open(true)
+            shot("watch-reminders-preview")
+            click("+ New reminder")
+            shot("watch-editor-preview")
+            device.pressBack()
+            open(true)
+            click("Agenda")
+            shot("watch-agenda-preview")
+        } finally {
+            device.executeShellCommand("wm size reset")
+            device.executeShellCommand("wm density reset")
+        }
+    }
+}

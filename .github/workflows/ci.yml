@@ -55,6 +55,7 @@ jobs:
       - name: Checksums
         run: sha256sum app/build/outputs/apk/release/*.apk wear/build/outputs/apk/release/*.apk > apk.sha256
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        continue-on-error: true # Preserve check results when the account artifact quota is full.
         with:
           name: WatchGPT-phone-and-watch-${{ github.sha }}
           path: |
@@ -63,6 +64,7 @@ jobs:
             apk.sha256
           retention-days: 30
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        continue-on-error: true # Preserve check results when the account artifact quota is full.
         if: always()
         with:
           name: reports-${{ github.sha }}
@@ -82,6 +84,7 @@ jobs:
       - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
 
   sast:
     runs-on: ubuntu-24.04
@@ -98,6 +101,7 @@ jobs:
           mobsfscan --sarif -o mobsfscan.sarif . || true
           mobsfscan --json -o mobsfscan.json .
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        continue-on-error: true # Preserve check results when the account artifact quota is full.
         if: always()
         with:
           name: mobsfscan-${{ github.sha }}
@@ -105,13 +109,15 @@ jobs:
           retention-days: 90
 
   osv:
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
-    with:
-      upload-sarif: false
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Scan dependencies (results remain in the job log)
+        uses: google/osv-scanner-action/osv-scanner-action@7f58dd6750d78fc29a900ba64b1a0f946f62fba4 # v2.6.0
+        with:
+          scan-args: --format=table -r ./
 
   commits:
     runs-on: ubuntu-24.04
@@ -157,6 +163,7 @@ jobs:
           disable-animations: true
           script: ./gradlew :core:organizer:connectedDebugAndroidTest --console=plain --max-workers=2
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        continue-on-error: true # Preserve check results when the account artifact quota is full.
         if: always()
         with:
           name: android-integration-${{ github.sha }}

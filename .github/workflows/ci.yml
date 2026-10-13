@@ -3,7 +3,7 @@ name: WatchGPT checks and APKs
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, watchgpt/setup]
   workflow_dispatch:
     inputs:
       android_only:
@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'workflow_dispatch' || !inputs.android_only
+    if: (github.event_name != 'workflow_dispatch' || !inputs.android_only) && (github.event_name != 'push' || github.ref != 'refs/heads/watchgpt/setup')
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -82,7 +82,7 @@ jobs:
           retention-days: 90
 
   secrets:
-    if: github.event_name != 'workflow_dispatch' || !inputs.android_only
+    if: (github.event_name != 'workflow_dispatch' || !inputs.android_only) && (github.event_name != 'push' || github.ref != 'refs/heads/watchgpt/setup')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -95,7 +95,7 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
 
   sast:
-    if: github.event_name != 'workflow_dispatch' || !inputs.android_only
+    if: (github.event_name != 'workflow_dispatch' || !inputs.android_only) && (github.event_name != 'push' || github.ref != 'refs/heads/watchgpt/setup')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -118,7 +118,7 @@ jobs:
           retention-days: 90
 
   osv:
-    if: github.event_name != 'workflow_dispatch' || !inputs.android_only
+    if: (github.event_name != 'workflow_dispatch' || !inputs.android_only) && (github.event_name != 'push' || github.ref != 'refs/heads/watchgpt/setup')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -180,7 +180,7 @@ jobs:
             mkdir -p docs/screenshots
             adb pull /sdcard/Pictures/WatchGPT_Demos/. docs/screenshots/
       - name: Save synthetic screenshots to the private preview branch
-        if: always() && github.event_name == 'workflow_dispatch' && github.event.repository.private
+        if: always() && github.event.repository.private && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/watchgpt/setup')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

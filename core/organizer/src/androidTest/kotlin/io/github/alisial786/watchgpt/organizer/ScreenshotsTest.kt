@@ -5,22 +5,30 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.SystemClock
 import android.provider.MediaStore
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.UiScrollable
-import androidx.test.uiautomator.UiSelector
 import io.github.alisial786.watchgpt.reminders.AlertDevice
 import io.github.alisial786.watchgpt.reminders.Entry
 import io.github.alisial786.watchgpt.reminders.Kind
 import io.github.alisial786.watchgpt.reminders.Repeat
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.time.LocalDateTime
 
-/** Captures actual Compose screens and checks manual offline creation through Android accessibility. */
+/** Captures actual Compose screens and checks manual offline creation through their native semantics. */
 class ScreenshotsTest {
+    @get:Rule val compose = createEmptyComposeRule()
+
     @Test fun offlineEditorAndPhoneWatchLayoutPreviews() = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
@@ -36,16 +44,16 @@ class ScreenshotsTest {
         fun open(watch: Boolean = false) {
             val intent = Intent(context, OrganizerActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra("watch_preview", watch)
             instrumentation.runOnMainSync { context.startActivity(intent) }
-            device.waitForIdle()
-            SystemClock.sleep(1500)
+            compose.waitForIdle()
+            compose.onNodeWithText("Your day").assertExists()
+            SystemClock.sleep(1000)
         }
         fun click(text: String) {
-            val item = device.findObject(UiSelector().text(text))
-            if (!item.exists()) UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text(text))
-            device.findObject(UiSelector().text(text)).click()
-            device.waitForIdle()
+            compose.onNodeWithText(text).performScrollTo().performClick()
+            compose.waitForIdle()
         }
         fun shot(name: String) {
+            compose.waitForIdle()
             SystemClock.sleep(600)
             val bitmap = instrumentation.uiAutomation.takeScreenshot() ?: error("Screenshot unavailable")
             val dir = context.getExternalFilesDir("screenshots")!!
@@ -67,9 +75,11 @@ class ScreenshotsTest {
             shot("phone-reminders")
             click("+ New reminder")
             shot("phone-editor")
-            val title = device.findObject(UiSelector().className("android.widget.EditText").instance(0))
-            title.setText("Synthetic offline UI reminder")
+            click("Monthly")
+            shot("phone-recurrence")
+            compose.onAllNodes(hasSetTextAction()).onFirst().performScrollTo().performTextInput("Synthetic offline UI reminder")
             click("Save on this device")
+            compose.waitUntil(10000) { organizer.entries.value.any { it.title == "Synthetic offline UI reminder" } }
             assertTrue(organizer.list().any { it.title == "Synthetic offline UI reminder" })
             open()
             click("Google Calendar · optional")
@@ -83,7 +93,9 @@ class ScreenshotsTest {
             shot("watch-reminders-preview")
             click("+ New reminder")
             shot("watch-editor-preview")
-            device.pressBack()
+            click("Monthly")
+            shot("watch-recurrence-preview")
+            click("‹ Cancel")
             open(true)
             click("Agenda")
             shot("watch-agenda-preview")

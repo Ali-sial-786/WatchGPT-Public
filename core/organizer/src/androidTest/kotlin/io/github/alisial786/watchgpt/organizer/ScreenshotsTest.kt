@@ -1,8 +1,10 @@
 package io.github.alisial786.watchgpt.organizer
 
+import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.SystemClock
+import android.provider.MediaStore
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiScrollable
@@ -46,6 +48,15 @@ class ScreenshotsTest {
             val dir = context.getExternalFilesDir("screenshots")!!
             dir.mkdirs()
             File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            val uri = context.contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, "$name.png")
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/WatchGPT_Demos")
+                },
+            )!!
+            context.contentResolver.openOutputStream(uri)!!.use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
             bitmap.recycle()
         }
         try {
@@ -55,7 +66,6 @@ class ScreenshotsTest {
             shot("phone-editor")
             val title = device.findObject(UiSelector().className("android.widget.EditText").instance(0))
             title.setText("Synthetic offline UI reminder")
-            device.pressBack()
             click("Save on this device")
             assertTrue(organizer.list().any { it.title == "Synthetic offline UI reminder" })
             open()

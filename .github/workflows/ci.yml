@@ -137,6 +137,8 @@ jobs:
           fi
 
   android-integration:
+    permissions:
+      contents: write
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -161,7 +163,22 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: ./gradlew :core:organizer:connectedDebugAndroidTest --console=plain --max-workers=2
+          script: |
+            ./gradlew :core:organizer:connectedDebugAndroidTest --console=plain --max-workers=2
+            mkdir -p docs/screenshots
+            adb pull /sdcard/Pictures/WatchGPT_Demos/. docs/screenshots/
+      - name: Save synthetic screenshots to the private preview branch
+        if: github.event_name == 'workflow_dispatch' && github.event.repository.private
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh auth setup-git
+          git config user.name "WatchGPT CI"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "watchgpt/screenshots-$GITHUB_RUN_ID"
+          git add docs/screenshots/*.png
+          git diff --cached --quiet || git commit -m "Capture WatchGPT reminder screens on Android emulator"
+          git push origin "HEAD:watchgpt/screenshots-$GITHUB_RUN_ID"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         continue-on-error: true # Preserve check results when the account artifact quota is full.
         if: always()

@@ -15,6 +15,8 @@ Private Android + Wear OS fork of [Buddy / watch-ai](https://github.com/thenguye
 
 ## Use and build
 
+[Download the verified matching phone/watch APK pair](https://github.com/Ali-sial-786/WatchGPT/releases/tag/untagged-1e6a19be1be63a3d5d93) from the private draft release while signed in to GitHub. Install both files from that release. [Owner setup checklist](docs/OWNER-CHECKLIST.md).
+
 [Installation and permissions](docs/getting-started.md) · [Completed screen previews](docs/screenshots/README.md) · [Behavior and limitations](docs/WATCHGPT_BEHAVIOR.md) · [Implementation plan](docs/WATCHGPT_PLAN.md) · [Verification](docs/WATCHGPT_VERIFICATION.md)
 
 ```sh

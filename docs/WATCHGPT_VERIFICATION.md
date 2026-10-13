@@ -33,3 +33,7 @@ These were not performed on a physical Watch9 or S24 Ultra:
 4. Add the tile and manually assign Samsung's double-press shortcut. Long-press/default-system-assistant replacement remains unverified.
 5. If desired, choose a writable Google calendar and verify an owned event's edit and deletion round trip through Google's servers. Automated Calendar Provider tests verify local integration, not Google cloud delivery.
 6. If repeatable CI updates are desired, the owner must set `WATCHGPT_SIGNING_KEYSTORE` from the backed-up local keystore. This task's repository connection cannot write Actions secrets. Until then, fresh CI runners create a new matching certificate pair.
+
+## Private repository delivery
+
+Completed source and all nine final previews are on `main`. Main-branch CI also creates a private draft release containing a matching APK pair, checksums, and installation notes, independently of the exhausted Actions artifact quota. The local handoff certificate is recorded above; a fresh CI runner can use a different certificate until the optional persistent signing secret is configured. Download both apps from the same handoff or release.

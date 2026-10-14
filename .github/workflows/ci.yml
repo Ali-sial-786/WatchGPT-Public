@@ -10,6 +10,10 @@ on:
         description: Run only Android integration and screen capture
         type: boolean
         default: false
+      save_screenshots:
+        description: Save the captured screens to a private watchgpt/screenshots-<run> branch
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -214,7 +218,8 @@ jobs:
             mkdir -p docs/screenshots
             adb pull /sdcard/Pictures/WatchGPT_Demos/. docs/screenshots/
       - name: Save synthetic screenshots to the private preview branch
-        if: always() && github.event.repository.private && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/watchgpt/setup' || (github.event_name == 'pull_request' && github.head_ref == 'watchgpt/setup' && github.event.pull_request.head.repo.full_name == github.repository))
+        # Only when asked for: every saved run is another branch in the repository.
+        if: always() && github.event.repository.private && ((github.event_name == 'workflow_dispatch' && inputs.save_screenshots) || github.ref == 'refs/heads/watchgpt/setup' || (github.event_name == 'pull_request' && github.head_ref == 'watchgpt/setup' && github.event.pull_request.head.repo.full_name == github.repository))
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

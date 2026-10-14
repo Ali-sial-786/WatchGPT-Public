@@ -1,8 +1,10 @@
 package io.github.alisial786.watchgpt.organizer
 
+import android.Manifest
 import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.SystemClock
 import android.provider.MediaStore
 import androidx.compose.ui.test.assertIsDisplayed
@@ -35,6 +37,8 @@ class ScreenshotsTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         val device = UiDevice.getInstance(instrumentation)
+        // The screen asks for notifications on first open; a system dialog over it would block every step.
+        if (Build.VERSION.SDK_INT >= 33) instrumentation.uiAutomation.grantRuntimePermission(context.packageName, Manifest.permission.POST_NOTIFICATIONS)
         device.wakeUp()
         device.executeShellCommand("wm dismiss-keyguard")
         device.executeShellCommand("settings put secure immersive_mode_confirmations confirmed")

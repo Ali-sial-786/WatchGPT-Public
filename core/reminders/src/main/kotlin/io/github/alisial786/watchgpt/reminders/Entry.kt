@@ -86,7 +86,8 @@ object Merge {
         if (a == null) return b
         require(a.id == b.id)
         if (a.deleted != b.deleted) return if (a.deleted) a else b
-        return if (compareValuesBy(a, b, { it.revision }, { it.author }, { it.toString() }) >= 0) a else b
+        // Equal revisions and authors: the canonical encoding decides, the same way on every device.
+        return if (compareValuesBy(a, b, { it.revision }, { it.author }, { EntryCodec.encode(it) }) >= 0) a else b
     }
 }
 

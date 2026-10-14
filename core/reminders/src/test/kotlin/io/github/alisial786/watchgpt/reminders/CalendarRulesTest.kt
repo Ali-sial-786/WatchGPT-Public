@@ -43,4 +43,11 @@ class CalendarRulesTest {
             assertThrows(IllegalArgumentException::class.java) { CalendarRules.decode(rule) }
         }
     }
+
+    @Test fun aCalendarMonthlyOnThe31stSkipsShortMonthsSoIsNotTakenAsMonthEnd() {
+        assertThrows(IllegalArgumentException::class.java) { CalendarRules.decode("FREQ=MONTHLY;BYMONTHDAY=31") }
+        assertThrows(IllegalArgumentException::class.java) { CalendarRules.decode("FREQ=MONTHLY", LocalDate.parse("2027-01-30")) }
+        assertEquals(Repeat.MONTHLY, CalendarRules.decode("FREQ=MONTHLY", LocalDate.parse("2027-01-15")).repeat)
+        assertEquals(31, CalendarRules.decode("FREQ=MONTHLY;BYMONTHDAY=28,29,30,31;BYSETPOS=-1").monthlyDay)
+    }
 }

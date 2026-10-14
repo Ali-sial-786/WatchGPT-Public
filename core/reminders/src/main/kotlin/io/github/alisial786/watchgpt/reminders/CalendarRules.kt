@@ -55,6 +55,10 @@ object CalendarRules {
             frequency == "MONTHLY" && days == null -> {
                 val numbers = month?.split(',')?.map { it.toInt() }
                 require(numbers == null || numbers.all { it in 1..31 }) { UNSUPPORTED }
+                // "The 31st" alone skips shorter months in a calendar, where WatchGPT's month-end repeat moves to their
+                // last day ("28,29,30,31" with BYSETPOS=-1): not the same, so it isn't taken as one.
+                val day = numbers?.singleOrNull() ?: start?.dayOfMonth.takeIf { numbers == null }
+                require(position != null || day == null || day <= 28) { UNSUPPORTED }
                 require((position == null && (numbers == null || numbers.size == 1)) || (position == "-1" && numbers != null && numbers == (28..numbers.last()).toList())) { UNSUPPORTED }
                 Decoded(Repeat.MONTHLY, numbers?.last())
             }

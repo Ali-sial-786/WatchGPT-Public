@@ -16,8 +16,16 @@ gradlew connectedDebugAndroidTest   # on the phone: vault, Keystore
 - **Unit tests** cover the safety gate and the cleaner (`GuardTest`, `RedactorTest`), the ChatGPT
   protocol (sign-in, token refresh, streaming, errors), the model download, the watch link and the
   audio code.
+- **Reminder rules** are plain Kotlin in `core/reminders`, tested on the JVM without a device
+  (`./gradlew :core:reminders:test`): `AlertsTest` (when alerts ring, missed-alert windows, receipts,
+  snooze, Done on an advance alert), `AgendaTest` (next occurrence in local time), `CalendarProjectionTest`
+  (item to calendar event and back, Google's rewrites), `CalendarRulesTest` (supported and refused
+  repeats) and `EntryTest` (recurrence, DST, merging, deletion records, encoding).
 - **`spotlessCheck`** runs ktlint. **`lintDebug`** fails the build on any lint error.
 - **`connectedDebugAndroidTest`** runs on the phone, because the vault needs the real Keystore.
+  `:core:organizer:connectedDebugAndroidTest` checks reminder storage (encryption, reopening, stale
+  edits, deletion records), alerts and receipts, and the Calendar Provider, and captures the
+  reminder screens with synthetic items.
 
 ## Test data is synthetic only
 
@@ -27,15 +35,16 @@ build. The secret scan in CI lets those lines through.
 
 ## CI
 
-Every push to `main` runs [`.github/workflows/ci.yml`](../.github/workflows/ci.yml):
+Pull requests, pushes to `main` and manual runs use [`.github/workflows/ci.yml`](../.github/workflows/ci.yml):
 
 | Job | What |
 |---|---|
-| `build` | Formatting, the synthetic-data check, tests, lint, both builds and the SBOM; 16 KB page alignment; checksums; the debug APK and reports as artifacts |
+| `build` | Formatting, the synthetic-data check, tests, lint, both builds and the SBOM; 16 KB page alignment; the phone and watch certificates must match; checksums. On `main`, a private draft release with the pair (see [Signing](getting-started.md#signing-one-time-so-updates-install)). The release APKs as a 3-day artifact; reports only when something failed |
 | `secrets` | gitleaks, with the rules in `.gitleaks.toml` |
 | `sast` | mobsfscan |
 | `osv` | OSV-Scanner on the dependencies |
-| `commits` | Checks the commit messages |
+| `commits` | Checks the commit messages (pull requests) |
+| `android-integration` | `:core:organizer:connectedDebugAndroidTest` on an Android 15 emulator (API 35, Google APIs, x86_64); saves the captured screens to a private `watchgpt/screenshots-<run>` branch only when a manual run asks for it, or for the `watchgpt/setup` branch |
 
 ## Debug hooks on the phone
 

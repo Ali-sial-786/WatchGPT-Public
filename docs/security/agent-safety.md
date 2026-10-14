@@ -48,10 +48,19 @@ phone decides.
 | Level | What | Examples | Rule |
 |---|---|---|---|
 | 0 | Looking something up | time, weather, battery | runs |
-| 1 | Small, local, can be undone | timer, alarm, note, flashlight, volume, open an app, directions | runs, logged, undo where possible |
-| 2 | Reads private data | messages, calendar, notes, contacts, PC files | only when the user asked for it in this turn; goes through the Redactor; marks the conversation as holding other people's words |
+| 1 | Small, local, can be undone | timer, alarm, note, flashlight, volume, open an app, directions; add a reminder or event, complete, snooze or edit one | runs, logged, undo where possible |
+| 2 | Reads private data | messages, calendar and WatchGPT's agenda, reminders, notes, contacts, PC files | only when the user asked for it in this turn; goes through the Redactor; marks the conversation as holding other people's words |
 | 3 | Leaves the phone or can't be undone | send a text, reply, call, email; change files, push or install on the PC | yes in a later turn with the exact payload; user present; at most 10 an hour; a recipient WatchGPT hasn't used before is confirmed on the screen |
 | 4 | Never | passwords, one-time codes, banking and payment apps, the password manager, security settings, turning the Guard off | refused, whatever the model says; the user does these themselves |
+
+WatchGPT's reminders (added 2026-10-14, `Safety.LEVELS`): `add_reminder`, `add_calendar_event` and
+`change_reminder` are level 1. They change the user's own WatchGPT items, which sync to the watch and,
+if the user turned it on, their Google calendar; a completion, snooze or edit can be changed back.
+Deleting can't be undone, so `change_reminder` with `delete` only reads the item back: it waits for a
+yes in a later turn through `Pending` (`confirm_action`), like texts and calls, with the same
+presence check, two-minute limit and hourly budget. `list_reminders` and `list_calendar_events` are
+level 2; `list_calendar_events` reads WatchGPT's own agenda even without calendar access, and the
+phone's calendar only with it.
 
 ## On the phone
 
@@ -110,7 +119,7 @@ through an accessibility service the user switches on (`app/.../actions/screen/`
   is sorted the same way: in a search or address field it goes ahead, in a message or comment field
   it waits for the yes.
 - **Only the apps the user turned on.** Every other app is not opened, not read, not touched
-  (`AppLimits`); see [Apps WatchGPT can use](#apps-buddy-can-use-changed-2026-09-29). Password fields are
+  (`AppLimits`); see [Apps WatchGPT can use](#apps-watchgpt-can-use-changed-2026-09-29). Password fields are
   never read or typed into.
 - It doesn't watch: it looks at the screen only when a tool asks, and takes no screenshots.
 

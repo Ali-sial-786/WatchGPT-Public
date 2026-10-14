@@ -122,6 +122,8 @@ the phone, starts with it and with the last conversations, so "text my sister" f
 | Module | What |
 |---|---|
 | `core/brain` | Brain interface, router, tools (`Toolbox`), the safety gate and the cleaner (`guard`). Plain Kotlin/JVM. |
+| `core/reminders` | Reminders and agenda rules in plain Kotlin/JVM: the item model and its encoding, recurrence, merging, when alerts ring (`Alerts`), the mapping to calendar events (`CalendarProjection`, `CalendarRules`) and what lists show (`Agenda`). |
+| `core/organizer` | Reminders on Android, for both apps: encrypted storage (`EntryDatabase`), Wear Data Layer sync (`Organizer`), alarms and notifications (`ReminderAlerts`), the optional Calendar Provider sync (`CalendarSync`), native Clock requests and the reminders screen (`OrganizerActivity`). |
 | `core/brain-chatgpt` | Sign in with ChatGPT (PKCE + loopback, device code), token refresh, Responses streaming with tools. |
 | `core/brain-ondevice` | Gemma via LiteRT-LM (chat and private reading), Gemini Nano via ML Kit, verified model download. |
 | `core/voice` | ChatGPT voice (GPT-Live over WebRTC), hand-offs to the tools, the phone's own voice for private answers. |

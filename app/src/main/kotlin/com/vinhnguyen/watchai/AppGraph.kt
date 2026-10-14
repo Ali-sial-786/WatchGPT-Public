@@ -247,8 +247,11 @@ class AppGraph(
         ?: Genes.seedFor(runCatching { session.bearer().accountId }.getOrNull() ?: settings.installId)
     val watchCalls = WatchCalls(this)
 
-    /** "Delete everything": tokens, keys, reports, notes, what WatchGPT remembers, models, settings. */
-    suspend fun deleteEverything() {
+    /**
+     * "Delete everything": tokens, keys, reports, notes, what WatchGPT remembers, models, settings, and reminders
+     * (on the watch too, and their calendar copies). False when the reminders couldn't be deleted.
+     */
+    suspend fun deleteEverything(): Boolean {
         runCatching { session.signOut() }
         vault.wipe()
         notesVault.wipe()
@@ -262,7 +265,7 @@ class AppGraph(
         settings.clearAll()
         appContext.noBackupFilesDir.resolve("litertlm-cache").deleteRecursively()
         // Last, and on its own: a reminder storage problem must not stop the rest of the wipe.
-        runCatching { io.github.alisial786.watchgpt.organizer.Organizer.get(appContext).deleteAll() }
+        return runCatching { io.github.alisial786.watchgpt.organizer.Organizer.get(appContext).deleteAll() }.isSuccess
     }
 
     private companion object {

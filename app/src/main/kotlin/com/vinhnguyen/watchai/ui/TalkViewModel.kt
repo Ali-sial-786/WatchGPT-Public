@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -42,6 +43,9 @@ class TalkViewModel(
 ) : ViewModel() {
     /** Opened as the assistant: see [AppGraph.assistRequests]. */
     val assistRequests: StateFlow<Int> get() = graph.assistRequests
+
+    /** Uses up the waiting assist requests; true when there was one. */
+    fun takeAssist(): Boolean = graph.assistRequests.getAndUpdate { 0 } > 0
 
     data class State(
         val phase: VoicePhase = VoicePhase.IDLE,

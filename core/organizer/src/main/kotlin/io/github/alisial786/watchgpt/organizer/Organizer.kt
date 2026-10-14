@@ -110,10 +110,13 @@ class Organizer internal constructor(context: Context, private val startWorkers:
         update(id) { Recurrence.complete(it, Instant.now(), occurrence = occurrence) }
     }
 
-    /** Postpones the alert that is due (or the next one) by [minutes]; snoozing never brings an alert forward. */
-    suspend fun snooze(id: String, minutes: Int = 10) {
+    /**
+     * Postpones the alert that is due (or the next one) by [minutes]; snoozing never brings an alert forward. A
+     * notification's Snooze counts [from] the tap: its alert has rung, however long ago.
+     */
+    suspend fun snooze(id: String, minutes: Int = 10, from: Instant? = null) {
         require(minutes in 1..10080)
-        update(id) { it.copy(completed = false, snoozeUntil = Alerts.snoozeFrom(it, Instant.now(), ZoneId.systemDefault()).toEpochMilli() + minutes * 60_000L) }
+        update(id) { it.copy(completed = false, snoozeUntil = (from ?: Alerts.snoozeFrom(it, Instant.now(), ZoneId.systemDefault())).toEpochMilli() + minutes * 60_000L) }
     }
     private suspend fun update(id: String, transform: (Entry) -> Entry) = withContext(Dispatchers.IO) {
         val current = db.get(id)?.takeUnless { it.deleted } ?: return@withContext

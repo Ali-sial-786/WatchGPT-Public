@@ -170,7 +170,7 @@ class AppGraph(
     /** Test builds: a screen to open, set from adb (debug TestHooks); nothing sets it in release builds. */
     val testPage = MutableStateFlow<TestPage?>(null)
 
-    /** How many times WatchGPT was opened as the assistant (ACTION_ASSIST): the home screen starts listening for each. */
+    /** Assist requests (ACTION_ASSIST) not yet handled: the home screen starts listening and sets this back to 0. */
     val assistRequests = MutableStateFlow(0)
 
     /** The phone's own voice, for private answers. */
@@ -215,7 +215,14 @@ class AppGraph(
     /** The user tapped Send, Call or Cancel in the pop-up: that tap is their answer. */
     suspend fun decideOnScreen(yes: Boolean): String {
         userTurns.heard()
-        val result = pending.decide(yes)
+        // Runs on graph.scope: a failing action must come back as a result, never crash the app.
+        val result = try {
+            pending.decide(yes)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            "error: that didn't work (${e.javaClass.simpleName}); nothing more was done"
+        }
         // A tap proves the user is there, so it isn't held back; it still counts, and it's logged.
         if (yes && result.startsWith("ok")) budget.spend()
         actionLog.record(

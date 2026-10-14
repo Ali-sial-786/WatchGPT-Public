@@ -319,7 +319,7 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
                     watch = watch,
                     format = format,
                     // Done completes the occurrence the card shows.
-                    onDone = { run { organizer.complete(entry.id, Agenda.current(entry, now, zone)) } },
+                    onDone = { run { organizer.complete(entry.id, Agenda.doneOccurrence(entry, now, zone)) } },
                     onEdit = {
                         error = null
                         editing = EntryCodec.encode(entry)
@@ -345,7 +345,7 @@ private fun EntryCard(entry: Entry, now: Instant, zone: ZoneId, watch: Boolean, 
     val shown = Agenda.nextShown(entry, now, zone)
     val overdue = entry.repeat == Repeat.NONE && Agenda.overdue(entry, now, zone) && snoozedUntil(entry, now) == null
     // Snooze is offered while an alert is due, the moment it is useful; earlier it would only move the reminder.
-    val dueNow = !entry.completed && Alerts.due(entry, now, zone)?.at?.let { it <= now } == true
+    val dueNow = !entry.completed && Alerts.due(entry, now, zone)?.at?.let { it <= now && it >= now.minus(Alerts.GRACE_REPEAT) } == true
     val align = if (watch) TextAlign.Center else TextAlign.Start
     // On the watch a card is a tap target of its own (it opens the item) with only the buttons that matter now.
     val body: @Composable () -> Unit = {

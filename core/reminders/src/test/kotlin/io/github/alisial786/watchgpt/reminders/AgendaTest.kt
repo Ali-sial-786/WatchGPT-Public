@@ -58,8 +58,19 @@ class AgendaTest {
         val pills = entry(Repeat.DAILY, "2026-10-07T10:00")
         val now = Instant.parse("2026-10-14T09:00:00Z")
         assertEquals(t("2026-10-14T10:00"), Agenda.nextShown(pills, now, utc))
-        val done = Recurrence.complete(pills, now, utc, Agenda.current(pills, now, utc))
+        val done = Recurrence.complete(pills, now, utc, Agenda.doneOccurrence(pills, now, utc))
         assertEquals(t("2026-10-15T10:00"), Agenda.nextShown(done, now, utc))
+    }
+
+    @Test fun doneLateOrWhileSnoozedCompletesTheOneThatWentBy() {
+        // 09:00 went by two hours ago; the card already shows tomorrow's. Done is for today's, tomorrow's stays.
+        val daily = entry(Repeat.DAILY, "2026-10-14T09:00")
+        val late = Instant.parse("2026-10-14T11:00:00Z")
+        assertEquals("2026-10-15T09:00", Recurrence.complete(daily, late, utc, Agenda.doneOccurrence(daily, late, utc)).localTime)
+        // Snoozed to 10:20: Done at 10:15 finishes the snoozed occurrence, not next week's too.
+        val weekly = entry(Repeat.WEEKLY, "2026-10-15T09:00").copy(snoozeUntil = Instant.parse("2026-10-15T10:20:00Z").toEpochMilli())
+        val snoozed = Instant.parse("2026-10-15T10:15:00Z")
+        assertEquals("2026-10-22T09:00", Recurrence.complete(weekly, snoozed, utc, Agenda.doneOccurrence(weekly, snoozed, utc)).localTime)
     }
 
     @Test fun anEventIsOverdueOnlyOnceItHasEnded() {

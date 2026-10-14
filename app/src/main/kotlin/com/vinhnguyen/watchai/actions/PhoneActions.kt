@@ -185,14 +185,19 @@ class PhoneActions(
             // Deleting can't be undone (and syncs to the watch and the calendar): read it back and wait for a yes.
             "delete" -> {
                 val confirm = pending ?: return done(CHANGE_REMINDER, "refused", "error: deleting by voice isn't available here; the user can delete it in WatchGPT's reminders screen")
-                return done(
-                    CHANGE_REMINDER,
-                    "proposed",
-                    confirm.propose("Delete \"${item.title}\" from WatchGPT on the phone and the watch.") {
+                val proposal = confirm.propose("Delete \"${item.title}\" from WatchGPT on the phone and the watch.") {
+                    try {
                         organizer.delete(selectedId)
                         "ok: deleted \"${item.title}\""
-                    },
-                )
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        "error: couldn't delete \"${item.title}\" right now; nothing was changed"
+                    }
+                }
+                // Its own card, so a Send or Call button still on screen from before can't confirm this instead.
+                cards?.show(WatchGPTCard.Ask("Delete reminder", item.title, "Delete", null))
+                return done(CHANGE_REMINDER, "proposed", proposal)
             }
 
             "edit" -> {
@@ -228,7 +233,15 @@ class PhoneActions(
         val to = ActionArgs.time(ActionArgs.text(args, "to", 40), zone()).endTime()?.takeIf { it.isAfter(from) } ?: from.toLocalDate().plusDays(1).atStartOfDay()
         if (Duration.between(from, to) > Duration.ofDays(LIST_MAX_DAYS)) return done(LIST_EVENTS, "invalid", "error: ask for at most $LIST_MAX_DAYS days at a time")
         // WatchGPT's own agenda (it needs no calendar access) and the phone's calendar, without WatchGPT's copies twice.
-        val own = Organizer.get(appContext).list().flatMap { e ->
+        // The phone's calendar is still read when WatchGPT's own storage can't be.
+        val ownItems = try {
+            Organizer.get(appContext).list()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: IllegalStateException) {
+            null
+        }
+        val own = ownItems.orEmpty().flatMap { e ->
             Agenda.occurrences(e, from, to, zone()).map { at ->
                 val kind = if (e.kind == Kind.REMINDER) " (reminder)" else ""
                 at to if (e.allDay) "${ActionArgs.say(at.toLocalDate())}: ${e.title} (all day)$kind" else "${ActionArgs.say(at)}: ${e.title}$kind"
@@ -237,7 +250,8 @@ class PhoneActions(
         val readable = calendarAllowed()
         val phone = if (readable) withContext(Dispatchers.IO) { queryEvents(from, to) } else emptyList()
         val events = (own + phone).sortedBy { it.first }.take(LIST_MAX_EVENTS).map { it.second }
-        val unread = if (readable) "" else " (the phone's own calendar wasn't read: calendar access is off; the user can allow it in the WatchGPT phone app, What WatchGPT can do)"
+        val unread = (if (readable) "" else " (the phone's own calendar wasn't read: calendar access is off; the user can allow it in the WatchGPT phone app, What WatchGPT can do)") +
+            (if (ownItems == null) " (WatchGPT's own reminders couldn't be read right now)" else "")
         if (events.isEmpty()) return done(LIST_EVENTS, "ok", "no events between ${ActionArgs.say(from)} and ${ActionArgs.say(to)}$unread")
         return done(LIST_EVENTS, "ok", events.joinToString(" | ") + unread)
     }

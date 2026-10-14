@@ -122,7 +122,7 @@ internal class ReminderAlerts(private val organizer: Organizer) {
     /** "Snooze" on a notification: only while the alert it was about is still the item's, so it never reopens one done elsewhere. */
     suspend fun snooze(id: String, key: String?) {
         val entry = organizer.db.get(id) ?: return
-        if (key == null || Alerts.current(entry, key)) organizer.snooze(id)
+        if (key == null || Alerts.current(entry, key)) organizer.snooze(id, from = Instant.now())
     }
 
     private fun action(entry: Entry, action: String, alert: Alerts.Alert) = PendingIntent.getBroadcast(

@@ -165,6 +165,25 @@ class CalendarProviderTest {
             assertFalse(organizer.db.get(item.id)!!.deleted)
             assertEquals(1, copies(first).size)
 
+            // Sync off and on again: the copy is found by its marker, not written twice.
+            organizer.calendar.select(null)
+            organizer.calendar.select(first)
+            organizer.calendar.synchronize()
+            assertEquals(1, copies(first).size)
+
+            // Calendar Storage cleared: every copy gone at once deletes no item, and nothing is written meanwhile.
+            val other = organizer.db.save(Entry(title = "Synthetic second entry", localTime = "2027-05-04T09:00"))
+            organizer.calendar.synchronize()
+            fun wipe() = resolver.delete(CalendarContract.Events.CONTENT_URI.buildUpon().appendQueryParameter(CalendarContract.CALLER_IS_SYNCADAPTER, "true").appendQueryParameter(CalendarContract.Calendars.ACCOUNT_NAME, account).appendQueryParameter(CalendarContract.Calendars.ACCOUNT_TYPE, "com.google").build(), "calendar_id=? AND description LIKE ?", arrayOf(first.toString(), "%[WatchGPT:%"))
+            wipe()
+            organizer.calendar.synchronize()
+            assertFalse(organizer.db.get(item.id)!!.deleted)
+            assertFalse(organizer.db.get(other.id)!!.deleted)
+            assertTrue(copies(first).isEmpty())
+            organizer.db.removeMeta("calendar_${first}_reset")
+            organizer.calendar.synchronize()
+            assertEquals(1, copies(first).size)
+
             // Choosing another calendar moves the copy there.
             organizer.calendar.select(second)
             organizer.calendar.synchronize()

@@ -119,6 +119,7 @@ class CalendarSync internal constructor(private val organizer: Organizer) {
                 _status.value = "Selected Google calendar is unavailable. Choose a calendar."
                 return
             }
+            if (resetHold(calendar)) return
             val zone = ZoneId.systemDefault()
             val outcomes = mutableMapOf<Outcome, Int>()
             var failed = 0
@@ -159,7 +160,8 @@ class CalendarSync internal constructor(private val organizer: Organizer) {
             db.meta(key, "")
             return Outcome.DONE
         }
-        var existing = link?.let { read(it.eventId, calendar, entry) }
+        // Unlinked (new, or sync was turned off and on): its copy is looked for by marker before a new one is written.
+        var existing = if (link != null) read(link.eventId, calendar, entry) else find(calendar, entry)
         var outcome = Outcome.DONE
         if (link != null && existing == null) {
             // The copy under another id (the calendar's storage was reset and downloaded again) is linked afresh.
@@ -218,6 +220,31 @@ class CalendarSync internal constructor(private val organizer: Organizer) {
         val written = read(id, calendar, current) ?: error("Calendar event could not be verified")
         db.meta(key, json.encodeToString(Link.serializer(), Link(id, current.revision, current.author, CalendarProjection.fingerprint(written.fields), writtenZone, LINK_VERSION)))
         return if (remoteChanged && localChanged) Outcome.CONFLICT else outcome
+    }
+
+    /**
+     * True (and this pass stops) while the calendar looks reset: several linked copies, and not one WatchGPT copy left
+     * in it. That is Calendar Storage being cleared, not the owner deleting each copy, so no item is deleted: the links
+     * go, and the pass waits for the copies to download again (found by their markers), or a day, before writing new ones.
+     */
+    private fun resetHold(calendar: Long): Boolean {
+        val held = "calendar_${calendar}_$RESET"
+        if (query("calendar_id=? AND deleted=0 AND original_id IS NULL AND description LIKE ?", arrayOf(calendar.toString(), "%[WatchGPT:%"), null).isNotEmpty()) {
+            db.removeMeta(held)
+            return false
+        }
+        val linked = db.metaNames("calendar_${calendar}_").count { it != held && !db.meta(it).isNullOrEmpty() }
+        if (linked >= 2) {
+            db.clearMeta("calendar_${calendar}_")
+            db.meta(held, System.currentTimeMillis().toString())
+        }
+        val since = db.meta(held)?.toLongOrNull() ?: return false
+        if (System.currentTimeMillis() - since >= RESET_WAIT_MS) {
+            db.removeMeta(held)
+            return false
+        }
+        _status.value = "Calendar sync waiting: the calendar has none of WatchGPT's copies right now (was its storage cleared?). Nothing was deleted; sync resumes once they download again."
+        return true
     }
 
     private enum class Copy { GONE, ELSEWHERE, NOT_OURS }
@@ -286,6 +313,8 @@ class CalendarSync internal constructor(private val organizer: Organizer) {
         const val CHECKING = "Calendar sync · checking…"
         const val OFF = "Calendar sync is off"
         const val MOVED = "calendar_moved_"
+        const val RESET = "reset"
+        const val RESET_WAIT_MS = 24 * 60 * 60 * 1000L
         val LINKED = Regex("calendar_(\\d+)_.+")
         val PENDING = Regex("calendar_moved_(\\d+)")
         val MARKER = Regex("\\[WatchGPT:([0-9a-fA-F-]{36})]")

@@ -27,6 +27,24 @@ object Agenda {
         return if (entry.repeat == Repeat.NONE || entry.completed) LocalDateTime.parse(entry.localTime) else Recurrence.occurrence(entry, from, zone) ?: LocalDateTime.parse(entry.localTime)
     }
 
+    /**
+     * What "Done" on the item's card completes, or null for the occurrence due now (the default). The occurrence the
+     * card shows, unless one went by in the last half day (Done late is for that one) or a snooze is pending (Done is for
+     * the occurrence it postponed, as on its notification).
+     */
+    fun doneOccurrence(
+        entry: Entry,
+        now: Instant,
+        deviceZone: ZoneId,
+    ): LocalDateTime? {
+        if (entry.repeat == Repeat.NONE || entry.completed) return null
+        if (entry.snoozeUntil?.let { Instant.ofEpochMilli(it) >= now.minus(Alerts.GRACE_REPEAT) } == true) return null
+        val zone = entry.effectiveZone(deviceZone)
+        val shown = current(entry, now, deviceZone)
+        val recent = Recurrence.occurrence(entry, now.minus(Alerts.GRACE_ONCE), zone) ?: return shown
+        return if (recent < shown) null else shown
+    }
+
     /** Whether the item's time has passed: for an all-day item once its day is over, for an event once it has ended. */
     fun overdue(
         entry: Entry,

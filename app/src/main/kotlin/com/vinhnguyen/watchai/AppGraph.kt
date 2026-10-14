@@ -118,7 +118,7 @@ class AppGraph(
     /** What the phone's pop-up shows while WatchGPT works. */
     val cards = CardHub()
 
-    val actions = PhoneActions(appContext, notes, controls, phoneClock, logger = logger, cards = cards)
+    val actions = PhoneActions(appContext, notes, controls, phoneClock, logger = logger, cards = cards, pending = pending)
 
     /** Messages the user got, from notifications (with their OK); only in memory. */
     val inbox = MessageInbox()
@@ -169,6 +169,9 @@ class AppGraph(
 
     /** Test builds: a screen to open, set from adb (debug TestHooks); nothing sets it in release builds. */
     val testPage = MutableStateFlow<TestPage?>(null)
+
+    /** How many times WatchGPT was opened as the assistant (ACTION_ASSIST): the home screen starts listening for each. */
+    val assistRequests = MutableStateFlow(0)
 
     /** The phone's own voice, for private answers. */
     val speech by lazy { LocalSpeech(appContext) }
@@ -301,14 +304,21 @@ class AppSettings(
         get() = prefs.getBoolean("remember_chats", true)
         set(value) = prefs.edit { putBoolean("remember_chats", value) }
 
-    /** Inactivity ends a call; zero keeps it open until stopped or disconnected. */
+    /** Silence that ends a call; zero is "until I stop". Short by default: every open call holds the microphone. */
     var conversationTimeoutSeconds: Int
-        get() = prefs.getInt("conversation_timeout", 120).coerceIn(0, 900)
+        get() = prefs.getInt("conversation_timeout", 30).coerceIn(0, 900)
         set(value) = prefs.edit { putInt("conversation_timeout", value.coerceIn(0, 900)) }
+
+    /** The call's idle limit: "until I stop" still ends a call after half an hour of nothing at all (one left open by mistake). */
+    val conversationIdleMs: Long get() = conversationTimeoutSeconds.let { if (it > 0) it * 1000L else UNTIL_STOPPED_IDLE_MS }
 
     var voice: String
         get() = prefs.getString("voice", null) ?: "cove"
         set(value) = prefs.edit { putString("voice", value) }
 
     fun clearAll() = prefs.edit { clear() }
+
+    private companion object {
+        const val UNTIL_STOPPED_IDLE_MS = 30 * 60_000L
+    }
 }

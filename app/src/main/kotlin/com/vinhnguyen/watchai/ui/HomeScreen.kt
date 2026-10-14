@@ -28,8 +28,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -88,6 +92,15 @@ fun HomeScreen(
         }
     }
     val talking = state.phase != VoicePhase.IDLE && state.phase != VoicePhase.ERROR
+    // Opened as the assistant: start listening, once per request (not again after a rotation).
+    val assist by talk.assistRequests.collectAsStateWithLifecycle()
+    var assistHandled by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(assist) {
+        if (assist > assistHandled) {
+            assistHandled = assist
+            if (!talking) onTap()
+        }
+    }
 
     Box(Modifier.fillMaxSize().background(p.background)) {
         // Everything the glass floats over.

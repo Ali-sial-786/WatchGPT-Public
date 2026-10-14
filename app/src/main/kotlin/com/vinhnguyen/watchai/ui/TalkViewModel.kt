@@ -40,6 +40,9 @@ import java.util.UUID
 class TalkViewModel(
     private val graph: AppGraph,
 ) : ViewModel() {
+    /** Opened as the assistant: see [AppGraph.assistRequests]. */
+    val assistRequests: StateFlow<Int> get() = graph.assistRequests
+
     data class State(
         val phase: VoicePhase = VoicePhase.IDLE,
         val detail: String? = null,
@@ -137,7 +140,7 @@ class TalkViewModel(
                         ),
                         graph.logger,
                         voice = graph.settings.voice,
-                        idleHangUpMs = graph.settings.conversationTimeoutSeconds.takeIf { it > 0 }?.times(1000L),
+                        idleHangUpMs = graph.settings.conversationIdleMs,
                         onIdle = { end() },
                         instructions = listOfNotNull(ChatGptRealtimeSession.VOICE_INSTRUCTIONS, remembered).joinToString("\n"),
                         onUserWords = graph.userTurns::heard,
@@ -243,7 +246,6 @@ class TalkViewModel(
     }
 
     private companion object {
-        /** Like on the watch: back to rest after 10 s with nobody talking. */
         const val BACKGROUND_GRACE_MS = 30_000L
         const val ON_PHONE = "on the phone"
         const val CARD_MS = 6_000L

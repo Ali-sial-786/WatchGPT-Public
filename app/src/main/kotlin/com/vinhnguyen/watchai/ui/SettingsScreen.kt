@@ -65,14 +65,18 @@ fun SettingsScreen(
     }
 
     var timeout by remember { mutableStateOf(settings.conversationTimeoutSeconds) }
-    Group("Conversation timeout", footer = "Silence before ending phone and watch conversations. Changes apply to the next call. Longer sessions can use more battery and voice allowance.") {
+    Group(
+        "Conversation timeout",
+        footer = "Silence before ending phone and watch conversations; a call where nobody spoke ends within a minute either way. " +
+            "\"Until I stop\" still ends after 30 minutes of silence. Changes apply to the next call. Longer sessions use more battery and voice allowance.",
+    ) {
         FlowRow(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(30, 60, 120, 300, 900, 0).forEach { seconds ->
+            listOf(10, 30, 60, 120, 300, 900, 0).forEach { seconds ->
                 Pill(
                     if (seconds == 0) {
                         "Until I stop"
                     } else if (seconds < 60) {
-                        "30 sec"
+                        "$seconds sec"
                     } else {
                         "${seconds / 60} min"
                     },

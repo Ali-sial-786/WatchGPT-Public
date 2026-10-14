@@ -11,6 +11,7 @@ import io.github.alisial786.watchgpt.brain.ToolSpec
 import io.github.alisial786.watchgpt.brain.Toolbox
 import io.github.alisial786.watchgpt.organizer.ItemChangedException
 import io.github.alisial786.watchgpt.organizer.Organizer
+import io.github.alisial786.watchgpt.reminders.Agenda
 import io.github.alisial786.watchgpt.reminders.AlertDevice
 import io.github.alisial786.watchgpt.reminders.Entry
 import io.github.alisial786.watchgpt.reminders.Kind
@@ -30,11 +31,12 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * What the assistant can do on this phone: notes (kept in this app), calendar events and reminders
- * (the phone's calendar, so they sync to the user's Google or Samsung calendar and show on the
- * watch), timers and alarms (on the device the user talks through, or where they say), and
- * [PhoneControls] that work from a pocket: find my phone, music, volume, ringer, Do Not Disturb,
- * battery. Nothing is deleted or sent anywhere. Every argument is checked; results are short plain
+ * What the assistant can do on this phone: notes (kept in this app), reminders and agenda events
+ * (WatchGPT's own, encrypted on the phone and the watch; copied to Google Calendar only if the user
+ * turned that on), reading the agenda together with the phone's calendar, timers and alarms (on the
+ * device the user talks through, or where they say), and [PhoneControls] that work from a pocket:
+ * find my phone, music, volume, ringer, Do Not Disturb, battery. A reminder is only deleted after the
+ * user's yes ([Pending]); nothing is sent anywhere. Every argument is checked; results are short plain
  * sentences for the model.
  */
 class PhoneActions(
@@ -48,6 +50,8 @@ class PhoneActions(
     private val zone: () -> ZoneId = { ZoneId.systemDefault() },
     /** The phone's pop-up shows what got done. */
     private val cards: CardHub? = null,
+    /** Deleting a reminder waits here for the user's yes; without it, deleting by voice isn't offered. */
+    private val pending: Pending? = null,
 ) : Toolbox {
     private val appContext = context.applicationContext
 
@@ -65,7 +69,7 @@ class PhoneActions(
                 ADD_NOTE -> addNote(args)
                 LIST_NOTES -> listNotes(args)
                 ADD_EVENT -> addEvent(args)
-                LIST_EVENTS -> calendar(name) { listEvents(args) }
+                LIST_EVENTS -> listEvents(args)
                 ADD_REMINDER -> addReminder(args)
                 LIST_REMINDERS -> listReminders()
                 CHANGE_REMINDER -> changeReminder(args)
@@ -108,15 +112,6 @@ class PhoneActions(
         return done(LIST_NOTES, "ok", "${all.size} notes, newest first: " + newest.joinToString(" | ") { it.text })
     }
 
-    private suspend fun calendar(
-        name: String,
-        block: suspend () -> String,
-    ): String = if (calendarAllowed()) {
-        block()
-    } else {
-        done(name, "denied", "error: calendar access is off. Tell the user to allow it in the WatchGPT phone app: in the menu, What WatchGPT can do.")
-    }
-
     private suspend fun addEvent(args: JsonObject): String {
         val title = ActionArgs.text(args, "title", TITLE_MAX) ?: return done(ADD_EVENT, "invalid", "error: the event needs a title")
         val start = ActionArgs.time(ActionArgs.text(args, "start", 40), zone()) ?: return done(ADD_EVENT, "invalid", "error: start must be a date or date and time like 2026-09-28T15:00")
@@ -148,19 +143,29 @@ class PhoneActions(
         val at = ActionArgs.time(ActionArgs.text(args, "at", 40), zone()) as? ActionArgs.When.At ?: return done(ADD_REMINDER, "invalid", "error: at must be a date and time like 2026-09-28T15:00")
         if (!plausible(at.time)) return done(ADD_REMINDER, "invalid", "error: that time is in the past or too far away")
         val repeat = ActionArgs.choice(args, "repeat", REPEATS) ?: "none"
-        val target = when (ActionArgs.choice(args, "on", PLACES)) {
-            "watch" -> AlertDevice.WATCH
-            "phone" -> AlertDevice.PHONE
-            else -> if (watch != null) AlertDevice.WATCH else AlertDevice.PHONE
-        }
-        val saved = Organizer.get(appContext).save(Entry(title = text, notes = ActionArgs.text(args, "notes", 8000).orEmpty(), localTime = at.time.toString(), zone = zone().id, repeat = Repeat.valueOf(repeat.uppercase()), alertDevice = target))
+        val target = alertDevice(args)
+        Organizer.get(appContext).save(Entry(title = text, notes = ActionArgs.text(args, "notes", 8000).orEmpty(), localTime = at.time.toString(), zone = zone().id, repeat = Repeat.valueOf(repeat.uppercase()), alertDevice = target))
         cards?.show(WatchGPTCard.Done(Symbol.CALENDAR, text, "Reminder · ${ActionArgs.say(at.time)}"))
-        return done(ADD_REMINDER, "ok", "ok: saved WatchGPT reminder ${saved.id} for ${ActionArgs.say(at.time)}, alert destination ${target.name.lowercase()}. Delivery needs notifications enabled on that device and device sync if it is the watch. Google sync is optional.")
+        val where = when (target) {
+            AlertDevice.BOTH -> "the phone and the watch"
+            AlertDevice.WATCH -> "the watch (once it has synced)"
+            AlertDevice.PHONE -> "the phone"
+        }
+        return done(ADD_REMINDER, "ok", "ok: reminder \"$text\" saved for ${ActionArgs.say(at.time)}; it alerts on $where if notifications are allowed there.")
     }
 
+    /** Open reminders by when they are next due, said the way people say them; changes go by title, so no IDs. */
     private suspend fun listReminders(): String {
-        val items = Organizer.get(appContext).list().filter { it.kind == Kind.REMINDER }.take(50)
-        return done(LIST_REMINDERS, "ok", if (items.isEmpty()) "No reminders" else items.joinToString(" | ") { "${it.id}: ${it.title}, ${it.localTime}, ${it.repeat}, ${if (it.completed) "completed" else "open"}; ${it.notes}" })
+        val now = Instant.now()
+        val items = Organizer.get(appContext).list().filter { it.kind == Kind.REMINDER && !it.completed }
+            .map { it to Agenda.nextShown(it, now, zone()) }.sortedBy { it.second }
+        if (items.isEmpty()) return done(LIST_REMINDERS, "ok", "no open reminders")
+        val shown = items.take(LIST_MAX_REMINDERS).joinToString(" | ") { (e, at) ->
+            val repeat = if (e.repeat == Repeat.NONE) "" else ", ${e.repeat.name.lowercase()}"
+            val notes = e.notes.takeIf { it.isNotBlank() }?.let { "; notes: ${it.take(200)}" }.orEmpty()
+            "\"${e.title}\" ${ActionArgs.say(at)}$repeat$notes"
+        }
+        return done(LIST_REMINDERS, "ok", "${items.size} open reminders, soonest first: $shown")
     }
 
     private suspend fun changeReminder(args: JsonObject): String {
@@ -177,21 +182,35 @@ class PhoneActions(
 
             "snooze" -> organizer.snooze(selectedId, ActionArgs.int(args, "minutes", 1..10080) ?: 10)
 
-            "delete" -> organizer.delete(selectedId)
+            // Deleting can't be undone (and syncs to the watch and the calendar): read it back and wait for a yes.
+            "delete" -> {
+                val confirm = pending ?: return done(CHANGE_REMINDER, "refused", "error: deleting by voice isn't available here; the user can delete it in WatchGPT's reminders screen")
+                return done(
+                    CHANGE_REMINDER,
+                    "proposed",
+                    confirm.propose("Delete \"${item.title}\" from WatchGPT on the phone and the watch.") {
+                        organizer.delete(selectedId)
+                        "ok: deleted \"${item.title}\""
+                    },
+                )
+            }
 
             "edit" -> {
-                val at = (ActionArgs.time(ActionArgs.text(args, "at", 40), zone()) as? ActionArgs.When.At)?.time
+                val atText = ActionArgs.text(args, "at", 40)
+                val at = atText?.let { (ActionArgs.time(it, zone()) as? ActionArgs.When.At)?.time ?: return done(CHANGE_REMINDER, "invalid", "error: at must be a date and time like 2026-09-28T15:00; nothing was changed") }
                 if (at != null && !plausible(at)) return done(CHANGE_REMINDER, "invalid", "error: that time is in the past or too far away")
                 val repeat = ActionArgs.choice(args, "repeat", REPEATS)?.let { Repeat.valueOf(it.uppercase()) }
                 // A new time or repeat starts the item afresh (reopened if it was done); a new title alone doesn't.
                 val retimed = (at != null && at.toString() != item.localTime) || (repeat != null && repeat != item.repeat)
+                // A month-end series keeps its day (the 31st) through a time-of-day change.
+                val redated = (at != null && at.toLocalDate() != LocalDateTime.parse(item.localTime).toLocalDate()) || (repeat != null && repeat != item.repeat)
                 organizer.save(
                     item.copy(
                         title = ActionArgs.text(args, "title", 200) ?: item.title,
                         notes = ActionArgs.text(args, "notes", 8000) ?: item.notes,
                         localTime = at?.toString() ?: item.localTime,
                         repeat = repeat ?: item.repeat,
-                        monthlyDay = if (retimed) null else item.monthlyDay,
+                        monthlyDay = if (redated) null else item.monthlyDay,
                         snoozeUntil = if (retimed) null else item.snoozeUntil,
                         completed = item.completed && !retimed,
                     ),
@@ -208,9 +227,19 @@ class PhoneActions(
         val from = ActionArgs.time(ActionArgs.text(args, "from", 40), zone()).startTime() ?: today.atStartOfDay()
         val to = ActionArgs.time(ActionArgs.text(args, "to", 40), zone()).endTime()?.takeIf { it.isAfter(from) } ?: from.toLocalDate().plusDays(1).atStartOfDay()
         if (Duration.between(from, to) > Duration.ofDays(LIST_MAX_DAYS)) return done(LIST_EVENTS, "invalid", "error: ask for at most $LIST_MAX_DAYS days at a time")
-        val events = withContext(Dispatchers.IO) { queryEvents(from, to) }
-        if (events.isEmpty()) return done(LIST_EVENTS, "ok", "no events between ${ActionArgs.say(from)} and ${ActionArgs.say(to)}")
-        return done(LIST_EVENTS, "ok", events.joinToString(" | "))
+        // WatchGPT's own agenda (it needs no calendar access) and the phone's calendar, without WatchGPT's copies twice.
+        val own = Organizer.get(appContext).list().flatMap { e ->
+            Agenda.occurrences(e, from, to, zone()).map { at ->
+                val kind = if (e.kind == Kind.REMINDER) " (reminder)" else ""
+                at to if (e.allDay) "${ActionArgs.say(at.toLocalDate())}: ${e.title} (all day)$kind" else "${ActionArgs.say(at)}: ${e.title}$kind"
+            }
+        }
+        val readable = calendarAllowed()
+        val phone = if (readable) withContext(Dispatchers.IO) { queryEvents(from, to) } else emptyList()
+        val events = (own + phone).sortedBy { it.first }.take(LIST_MAX_EVENTS).map { it.second }
+        val unread = if (readable) "" else " (the phone's own calendar wasn't read: calendar access is off; the user can allow it in the WatchGPT phone app, What WatchGPT can do)"
+        if (events.isEmpty()) return done(LIST_EVENTS, "ok", "no events between ${ActionArgs.say(from)} and ${ActionArgs.say(to)}$unread")
+        return done(LIST_EVENTS, "ok", events.joinToString(" | ") + unread)
     }
 
     private suspend fun setTimer(args: JsonObject): String {
@@ -229,6 +258,13 @@ class PhoneActions(
         val days = rawDays?.map { (it as? JsonPrimitive)?.intOrNull ?: return invalid(SET_ALARM, "days") }.orEmpty()
         if (days.size > 7 || days.any { it !in 1..7 }) return invalid(SET_ALARM, "days")
         return outcome(SET_ALARM, clock.setAlarm(hour, minute, label, days)) { WatchGPTCard.Done(Symbol.ALARM, "Alarm · %02d:%02d".format(hour, minute), label) }
+    }
+
+    /** Where a reminder alerts: where the user said, else both (see insertEvent). */
+    private fun alertDevice(args: JsonObject): AlertDevice = when (ActionArgs.choice(args, "on", REMINDER_PLACES)) {
+        "watch" -> AlertDevice.WATCH
+        "phone" -> AlertDevice.PHONE
+        else -> AlertDevice.BOTH
     }
 
     /** Where the user said ("on my phone"), else the device they talk through; null if they asked for a watch that isn't in the conversation. */
@@ -289,7 +325,9 @@ class PhoneActions(
                 notes = listOfNotNull(details, location?.let { "Location: $it" }).joinToString("\n"),
                 localTime = start.toString(), zone = zone().id, kind = Kind.EVENT,
                 durationMinutes = Duration.between(start, end).toMinutes().toInt().coerceIn(1, 10080),
-                alertDevice = if (watch != null) AlertDevice.WATCH else AlertDevice.PHONE,
+                // Both, like the calendar reminders this replaced (phone, mirrored to the watch): a watch off the
+                // wrist or charging mustn't swallow it. Done on either clears the other once they sync.
+                alertDevice = AlertDevice.BOTH,
             ),
         )
     }
@@ -297,7 +335,7 @@ class PhoneActions(
     private fun queryEvents(
         from: LocalDateTime,
         to: LocalDateTime,
-    ): List<String> {
+    ): List<Pair<LocalDateTime, String>> {
         val begin = from.atZone(zone()).toInstant().toEpochMilli()
         val end = to.atZone(zone()).toInstant().toEpochMilli()
         val uri =
@@ -313,12 +351,15 @@ class PhoneActions(
                 CalendarContract.Instances.END,
                 CalendarContract.Instances.ALL_DAY,
                 CalendarContract.Instances.EVENT_LOCATION,
+                CalendarContract.Instances.DESCRIPTION,
             )
-        val out = mutableListOf<String>()
+        val out = mutableListOf<Pair<LocalDateTime, String>>()
         appContext.contentResolver
             .query(uri, projection, "${CalendarContract.Instances.VISIBLE} = 1", null, "${CalendarContract.Instances.BEGIN} ASC")
             ?.use { c ->
                 while (c.moveToNext() && out.size < LIST_MAX_EVENTS) {
+                    // WatchGPT's own copies are listed from WatchGPT itself.
+                    if (c.getString(5)?.contains("[WatchGPT:") == true) continue
                     val title = c.getString(0)?.take(TITLE_MAX) ?: "(no title)"
                     val allDay = c.getInt(3) == 1
                     val startsAt =
@@ -327,7 +368,7 @@ class PhoneActions(
                             .atZone(if (allDay) ZoneOffset.UTC else zone())
                             .toLocalDateTime()
                     val place = c.getString(4)?.takeIf { it.isNotBlank() }?.let { " at ${it.take(TITLE_MAX)}" }.orEmpty()
-                    out += if (allDay) "${ActionArgs.say(startsAt.toLocalDate())}: $title (all day)$place" else "${ActionArgs.say(startsAt)}: $title$place"
+                    out += startsAt to if (allDay) "${ActionArgs.say(startsAt.toLocalDate())}: $title (all day)$place" else "${ActionArgs.say(startsAt)}: $title$place"
                 }
             }
         return out
@@ -381,12 +422,13 @@ class PhoneActions(
 
         private const val NOTE_MAX = 1_000
         private const val TITLE_MAX = 200
-        private const val REMINDER_MINUTES = 15L
         private const val LIST_MAX_DAYS = 31L
         private const val LIST_MAX_EVENTS = 15
         private const val RING_SECONDS = 30
         private val PLACES = setOf("watch", "phone")
         private val REPEATS = setOf("none", "daily", "weekdays", "weekly", "monthly")
+        private val REMINDER_PLACES = setOf("watch", "phone", "both")
+        private const val LIST_MAX_REMINDERS = 15
         private val MEDIA_TITLES = mapOf("play" to "Playing", "pause" to "Paused", "next" to "Next track", "previous" to "Previous track")
         private const val NO_WATCH = "error: timers and alarms only go on the watch while the user talks through it; offer the phone instead"
 
@@ -409,28 +451,28 @@ class PhoneActions(
                 ),
                 ToolSpec(
                     ADD_EVENT,
-                    "Create a WatchGPT agenda event stored locally and synced to the watch. Google Calendar copies only if the user enabled sync. Date-only events start at midnight. Alerts occur at the event start.",
+                    "Create a WatchGPT agenda event, kept on the phone and the watch (copied to Google Calendar only if the user turned that on). It alerts on both at its start, or alert_minutes_before; date-only events are all day and alert at 9:00 that day.",
                     """{"type":"object","properties":{"title":{"type":"string"},"start":{"type":"string","description":"$LOCAL_TIME"},"end":{"type":"string","description":"$LOCAL_TIME Optional."},"duration_minutes":{"type":"integer","minimum":5,"maximum":1440,"description":"Used when there is no end. Default 60."},"location":{"type":"string"},"notes":{"type":"string"},"alert_minutes_before":{"type":"integer","minimum":0,"maximum":10080}},"required":["title","start"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     LIST_EVENTS,
-                    "Read the user's calendar between two times (at most 31 days). Defaults to today.",
+                    "Read the user's agenda between two times (at most 31 days): WatchGPT's events and reminders and the phone's calendar. Defaults to today.",
                     """{"type":"object","properties":{"from":{"type":"string","description":"$LOCAL_TIME"},"to":{"type":"string","description":"$LOCAL_TIME"},"instruction":{"type":"string","description":"In English: exactly what the phone should find in it and tell the user."},"language":{"type":"string","description":"The language the user is speaking, as a BCP 47 tag: the phone answers and speaks in it."},"details":{"type":"boolean","description":"True only when the user asked for a code, a number or a link itself."}},"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     ADD_REMINDER,
-                    "Create a native WatchGPT reminder, including recurrence. Stored offline; alert on the specified device, otherwise the device in this conversation. No Google Calendar required.",
-                    """{"type":"object","properties":{"text":{"type":"string"},"at":{"type":"string","description":"Local date and time without a zone, like 2026-09-28T15:00."},"notes":{"type":"string"},"repeat":{"type":"string","enum":["none","daily","weekdays","weekly","monthly"]},$ON},"required":["text","at"],"additionalProperties":false}""",
+                    "Create a WatchGPT reminder, optionally repeating. It works offline and alerts on the phone and the watch unless the user says only one of them. No Google Calendar needed.",
+                    """{"type":"object","properties":{"text":{"type":"string"},"at":{"type":"string","description":"Local date and time without a zone, like 2026-09-28T15:00."},"notes":{"type":"string"},"repeat":{"type":"string","enum":["none","daily","weekdays","weekly","monthly"]},"on":{"type":"string","enum":["watch","phone","both"],"description":"Only when the user says where; otherwise leave it out and it alerts on both."}},"required":["text","at"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     LIST_REMINDERS,
-                    "Read WatchGPT reminders and their IDs privately on the phone.",
+                    "Read the user's open WatchGPT reminders, soonest first.",
                     """{"type":"object","properties":{"instruction":{"type":"string"},"language":{"type":"string"},"details":{"type":"boolean"}},"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     CHANGE_REMINDER,
-                    "Complete, snooze, edit or delete a WatchGPT item by its exact ID or the exact title the user said. Use match_title for private reminders whose IDs stay on the phone. Duplicate titles are rejected; never guess an ID or title. Delete only when the user asks.",
-                    """{"type":"object","properties":{"id":{"type":"string"},"match_title":{"type":"string","description":"Exact existing title spoken by the user; avoids sending the reminder list to ChatGPT."},"operation":{"type":"string","enum":["complete","snooze","delete","edit"]},"minutes":{"type":"integer","minimum":1,"maximum":10080},"title":{"type":"string"},"notes":{"type":"string"},"at":{"type":"string"},"repeat":{"type":"string","enum":["none","daily","weekdays","weekly","monthly"]}},"required":["operation"],"additionalProperties":false}""",
+                    "Complete, snooze, edit or delete a WatchGPT reminder or agenda item by the exact title the user said (match_title). Two items with that title are refused; never guess a title. Delete only when the user asks: it is read back and waits for their yes.",
+                    """{"type":"object","properties":{"match_title":{"type":"string","description":"The item's exact existing title, as the user said it."},"id":{"type":"string","description":"Rarely needed: an item ID WatchGPT gave you."},"operation":{"type":"string","enum":["complete","snooze","delete","edit"]},"minutes":{"type":"integer","minimum":1,"maximum":10080,"description":"For snooze; default 10."},"title":{"type":"string","description":"For edit: the new title."},"notes":{"type":"string","description":"For edit: the new notes."},"at":{"type":"string","description":"For edit: the new local date and time, like 2026-09-28T15:00."},"repeat":{"type":"string","enum":["none","daily","weekdays","weekly","monthly"]}},"required":["operation"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     SET_TIMER,

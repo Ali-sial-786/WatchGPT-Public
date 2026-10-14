@@ -1,5 +1,6 @@
 package io.github.alisial786.watchgpt
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,6 +36,7 @@ class MainActivity : ComponentActivity() {
             io.github.alisial786.watchgpt.organizer.OrganizerActivity.open(this, BuildConfig.DEBUG && intent.getBooleanExtra("watch_preview", false))
         }
         val graph = (application as WatchAiApp).graph
+        if (savedInstanceState == null) assisted(intent)
         val factory =
             viewModelFactory {
                 initializer { ChatViewModel(graph) }
@@ -67,5 +69,17 @@ class MainActivity : ComponentActivity() {
                 WatchGPTApp(graph, talk = viewModel(factory = factory), pages = pages, testPage = testPage)
             }
         }
+    }
+
+    /** Opened again while running: as the assistant, or for the reminders. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        assisted(intent)
+        if (intent.getBooleanExtra("organizer", false)) io.github.alisial786.watchgpt.organizer.OrganizerActivity.open(this)
+    }
+
+    private fun assisted(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_ASSIST) (application as WatchAiApp).graph.assistRequests.value += 1
     }
 }

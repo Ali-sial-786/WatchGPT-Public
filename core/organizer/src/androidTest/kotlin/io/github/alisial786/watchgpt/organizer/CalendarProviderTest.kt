@@ -6,8 +6,11 @@ import android.content.ContentValues
 import android.provider.CalendarContract
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.alisial786.watchgpt.reminders.Entry
+import io.github.alisial786.watchgpt.reminders.Kind
+import io.github.alisial786.watchgpt.reminders.Repeat
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -74,6 +77,23 @@ class CalendarProviderTest {
                 assertTrue(it.moveToFirst())
                 assertEquals("Synthetic unrelated event", it.getString(0))
             }
+
+            // A recurring all-day item: the provider only accepts day-based durations for these.
+            val birthday = organizer.db.save(Entry(title = "Synthetic birthday", localTime = "2027-04-14T00:00", allDay = true, durationMinutes = 1440, kind = Kind.EVENT, repeat = Repeat.WEEKLY))
+            organizer.calendar.synchronize()
+            val birthdayCopy = resolver.query(CalendarContract.Events.CONTENT_URI, arrayOf("duration", "allDay", "accessLevel"), "calendar_id=? AND deleted=0 AND description LIKE ?", arrayOf(calendarId.toString(), "%[WatchGPT:${birthday.id}]%"), null)!!.use { c ->
+                assertTrue(c.moveToFirst())
+                Triple(c.getString(0), c.getInt(1), c.getInt(2))
+            }
+            assertEquals(Triple("P1D", 1, CalendarContract.Events.ACCESS_PRIVATE), birthdayCopy)
+
+            // Sync off, the copy deleted meanwhile, sync on again: the item stays, and gets a new copy.
+            organizer.calendar.select(null)
+            resolver.delete(CalendarContract.Events.CONTENT_URI.buildUpon().appendQueryParameter(CalendarContract.CALLER_IS_SYNCADAPTER, "true").appendQueryParameter(CalendarContract.Calendars.ACCOUNT_NAME, account).appendQueryParameter(CalendarContract.Calendars.ACCOUNT_TYPE, "com.google").build(), "calendar_id=? AND description LIKE ?", arrayOf(calendarId.toString(), "%[WatchGPT:${birthday.id}]%"))
+            organizer.calendar.select(calendarId)
+            organizer.calendar.synchronize()
+            assertFalse(organizer.db.get(birthday.id)!!.deleted)
+            resolver.query(CalendarContract.Events.CONTENT_URI, arrayOf("_id"), "calendar_id=? AND deleted=0 AND description LIKE ?", arrayOf(calendarId.toString(), "%[WatchGPT:${birthday.id}]%"), null)!!.use { assertEquals(1, it.count) }
         } finally {
             organizer.calendar.select(null)
             resolver.delete(ContentUris.withAppendedId(calendars, calendarId), null, null)

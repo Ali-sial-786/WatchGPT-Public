@@ -194,6 +194,18 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
         calendarPage = false
         error = null
     }
+    @Composable
+    fun DeleteDialog() {
+        confirmDelete?.let { entry ->
+            AlertDialog(onDismissRequest = { confirmDelete = null }, title = { Text("Delete this item?") }, text = { Text("${entry.title}\nThe deletion syncs to your $peer and removes its calendar copy.") }, confirmButton = {
+                TextButton(onClick = {
+                    run { organizer.delete(entry.id) }
+                    confirmDelete = null
+                    editing = null
+                }) { Text("Delete") }
+            }, dismissButton = { TextButton(onClick = { confirmDelete = null }) { Text("Cancel") } })
+        }
+    }
     if (creating || original != null) {
         val current = original?.let { o -> entries.firstOrNull { it.id == o.id } }
         val changedElsewhere = when {
@@ -213,6 +225,7 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
                 editing = current?.let(EntryCodec::encode)
                 error = null
             },
+            onDelete = current?.let { { confirmDelete = it } },
             onCancel = {
                 creating = false
                 editing = null
@@ -231,11 +244,13 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
                 }
             },
         )
+        DeleteDialog()
         return
     }
     val padding = if (watch) 30.dp else 20.dp
     ScrollingColumn(watch, listScroll, Modifier.fillMaxSize().padding(horizontal = padding).padding(top = if (watch) 32.dp else 48.dp, bottom = if (watch) 40.dp else 32.dp), horizontalAlignment = if (watch) Alignment.CenterHorizontally else Alignment.Start, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        TextButton(onClick = if (calendarPage) ({ calendarPage = false }) else onClose) { Text("‹ WatchGPT") }
+        // The watch goes back with a swipe; its first screen is for the reminders themselves.
+        if (!watch || calendarPage) TextButton(onClick = if (calendarPage) ({ calendarPage = false }) else onClose) { Text("‹ WatchGPT") }
         if (!watch || calendarPage) Text(if (calendarPage) "Calendar sync" else "Your day", style = if (watch) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
         if (calendarPage) {
             CalendarPage(organizer, calendarStatus, calendarPermission, format, onAllow = { permission.launch(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)) }, onError = { error = it }, run = ::run)
@@ -264,7 +279,6 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
                 OutlinedButton(onClick = { open(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))) }) { Text("Allow precise alerts") }
             }
             Button(onClick = { creating = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("+ New ${if (tab == "Agenda") "item" else "reminder"}") }
-            if (watch) TextButton(onClick = { tab = if (tab == "Done") "Reminders" else "Done" }) { Text(if (tab == "Done") "Show active" else "Completed") }
             val now = Instant.now()
             val zone = ZoneId.systemDefault()
             val visible = entries.filter { if (tab == "Done") it.completed else !it.completed && (tab == "Agenda" || it.kind == Kind.REMINDER) }
@@ -291,6 +305,7 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
                     onDelete = { confirmDelete = entry },
                 )
             }
+            if (watch) TextButton(onClick = { tab = if (tab == "Done") "Reminders" else "Done" }) { Text(if (tab == "Done") "Show active" else "Completed") }
             HorizontalDivider()
             organizer.lastSync?.let { Text("Last sent: ${format.dateTime(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime(), allDay = false)}", style = MaterialTheme.typography.bodySmall) }
             Text(status, style = MaterialTheme.typography.bodySmall, textAlign = if (watch) TextAlign.Center else TextAlign.Start)
@@ -299,14 +314,7 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
-    confirmDelete?.let { entry ->
-        AlertDialog(onDismissRequest = { confirmDelete = null }, title = { Text("Delete this item?") }, text = { Text("${entry.title}\nThe deletion syncs to your $peer and removes its calendar copy.") }, confirmButton = {
-            TextButton(onClick = {
-                run { organizer.delete(entry.id) }
-                confirmDelete = null
-            }) { Text("Delete") }
-        }, dismissButton = { TextButton(onClick = { confirmDelete = null }) { Text("Cancel") } })
-    }
+    DeleteDialog()
 }
 
 @Composable
@@ -316,7 +324,8 @@ private fun EntryCard(entry: Entry, now: Instant, zone: ZoneId, watch: Boolean, 
     // Snooze is offered while an alert is due, the moment it is useful; earlier it would only move the reminder.
     val dueNow = !entry.completed && Alerts.due(entry, now, zone)?.at?.let { it <= now } == true
     val align = if (watch) TextAlign.Center else TextAlign.Start
-    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp)) {
+    // On the watch a card is a tap target of its own (it opens the item) with only the buttons that matter now.
+    val body: @Composable () -> Unit = {
         Column(Modifier.fillMaxWidth().padding(if (watch) 12.dp else 18.dp), horizontalAlignment = if (watch) Alignment.CenterHorizontally else Alignment.Start, verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(entry.title, style = MaterialTheme.typography.titleMedium, textAlign = align)
             Text(
@@ -333,17 +342,22 @@ private fun EntryCard(entry: Entry, now: Instant, zone: ZoneId, watch: Boolean, 
                 color = if (overdue) MaterialTheme.colorScheme.error else Color.Unspecified,
                 textAlign = align,
             )
-            Text(listOfNotNull(entry.kind.label(), entry.repeat.label().takeIf { entry.repeat != Repeat.NONE }, "alerts on ${entry.alertDevice.label().lowercase()}").joinToString(" · "), style = MaterialTheme.typography.labelSmall, textAlign = align)
+            Text(if (watch) listOfNotNull(entry.repeat.label().takeIf { entry.repeat != Repeat.NONE }, entry.alertDevice.label().takeIf { entry.alertDevice != AlertDevice.WATCH }?.let { "alerts: ${it.lowercase()}" }).joinToString(" · ") else listOfNotNull(entry.kind.label(), entry.repeat.label().takeIf { entry.repeat != Repeat.NONE }, "alerts on ${entry.alertDevice.label().lowercase()}").joinToString(" · "), style = MaterialTheme.typography.labelSmall, textAlign = align)
             snoozedUntil(entry, now)?.let { Text("Snoozed until ${format.time(it.atZone(zone).toLocalDateTime())}", style = MaterialTheme.typography.bodySmall, textAlign = align) }
-            if (entry.notes.isNotBlank()) Text(entry.notes, style = MaterialTheme.typography.bodySmall, textAlign = align, maxLines = if (watch) 3 else 6)
+            if (entry.notes.isNotBlank() && !watch) Text(entry.notes, style = MaterialTheme.typography.bodySmall, textAlign = align, maxLines = 6)
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp, if (watch) Alignment.CenterHorizontally else Alignment.Start)) {
                 // Each button says which item it acts on: a list of identical "Done"s is useless to a screen reader.
                 if (!entry.completed) TextButton(onClick = onDone, modifier = Modifier.semantics { contentDescription = "Done: ${entry.title}" }) { Text("Done") }
-                TextButton(onClick = onEdit, modifier = Modifier.semantics { contentDescription = "Edit ${entry.title}" }) { Text("Edit") }
+                if (!watch) TextButton(onClick = onEdit, modifier = Modifier.semantics { contentDescription = "Edit ${entry.title}" }) { Text("Edit") }
                 if (dueNow) TextButton(onClick = onSnooze, modifier = Modifier.semantics { contentDescription = "Snooze ${entry.title} for 10 minutes" }) { Text(if (watch) "Snooze" else "Snooze 10 min") }
-                TextButton(onClick = onDelete, modifier = Modifier.semantics { contentDescription = "Delete ${entry.title}" }) { Text("Delete") }
+                if (!watch) TextButton(onClick = onDelete, modifier = Modifier.semantics { contentDescription = "Delete ${entry.title}" }) { Text("Delete") }
             }
         }
+    }
+    if (watch) {
+        Card(onClick = onEdit, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp)) { body() }
+    } else {
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp)) { body() }
     }
 }
 
@@ -395,7 +409,7 @@ private fun CalendarPage(organizer: Organizer, calendarStatus: String, calendarP
 }
 
 @Composable
-private fun EntryEditor(original: Entry?, watch: Boolean, format: TimeFormat, externalError: String?, saving: Boolean, changedElsewhere: String?, onReload: () -> Unit, onCancel: () -> Unit, onSave: (Entry) -> Unit) {
+private fun EntryEditor(original: Entry?, watch: Boolean, format: TimeFormat, externalError: String?, saving: Boolean, changedElsewhere: String?, onReload: () -> Unit, onDelete: (() -> Unit)?, onCancel: () -> Unit, onSave: (Entry) -> Unit) {
     // Keyed on the version being edited, so "Reload" shows the newer one.
     val key = "${original?.id}:${original?.revision}:${original?.author}"
     var title by rememberSaveable(key) { mutableStateOf(original?.title.orEmpty()) }
@@ -463,9 +477,14 @@ private fun EntryEditor(original: Entry?, watch: Boolean, format: TimeFormat, ex
             OutlinedTextField(lead, { lead = it.filter(Char::isDigit).take(5) }, label = { Text("Alert minutes before") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
         }
         Text("Repeat", style = MaterialTheme.typography.titleSmall)
-        Repeat.entries.forEach { option -> FilterChip(selected = repeat == option, onClick = { repeat = option }, label = { Text(option.label()) }, modifier = if (watch) Modifier.fillMaxWidth() else Modifier) }
+        val chips = if (watch) Alignment.CenterHorizontally else Alignment.Start
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp, chips)) {
+            Repeat.entries.forEach { option -> FilterChip(selected = repeat == option, onClick = { repeat = option }, label = { Text(option.label()) }) }
+        }
         Text("Alert on", style = MaterialTheme.typography.titleSmall)
-        AlertDevice.entries.forEach { option -> FilterChip(selected = alert == option, onClick = { alert = option }, label = { Text(option.label()) }, modifier = if (watch) Modifier.fillMaxWidth() else Modifier) }
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp, chips)) {
+            AlertDevice.entries.forEach { option -> FilterChip(selected = alert == option, onClick = { alert = option }, label = { Text(option.label()) }) }
+        }
         Text("Only the selected device alerts. Sync must reach it first; no automatic duplicate alerts on the other device.", style = MaterialTheme.typography.bodySmall, textAlign = align)
         if (kind == Kind.EVENT && !allDay) OutlinedTextField(duration, { duration = it.filter(Char::isDigit).take(5) }, label = { Text("Minutes") }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
         Row(Modifier.toggleable(value = follows, role = Role.Checkbox, onValueChange = { follows = it }), verticalAlignment = Alignment.CenterVertically) {
@@ -508,6 +527,7 @@ private fun EntryEditor(original: Entry?, watch: Boolean, format: TimeFormat, ex
                 error = "That date or time can't be saved. Choose another."
             }
         }, enabled = !saving, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Save on this device") }
+        onDelete?.let { TextButton(onClick = it) { Text("Delete", color = MaterialTheme.colorScheme.error) } }
     }
 }
 

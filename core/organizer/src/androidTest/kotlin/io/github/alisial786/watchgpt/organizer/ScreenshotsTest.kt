@@ -49,7 +49,7 @@ class ScreenshotsTest {
             val intent = Intent(context, OrganizerActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra("watch_preview", watch)
             scenario?.close()
             scenario = ActivityScenario.launch(intent)
-            compose.waitUntil(15000) { runCatching { compose.onNodeWithText(if (watch) "‹ WatchGPT" else "Your day").assertExists() }.isSuccess }
+            compose.waitUntil(15000) { runCatching { compose.onNodeWithText(if (watch) "+ New reminder" else "Your day").assertExists() }.isSuccess }
             compose.waitForIdle()
             SystemClock.sleep(1000)
         }

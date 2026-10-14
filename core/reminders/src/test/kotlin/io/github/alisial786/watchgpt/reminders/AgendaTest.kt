@@ -53,6 +53,21 @@ class AgendaTest {
         assertTrue(Agenda.overdue(entry(), Instant.parse("2026-10-05T09:01:00Z"), utc))
     }
 
+    @Test fun doneOnACardCompletesTheOccurrenceItShows() {
+        // Made a week ago and never marked done: the card shows today's 10:00, and Done moves it to tomorrow.
+        val pills = entry(Repeat.DAILY, "2026-10-07T10:00")
+        val now = Instant.parse("2026-10-14T09:00:00Z")
+        assertEquals(t("2026-10-14T10:00"), Agenda.nextShown(pills, now, utc))
+        val done = Recurrence.complete(pills, now, utc, Agenda.current(pills, now, utc))
+        assertEquals(t("2026-10-15T10:00"), Agenda.nextShown(done, now, utc))
+    }
+
+    @Test fun anEventIsOverdueOnlyOnceItHasEnded() {
+        val meeting = entry().copy(kind = Kind.EVENT, durationMinutes = 60)
+        assertFalse(Agenda.overdue(meeting, Instant.parse("2026-10-05T09:30:00Z"), utc))
+        assertTrue(Agenda.overdue(meeting, Instant.parse("2026-10-05T10:01:00Z"), utc))
+    }
+
     @Test fun aPinnedAllDayItemIsOnItsDateHere() {
         val pinned = entry(Repeat.WEEKLY, "2026-10-06T00:00").copy(allDay = true, zone = "Asia/Tokyo", followsDeviceZone = false)
         assertEquals(listOf(t("2026-10-13T00:00")), Agenda.occurrences(pinned, t("2026-10-13T00:00"), t("2026-10-14T00:00"), ZoneId.of("America/New_York")))

@@ -19,6 +19,7 @@ import io.github.alisial786.watchgpt.reminders.Alerts
 import io.github.alisial786.watchgpt.reminders.Entry
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneId
 
 internal class ReminderAlerts(private val organizer: Organizer) {
@@ -115,7 +116,7 @@ internal class ReminderAlerts(private val organizer: Organizer) {
     /** "Done" on a notification: completes the occurrence it was about, never a later one. */
     suspend fun complete(id: String, key: String?) {
         val entry = organizer.db.get(id) ?: return
-        if (key == null || Alerts.current(entry, key)) organizer.complete(id)
+        if (key == null || Alerts.current(entry, key)) organizer.complete(id, key?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() })
     }
 
     /** "Snooze" on a notification: only while the alert it was about is still the item's, so it never reopens one done elsewhere. */

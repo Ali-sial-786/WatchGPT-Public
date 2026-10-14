@@ -25,14 +25,17 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
@@ -58,6 +61,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -88,12 +92,14 @@ import io.github.alisial786.watchgpt.reminders.Entry
 import io.github.alisial786.watchgpt.reminders.EntryCodec
 import io.github.alisial786.watchgpt.reminders.Kind
 import io.github.alisial786.watchgpt.reminders.Repeat
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class OrganizerActivity : ComponentActivity() {
@@ -107,7 +113,10 @@ class OrganizerActivity : ComponentActivity() {
         setContent {
             val dark = watch || androidx.compose.foundation.isSystemInDarkTheme()
             MaterialTheme(colorScheme = if (dark) darkColorScheme(primary = Color.White, onPrimary = Color.Black, background = Color(0xFF0B0B0D), surface = Color(0xFF17171A), surfaceContainerHighest = Color(0xFF17171A), secondaryContainer = Color(0xFF29292D), onSecondaryContainer = Color.White) else lightColorScheme(primary = Color(0xFF0A0A0B), onPrimary = Color.White, background = Color.White, surface = Color(0xFFF4F4F5), surfaceContainerHighest = Color(0xFFF4F4F5), secondaryContainer = Color(0xFFEAEAEA), onSecondaryContainer = Color.Black)) {
-                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { OrganizerPanel(organizer, onClose = ::finish, watch = watch) }
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    // Edge to edge on the phone: content stays clear of the system bars and the keyboard.
+                    Box(if (watch) Modifier.fillMaxSize() else Modifier.fillMaxSize().safeDrawingPadding()) { OrganizerPanel(organizer, onClose = ::finish, watch = watch) }
+                }
             }
         }
     }
@@ -136,7 +145,15 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
     val entries by organizer.entries.collectAsStateWithLifecycle()
     val status by organizer.status.collectAsStateWithLifecycle()
     val calendarStatus by organizer.calendar.status.collectAsStateWithLifecycle()
+    val loaded by organizer.loaded.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    // What's due, overdue or snoozable changes with the time, not only with the data.
+    val now by produceState(Instant.now()) {
+        while (true) {
+            delay(TICK_MS - System.currentTimeMillis() % TICK_MS)
+            value = Instant.now()
+        }
+    }
     val context = LocalContext.current
     val format = remember(context) { TimeFormat(context) }
     val peer = if (watch) "phone" else "watch"
@@ -160,11 +177,12 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
         calendarPermission = organizer.calendar.permitted()
         organizer.requestSync()
     }
-    // Reminders need notifications: ask once, the first time the screen opens (on the watch nothing else may have).
-    var asked by rememberSaveable { mutableStateOf(false) }
+    // Reminders need notifications: ask once, the first time the screen ever opens (on the watch nothing else may have).
     LaunchedEffect(Unit) {
-        if (!asked && !notifications && Build.VERSION.SDK_INT >= 33) permission.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
-        asked = true
+        if (!notifications && Build.VERSION.SDK_INT >= 33 && organizer.db.meta(ASKED_NOTIFICATIONS) == null) {
+            organizer.db.meta(ASKED_NOTIFICATIONS, "1")
+            permission.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        }
     }
     fun open(intent: Intent) {
         // Settings screens differ between devices (and some watches have none for this).
@@ -209,9 +227,13 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
     if (creating || original != null) {
         val current = original?.let { o -> entries.firstOrNull { it.id == o.id } }
         val changedElsewhere = when {
-            original == null -> null
+            // Not while this editor's own save lands, nor before the items have loaded.
+            original == null || saving || (current == null && !loaded) -> null
+
             current == null -> "Deleted on your $peer while you were editing."
+
             current.revision != original.revision || current.author != original.author -> "Changed on your $peer while you were editing. Reload to see it; saving this version is refused."
+
             else -> null
         }
         EntryEditor(
@@ -248,7 +270,7 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
         return
     }
     val padding = if (watch) 30.dp else 20.dp
-    ScrollingColumn(watch, listScroll, Modifier.fillMaxSize().padding(horizontal = padding).padding(top = if (watch) 32.dp else 48.dp, bottom = if (watch) 40.dp else 32.dp), horizontalAlignment = if (watch) Alignment.CenterHorizontally else Alignment.Start, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    ScrollingColumn(watch, listScroll, PaddingValues(start = padding, end = padding, top = if (watch) 32.dp else 24.dp, bottom = if (watch) 40.dp else 32.dp), horizontalAlignment = if (watch) Alignment.CenterHorizontally else Alignment.Start, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         // The watch goes back with a swipe; its first screen is for the reminders themselves.
         if (!watch || calendarPage) TextButton(onClick = if (calendarPage) ({ calendarPage = false }) else onClose) { Text("‹ WatchGPT") }
         if (!watch || calendarPage) Text(if (calendarPage) "Calendar sync" else "Your day", style = if (watch) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
@@ -267,10 +289,11 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
             if (!notifications) {
                 Text("Reminder notifications are off. Saved reminders cannot alert you.", color = MaterialTheme.colorScheme.error, textAlign = if (watch) TextAlign.Center else TextAlign.Start)
                 Button(onClick = {
-                    if (Build.VERSION.SDK_INT >= 33 && !asked) {
+                    // The system prompt while Android still offers it (after one "Don't allow"), else the app's settings.
+                    if (Build.VERSION.SDK_INT >= 33 && (context as? Activity)?.shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) == true) {
                         permission.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
-                    } else {
-                        open(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
+                    } else if (runCatching { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }.isFailure) {
+                        if (Build.VERSION.SDK_INT >= 33) permission.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
                     }
                 }) { Text("Enable alerts") }
             }
@@ -279,11 +302,10 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
                 OutlinedButton(onClick = { open(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))) }) { Text("Allow precise alerts") }
             }
             Button(onClick = { creating = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("+ New ${if (tab == "Agenda") "item" else "reminder"}") }
-            val now = Instant.now()
             val zone = ZoneId.systemDefault()
             val visible = entries.filter { if (tab == "Done") it.completed else !it.completed && (tab == "Agenda" || it.kind == Kind.REMINDER) }
                 .sortedBy { snoozedUntil(it, now) ?: Agenda.nextShown(it, now, zone).atZone(zone).toInstant() }
-            val loading = status.startsWith("Loading") || status.startsWith("Local storage unavailable")
+            val loading = !loaded || status.startsWith("Local storage unavailable")
             if (loading && visible.isEmpty()) Text(status, style = MaterialTheme.typography.bodyMedium, textAlign = if (watch) TextAlign.Center else TextAlign.Start)
             if (!loading && visible.isEmpty()) {
                 Text(if (tab == "Done") "Nothing completed yet" else "A little space in your day", style = MaterialTheme.typography.titleMedium, textAlign = if (watch) TextAlign.Center else TextAlign.Start)
@@ -296,7 +318,8 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
                     zone = zone,
                     watch = watch,
                     format = format,
-                    onDone = { run { organizer.complete(entry.id) } },
+                    // Done completes the occurrence the card shows.
+                    onDone = { run { organizer.complete(entry.id, Agenda.current(entry, now, zone)) } },
                     onEdit = {
                         error = null
                         editing = EntryCodec.encode(entry)
@@ -414,7 +437,7 @@ private fun EntryEditor(original: Entry?, watch: Boolean, format: TimeFormat, ex
     val key = "${original?.id}:${original?.revision}:${original?.author}"
     var title by rememberSaveable(key) { mutableStateOf(original?.title.orEmpty()) }
     var notes by rememberSaveable(key) { mutableStateOf(original?.notes.orEmpty()) }
-    var local by rememberSaveable(key) { mutableStateOf(original?.localTime ?: LocalDateTime.now().plusHours(1).withMinute(0).withSecond(0).withNano(0).toString()) }
+    var local by rememberSaveable(key) { mutableStateOf(original?.localTime ?: LocalDateTime.now().plusMinutes(90).truncatedTo(ChronoUnit.HOURS).toString()) }
     var repeat by rememberSaveable(key) { mutableStateOf(original?.repeat ?: Repeat.NONE) }
     var kind by rememberSaveable(key) { mutableStateOf(original?.kind ?: Kind.REMINDER) }
     var alert by rememberSaveable(key) { mutableStateOf(original?.alertDevice ?: if (watch) AlertDevice.WATCH else AlertDevice.PHONE) }
@@ -431,6 +454,7 @@ private fun EntryEditor(original: Entry?, watch: Boolean, format: TimeFormat, ex
     val speech = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { title = it.take(200) }
     }
+    val canSpeak = remember(context) { Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).resolveActivity(context.packageManager) != null }
     val time = LocalDateTime.parse(local)
     if (watch && picker != null) {
         WatchDateTimePicker(time, picker == "date", format, onCancel = { picker = null }, onSave = {
@@ -440,7 +464,7 @@ private fun EntryEditor(original: Entry?, watch: Boolean, format: TimeFormat, ex
         return
     }
     val align = if (watch) TextAlign.Center else TextAlign.Start
-    ScrollingColumn(watch, scroll, Modifier.fillMaxSize().padding(horizontal = if (watch) 28.dp else 20.dp).padding(top = if (watch) 32.dp else 48.dp, bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = if (watch) Alignment.CenterHorizontally else Alignment.Start) {
+    ScrollingColumn(watch, scroll, PaddingValues(start = if (watch) 28.dp else 20.dp, end = if (watch) 28.dp else 20.dp, top = if (watch) 32.dp else 24.dp, bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = if (watch) Alignment.CenterHorizontally else Alignment.Start) {
         TextButton(onClick = onCancel) { Text("‹ Cancel") }
         Text(if (original == null) "New reminder" else "Edit item", style = MaterialTheme.typography.titleLarge)
         changedElsewhere?.let {
@@ -448,7 +472,7 @@ private fun EntryEditor(original: Entry?, watch: Boolean, format: TimeFormat, ex
             OutlinedButton(onClick = onReload) { Text(if (it.startsWith("Deleted")) "Close" else "Reload") }
         }
         OutlinedTextField(title, { title = it.take(200) }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-        if (watch && Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).resolveActivity(context.packageManager) != null) {
+        if (watch && canSpeak) {
             OutlinedButton(onClick = { speech.launch(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(RecognizerIntent.EXTRA_PROMPT, "Say the title")) }, modifier = Modifier.fillMaxWidth()) { Text("Speak title") }
         }
         OutlinedTextField(notes, { notes = it.take(8000) }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(), maxLines = if (watch) 3 else 5)
@@ -462,9 +486,10 @@ private fun EntryEditor(original: Entry?, watch: Boolean, format: TimeFormat, ex
             }, modifier = Modifier.fillMaxWidth()) { Text(format.time(time)) }
             // One tap for the usual times, which is most of what a watch is for.
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp, if (watch) Alignment.CenterHorizontally else Alignment.Start)) {
-                val now = LocalDateTime.now().withSecond(0).withNano(0)
-                listOf("In 15 min" to now.plusMinutes(15), "In 1 hour" to now.plusHours(1), "Tomorrow ${format.time(now.withHour(9).withMinute(0))}" to now.plusDays(1).withHour(9).withMinute(0)).forEach { (label, at) ->
-                    TextButton(onClick = { local = at.toString() }) { Text(label) }
+                // Relative to the moment of the tap, not when the screen was drawn.
+                fun now() = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
+                listOf<Pair<String, () -> LocalDateTime>>("In 15 min" to { now().plusMinutes(15) }, "In 1 hour" to { now().plusHours(1) }, "Tomorrow ${format.time(LocalDateTime.of(2000, 1, 1, 9, 0))}" to { now().plusDays(1).withHour(9).withMinute(0) }).forEach { (label, at) ->
+                    TextButton(onClick = { local = at().toString() }) { Text(label) }
                 }
             }
         }
@@ -535,7 +560,7 @@ private fun EntryEditor(original: Entry?, watch: Boolean, format: TimeFormat, ex
 private fun WatchDateTimePicker(initial: LocalDateTime, date: Boolean, format: TimeFormat, onCancel: () -> Unit, onSave: (LocalDateTime) -> Unit) {
     var value by remember { mutableStateOf(initial) }
     BackHandler { onCancel() }
-    ScrollingColumn(true, rememberScrollState(), Modifier.fillMaxSize().padding(horizontal = 30.dp, vertical = 30.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    ScrollingColumn(true, rememberScrollState(), PaddingValues(horizontal = 30.dp, vertical = 30.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(if (date) "Choose date" else "Choose time", style = MaterialTheme.typography.titleMedium)
         Text(if (date) format.dateYear(value) else format.time(value), style = MaterialTheme.typography.titleLarge)
         // Coarse steps: a watch has no keyboard, and nobody wants 30 taps for half an hour.
@@ -564,9 +589,9 @@ private fun WatchDateTimePicker(initial: LocalDateTime, date: Boolean, format: T
     }
 }
 
-/** A scrolling column; on the watch the bezel or crown scrolls it too. */
+/** A full-screen scrolling column, padded inside the scroll so content uses the whole screen; on the watch the bezel or crown scrolls it too. */
 @Composable
-private fun ScrollingColumn(watch: Boolean, scroll: ScrollState, modifier: Modifier, horizontalAlignment: Alignment.Horizontal, verticalArrangement: Arrangement.Vertical, content: @Composable ColumnScope.() -> Unit) {
+private fun ScrollingColumn(watch: Boolean, scroll: ScrollState, padding: PaddingValues, horizontalAlignment: Alignment.Horizontal, verticalArrangement: Arrangement.Vertical, content: @Composable ColumnScope.() -> Unit) {
     val focus = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
     if (watch) LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
@@ -578,8 +603,11 @@ private fun ScrollingColumn(watch: Boolean, scroll: ScrollState, modifier: Modif
     } else {
         Modifier
     }
-    Column(modifier.then(rotary).verticalScroll(scroll), horizontalAlignment = horizontalAlignment, verticalArrangement = verticalArrangement, content = content)
+    Column(Modifier.fillMaxSize().then(rotary).verticalScroll(scroll).padding(padding), horizontalAlignment = horizontalAlignment, verticalArrangement = verticalArrangement, content = content)
 }
+
+private const val TICK_MS = 30_000L
+private const val ASKED_NOTIFICATIONS = "asked_notifications"
 
 private fun Kind.label() = if (this == Kind.REMINDER) "Reminder" else "Event"
 

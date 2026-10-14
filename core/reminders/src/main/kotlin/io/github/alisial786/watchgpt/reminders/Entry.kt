@@ -124,17 +124,19 @@ object Recurrence {
     }
 
     /**
-     * Completing an occurrence: a one-off is done; a series moves to the occurrence after the current one (or after now,
-     * when overdue). The series keeps its wall-clock time even when an occurrence falls in a DST gap.
+     * Completing an occurrence: a one-off is done; a series moves to the occurrence after [occurrence] (a notification's,
+     * or the one a list shows), else after the one due now. The series keeps its wall-clock time even when an occurrence
+     * falls in a DST gap.
      */
-    fun complete(entry: Entry, now: Instant, deviceZone: ZoneId = ZoneId.systemDefault()): Entry {
+    fun complete(entry: Entry, now: Instant, deviceZone: ZoneId = ZoneId.systemDefault(), occurrence: LocalDateTime? = null): Entry {
         if (entry.repeat == Repeat.NONE) return entry.copy(completed = true, snoozeUntil = null)
         val zone = entry.effectiveZone(deviceZone)
         val plain = entry.copy(snoozeUntil = null)
         // The first real occurrence: a weekdays series written for a Saturday starts on Monday.
         val first = next(plain, entry.initialInstant(deviceZone), deviceZone) ?: return entry.copy(completed = true, snoozeUntil = null)
         // Done on an advance alert (09:45 for 10:00) completes the occurrence it announced.
-        val following = occurrence(plain, maxOf(now.plusSeconds(entry.alertMinutesBefore * 60L), first).plusSeconds(1), zone) ?: return entry.copy(completed = true, snoozeUntil = null)
+        val done = occurrence?.atZone(zone)?.toInstant() ?: now.plusSeconds(entry.alertMinutesBefore * 60L)
+        val following = occurrence(plain, maxOf(done, first).plusSeconds(1), zone) ?: return entry.copy(completed = true, snoozeUntil = null)
         return entry.copy(monthlyDay = entry.monthlyDay ?: LocalDateTime.parse(entry.localTime).dayOfMonth, localTime = following.toString(), snoozeUntil = null)
     }
 

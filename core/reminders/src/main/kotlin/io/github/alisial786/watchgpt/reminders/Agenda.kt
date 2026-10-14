@@ -14,14 +14,20 @@ object Agenda {
         entry: Entry,
         now: Instant,
         deviceZone: ZoneId,
+    ): LocalDateTime = shown(entry, current(entry, now, deviceZone), entry.effectiveZone(deviceZone), deviceZone)
+
+    /** The occurrence [nextShown] shows, in the item's own wall time: what "Done" on that card completes. */
+    fun current(
+        entry: Entry,
+        now: Instant,
+        deviceZone: ZoneId,
     ): LocalDateTime {
         val zone = entry.effectiveZone(deviceZone)
         val from = if (entry.allDay) now.atZone(zone).toLocalDate().atStartOfDay(zone).toInstant() else now.minus(Alerts.GRACE_REPEAT)
-        val local = if (entry.repeat == Repeat.NONE || entry.completed) LocalDateTime.parse(entry.localTime) else Recurrence.occurrence(entry, from, zone) ?: LocalDateTime.parse(entry.localTime)
-        return shown(entry, local, zone, deviceZone)
+        return if (entry.repeat == Repeat.NONE || entry.completed) LocalDateTime.parse(entry.localTime) else Recurrence.occurrence(entry, from, zone) ?: LocalDateTime.parse(entry.localTime)
     }
 
-    /** Whether the item's time has passed: for an all-day item, once its day is over. */
+    /** Whether the item's time has passed: for an all-day item once its day is over, for an event once it has ended. */
     fun overdue(
         entry: Entry,
         now: Instant,
@@ -29,7 +35,11 @@ object Agenda {
     ): Boolean {
         if (entry.completed || entry.deleted) return false
         val shown = nextShown(entry, now, deviceZone)
-        val end = if (entry.allDay) shown.toLocalDate().plusDays(1).atStartOfDay() else shown
+        val end = when {
+            entry.allDay -> shown.toLocalDate().plusDays(1).atStartOfDay()
+            entry.kind == Kind.EVENT -> shown.plusMinutes(entry.durationMinutes.toLong())
+            else -> shown
+        }
         return end.atZone(deviceZone).toInstant() < now
     }
 

@@ -31,6 +31,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -49,6 +50,10 @@ class Organizer internal constructor(context: Context, private val startWorkers:
     private val syncQueued = AtomicBoolean(false)
     private val _entries = MutableStateFlow<List<Entry>>(emptyList())
     val entries = _entries.asStateFlow()
+    private val _loaded = MutableStateFlow(false)
+
+    /** The stored items have been read at least once ([entries] is empty before that). */
+    val loaded = _loaded.asStateFlow()
     private val _status = MutableStateFlow("Loading local reminders…")
     val status = _status.asStateFlow()
     val lastSync: Long? get() = db.meta("last_sync")?.toLongOrNull()
@@ -99,8 +104,10 @@ class Organizer internal constructor(context: Context, private val startWorkers:
         }
         alerts.dismiss(id)
     }
-    suspend fun complete(id: String) {
-        update(id) { Recurrence.complete(it, Instant.now()) }
+
+    /** Completes the item, or for a series [occurrence] (its wall time) or else the occurrence due now. */
+    suspend fun complete(id: String, occurrence: LocalDateTime? = null) {
+        update(id) { Recurrence.complete(it, Instant.now(), occurrence = occurrence) }
     }
 
     /** Postpones the alert that is due (or the next one) by [minutes]; snoozing never brings an alert forward. */
@@ -113,7 +120,10 @@ class Organizer internal constructor(context: Context, private val startWorkers:
         save(transform(current))
         alerts.dismiss(id)
     }
-    suspend fun refresh() = withContext(Dispatchers.IO) { _entries.value = db.all().filterNot { it.deleted }.sortedBy { it.localTime } }
+    suspend fun refresh() = withContext(Dispatchers.IO) {
+        _entries.value = db.all().filterNot { it.deleted }.sortedBy { it.localTime }
+        _loaded.value = true
+    }
 
     /** "Sync now": says it started; the status shows the result when the sync ends. */
     fun syncNow() {

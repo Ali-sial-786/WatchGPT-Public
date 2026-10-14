@@ -12,6 +12,8 @@
     <queries>
         <intent><action android:name="android.intent.action.SET_ALARM" /></intent>
         <intent><action android:name="android.intent.action.SET_TIMER" /></intent>
+        <!-- "Speak title" on the watch. -->
+        <intent><action android:name="android.speech.action.RECOGNIZE_SPEECH" /></intent>
     </queries>
     <application>
         <activity android:name=".OrganizerActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />

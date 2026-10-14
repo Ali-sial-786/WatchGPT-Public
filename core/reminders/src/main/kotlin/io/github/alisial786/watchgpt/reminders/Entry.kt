@@ -1,6 +1,7 @@
 package io.github.alisial786.watchgpt.reminders
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDateTime
@@ -53,6 +54,29 @@ data class Entry(
     }
     fun effectiveZone(deviceZone: ZoneId = ZoneId.systemDefault()): ZoneId = if (followsDeviceZone) deviceZone else ZoneId.of(zone)
     fun initialInstant(deviceZone: ZoneId = ZoneId.systemDefault()): Instant = LocalDateTime.parse(localTime).atZone(effectiveZone(deviceZone)).toInstant()
+
+    /** What a deletion keeps: enough to stop an offline peer restoring the item, none of its content or schedule. */
+    fun tombstone(): Entry = Entry(id = id, title = DELETED_TITLE, localTime = TOMBSTONE_TIME, zone = "UTC", deleted = true, revision = revision, author = author)
+
+    companion object {
+        const val DELETED_TITLE = "Deleted item"
+        private const val TOMBSTONE_TIME = "2000-01-01T00:00"
+    }
+}
+
+/**
+ * The one encoding for storage and the watch link. Defaults are always written: [Entry.zone]'s default is the
+ * device's current zone, so leaving it out would move a pinned item to whatever zone the reader is in.
+ */
+object EntryCodec {
+    val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
+
+    fun encode(entry: Entry): String = json.encodeToString(Entry.serializer(), entry)
+
+    fun decode(text: String): Entry = json.decodeFromString(Entry.serializer(), text).validate()
 }
 
 /** Lamport revision handles clock skew; immutable tombstones prevent resurrection after long offline periods. */
@@ -71,8 +95,13 @@ object Recurrence {
         if (entry.deleted || entry.completed) return null
         entry.snoozeUntil?.let { if (Instant.ofEpochMilli(it) >= from) return Instant.ofEpochMilli(it) }
         val zone = entry.effectiveZone(deviceZone)
+        return occurrence(entry, from, zone)?.atZone(zone)?.toInstant()
+    }
+
+    /** The wall-clock time of the first scheduled occurrence at or after [from], ignoring snooze. A time in a DST gap stays as written. */
+    fun occurrence(entry: Entry, from: Instant, zone: ZoneId): LocalDateTime? {
         val seed = LocalDateTime.parse(entry.localTime)
-        if (entry.repeat == Repeat.NONE) return seed.atZone(zone).toInstant().takeIf { it >= from }
+        if (entry.repeat == Repeat.NONE) return seed.takeIf { it.atZone(zone).toInstant() >= from }
         val target = from.atZone(zone).toLocalDateTime()
         var n = when (entry.repeat) {
             Repeat.MONTHLY -> ChronoUnit.MONTHS.between(seed.toLocalDate().withDayOfMonth(1), target.toLocalDate().withDayOfMonth(1))
@@ -85,16 +114,26 @@ object Recurrence {
                 Repeat.WEEKLY -> seed.plusWeeks(n)
                 else -> seed.plusDays(n)
             }
-            val at = local.atZone(zone).toInstant()
-            if (at >= from && (entry.repeat != Repeat.WEEKDAYS || local.dayOfWeek !in setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY))) return at
+            if (local.atZone(zone).toInstant() >= from && (entry.repeat != Repeat.WEEKDAYS || local.dayOfWeek !in WEEKEND)) return local
             n++
         }
         return null
     }
 
+    /**
+     * Completing an occurrence: a one-off is done; a series moves to the occurrence after the current one (or after now,
+     * when overdue). The series keeps its wall-clock time even when an occurrence falls in a DST gap.
+     */
     fun complete(entry: Entry, now: Instant, deviceZone: ZoneId = ZoneId.systemDefault()): Entry {
         if (entry.repeat == Repeat.NONE) return entry.copy(completed = true, snoozeUntil = null)
-        val next = next(entry.copy(snoozeUntil = null), maxOf(now, entry.initialInstant(deviceZone)).plusSeconds(1), deviceZone) ?: return entry.copy(completed = true)
-        return entry.copy(monthlyDay = entry.monthlyDay ?: LocalDateTime.parse(entry.localTime).dayOfMonth, localTime = next.atZone(entry.effectiveZone(deviceZone)).toLocalDateTime().toString(), snoozeUntil = null)
+        val zone = entry.effectiveZone(deviceZone)
+        val plain = entry.copy(snoozeUntil = null)
+        // The first real occurrence: a weekdays series written for a Saturday starts on Monday.
+        val first = next(plain, entry.initialInstant(deviceZone), deviceZone) ?: return entry.copy(completed = true, snoozeUntil = null)
+        // Done on an advance alert (09:45 for 10:00) completes the occurrence it announced.
+        val following = occurrence(plain, maxOf(now.plusSeconds(entry.alertMinutesBefore * 60L), first).plusSeconds(1), zone) ?: return entry.copy(completed = true, snoozeUntil = null)
+        return entry.copy(monthlyDay = entry.monthlyDay ?: LocalDateTime.parse(entry.localTime).dayOfMonth, localTime = following.toString(), snoozeUntil = null)
     }
+
+    private val WEEKEND = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
 }

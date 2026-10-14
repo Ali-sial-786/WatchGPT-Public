@@ -32,7 +32,7 @@ without the signing secret each have their own key.
 - **Sync.** An item made on the phone reaches the watch only after a sync. Check the status line at
   the bottom of the reminders screen on both devices, and tap **Sync now** with both nearby.
 - A missed alert is still delivered late for 12 hours (one-off) or 1 hour (a repeat's occurrence),
-  then skipped.
+  counted from the time it is for, then skipped.
 
 ### The status says "N item(s) … could not be read"
 

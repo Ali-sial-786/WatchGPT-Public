@@ -111,7 +111,7 @@ class WatchCalls(
                 Toolboxes(
                     listOf(
                         // Timers and alarms go to the watch unless the user asks for the phone: it's on the wrist, and on screen.
-                        PhoneActions(graph.appContext, graph.notes, graph.controls, graph.phoneClock, onCall, graph.logger, cards = graph.cards),
+                        PhoneActions(graph.appContext, graph.notes, graph.controls, graph.phoneClock, onCall, graph.logger, cards = graph.cards, pending = graph.pending),
                         // A call started from here takes over the phone's audio: WatchGPT makes way.
                         ReachActions(graph.appContext, graph.contacts, graph.inbox, graph.pending, graph.logger, onCalling = { session?.endSoon() }, cards = graph.cards, limits = graph.limits),
                         graph.shortcuts,
@@ -134,7 +134,7 @@ class WatchCalls(
                     graph.logger,
                     voice = graph.settings.voice,
                     external = watch,
-                    idleHangUpMs = graph.settings.conversationTimeoutSeconds.takeIf { it > 0 }?.times(1000L),
+                    idleHangUpMs = graph.settings.conversationIdleMs,
                     onIdle = { graph.scope.launch { hangUp() } },
                     instructions = listOfNotNull(ChatGptRealtimeSession.VOICE_INSTRUCTIONS, remembered).joinToString("\n"),
                     onUserWords = graph.userTurns::heard,
@@ -258,7 +258,6 @@ class WatchCalls(
     }
 
     private companion object {
-        /** Like a smart speaker: back to sleep after 10 s with nobody talking. */
         const val ON_WATCH = "on the watch"
         val QUIET_TOOLS =
             setOf(PhoneActions.LIST_NOTES, PhoneActions.LIST_EVENTS, PhoneActions.DEVICE_STATUS, ReachActions.READ_MESSAGES, MemoryActions.RECALL, ConversationActions.END) +

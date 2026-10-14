@@ -47,7 +47,7 @@ fun BrainsScreen(vm: BrainsViewModel) {
 
     state.message?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = p.textSecondary, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) }
 
-    Group("ChatGPT", footer = "Uses your ChatGPT account; no API key. Live voice relies on Buddy’s undocumented endpoint, which may change or be unavailable. Account sign-in alone does not verify live voice access. Your words go to OpenAI.") {
+    Group("ChatGPT", footer = "Uses your ChatGPT account; no API key. Live voice relies on an undocumented ChatGPT voice endpoint, which may change or be unavailable. Account sign-in alone does not verify live voice access. Your words go to OpenAI.") {
         when (val a = auth) {
             is AuthState.SignedIn -> {
                 Item(

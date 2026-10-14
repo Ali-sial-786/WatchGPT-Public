@@ -239,17 +239,18 @@ internal class VoiceTeacher(
             )
 
         /**
-         * What's worth listening for in one take's spelling: two or three words (one alone would
-         * fire on too much) of at least [MIN_PIECES] pieces; when the sentence ran on without a
-         * pause, its first two words. Null if nothing is. The first piece starts a word even
-         * without the mark: the model sometimes hears it that way.
+         * What's worth listening for in one take's spelling: three to five words of at least
+         * [MIN_PIECES] pieces ("HEY WATCH G P T"; a take heard as just "HEY WATCH" would wake on
+         * "hey, watch this"); when the sentence ran on without a pause, its first five words. Null
+         * if nothing is. The first piece starts a word even without the mark: the model sometimes
+         * hears it that way.
          */
         fun shape(spelling: List<String>): List<String>? {
             if (spelling.isEmpty()) return null
             val starts = spelling.indices.filter { it == 0 || spelling[it].startsWith("▁") }
             val s = if (starts.size > 5) spelling.take(starts[5]) else spelling
             val words = s.indices.count { it == 0 || s[it].startsWith("▁") }
-            return s.takeIf { words in 2..5 && it.size in MIN_PIECES..20 }
+            return s.takeIf { words in 3..5 && it.size in MIN_PIECES..20 }
         }
 
         /** keywords.txt lines for [spellings] at a boost and threshold, "/" between them. */

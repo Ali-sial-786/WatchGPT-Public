@@ -259,7 +259,7 @@ class ChatGptRealtimeSession(
             logger.log(LogEvent.Engine("voice_failed_${e::class.simpleName}", "gpt-live"))
             val detail = when ((e as? CallFailed)?.status) {
                 401 -> "ChatGPT sign-in expired. Sign in again in WatchGPT on your phone."
-                403 -> "Live voice is unavailable for this account or region. WatchGPT uses Buddy's undocumented endpoint; subscription access is not guaranteed."
+                403 -> "Live voice is unavailable for this account or region. It uses an undocumented ChatGPT voice endpoint; a subscription doesn't guarantee access."
                 429 -> "ChatGPT voice usage limit reached. Try again after your allowance resets; no paid fallback is used."
                 404, 405, 410 -> "The undocumented ChatGPT voice endpoint is unavailable or changed. No API fallback was used."
                 else -> "Could not connect to ChatGPT live voice. Check the phone's internet and account status, then tap to retry."
@@ -487,8 +487,9 @@ class ChatGptRealtimeSession(
             }
             if (timer.assistantSpeaking || consultJob?.isActive == true || privateSpeech) lastActivityAt = clock
             // Before the first words, more time: the start can be slow (a sleeping phone took 5.4 s to
-            // connect, 28.09) and people wait for the chime.
-            val idleLimit = idleHangUpMs?.let { if (heardUser) it else maxOf(it, FIRST_WORDS_MS) }
+            // connect, 28.09) and people wait for the chime. But not a long setting's worth: a wake-up nobody
+            // meant (a pocket) mustn't hold the microphone and a ChatGPT voice call open for minutes.
+            val idleLimit = idleHangUpMs?.let { if (heardUser) it else it.coerceIn(FIRST_WORDS_MS, FIRST_WORDS_MAX_MS) }
             if (idleLimit != null && !idleReported && clock - lastActivityAt >= idleLimit) {
                 idleReported = true
                 note("hung up after ${idleLimit / 1000} s of quiet")
@@ -590,10 +591,9 @@ class ChatGptRealtimeSession(
 
                 is QuicksilverWire.Event.Delegation -> delegate(event)
 
-                is QuicksilverWire.Event.Failure -> {
-                    note("voice service error")
-                    _state.update { it.copy(phase = VoicePhase.ERROR, detail = "ChatGPT voice reported an error or usage limit. End this call, check your account, and try again later.") }
-                }
+                // Not fatal by itself (e.g. a refused append after barge-in): the call goes on. If the service does
+                // end the call, Closed follows and says so.
+                is QuicksilverWire.Event.Failure -> note("error event ${event.code}")
 
                 is QuicksilverWire.Event.Closed -> {
                     note("call closed: ${event.reason}")
@@ -748,6 +748,7 @@ class ChatGptRealtimeSession(
         private const val POLL_MS = 50L
         private const val LISTEN_LOG_MS = 2_000L
         private const val FIRST_WORDS_MS = 20_000L
+        private const val FIRST_WORDS_MAX_MS = 60_000L
         private const val GOODBYE_QUIET_MS = 800L
         private const val GOODBYE_MAX_MS = 10_000L
         private const val MAX_TRANSCRIPT = 16

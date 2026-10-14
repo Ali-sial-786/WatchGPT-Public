@@ -118,7 +118,7 @@ class AppGraph(
     /** What the phone's pop-up shows while WatchGPT works. */
     val cards = CardHub()
 
-    val actions = PhoneActions(appContext, notes, controls, phoneClock, logger = logger, cards = cards)
+    val actions = PhoneActions(appContext, notes, controls, phoneClock, logger = logger, cards = cards, pending = pending)
 
     /** Messages the user got, from notifications (with their OK); only in memory. */
     val inbox = MessageInbox()
@@ -170,6 +170,9 @@ class AppGraph(
     /** Test builds: a screen to open, set from adb (debug TestHooks); nothing sets it in release builds. */
     val testPage = MutableStateFlow<TestPage?>(null)
 
+    /** Assist requests (ACTION_ASSIST) not yet handled: the home screen starts listening and sets this back to 0. */
+    val assistRequests = MutableStateFlow(0)
+
     /** The phone's own voice, for private answers. */
     val speech by lazy { LocalSpeech(appContext) }
 
@@ -212,7 +215,14 @@ class AppGraph(
     /** The user tapped Send, Call or Cancel in the pop-up: that tap is their answer. */
     suspend fun decideOnScreen(yes: Boolean): String {
         userTurns.heard()
-        val result = pending.decide(yes)
+        // Runs on graph.scope: a failing action must come back as a result, never crash the app.
+        val result = try {
+            pending.decide(yes)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            "error: that didn't work (${e.javaClass.simpleName}); nothing more was done"
+        }
         // A tap proves the user is there, so it isn't held back; it still counts, and it's logged.
         if (yes && result.startsWith("ok")) budget.spend()
         actionLog.record(
@@ -244,9 +254,11 @@ class AppGraph(
         ?: Genes.seedFor(runCatching { session.bearer().accountId }.getOrNull() ?: settings.installId)
     val watchCalls = WatchCalls(this)
 
-    /** "Delete everything": tokens, keys, reports, notes, what WatchGPT remembers, models, settings. */
-    suspend fun deleteEverything() {
-        io.github.alisial786.watchgpt.organizer.Organizer.get(appContext).deleteAll()
+    /**
+     * "Delete everything": tokens, keys, reports, notes, what WatchGPT remembers, models, settings, and reminders
+     * (on the watch too, and their calendar copies). Null when done, else why something was left.
+     */
+    suspend fun deleteEverything(): String? {
         runCatching { session.signOut() }
         vault.wipe()
         notesVault.wipe()
@@ -259,6 +271,8 @@ class AppGraph(
         onDeviceSettings.clearAll()
         settings.clearAll()
         appContext.noBackupFilesDir.resolve("litertlm-cache").deleteRecursively()
+        // Last, and on its own: a reminder storage problem must not stop the rest of the wipe.
+        return runCatching { io.github.alisial786.watchgpt.organizer.Organizer.get(appContext).deleteAll() }.exceptionOrNull()?.let { it.message ?: "Some reminders could not be deleted." }
     }
 
     private companion object {
@@ -300,14 +314,21 @@ class AppSettings(
         get() = prefs.getBoolean("remember_chats", true)
         set(value) = prefs.edit { putBoolean("remember_chats", value) }
 
-    /** Inactivity ends a call; zero keeps it open until stopped or disconnected. */
+    /** Silence that ends a call; zero is "until I stop". Short by default: every open call holds the microphone. */
     var conversationTimeoutSeconds: Int
-        get() = prefs.getInt("conversation_timeout", 120).coerceIn(0, 900)
+        get() = prefs.getInt("conversation_timeout", 30).coerceIn(0, 900)
         set(value) = prefs.edit { putInt("conversation_timeout", value.coerceIn(0, 900)) }
+
+    /** The call's idle limit: "until I stop" still ends a call after half an hour of nothing at all (one left open by mistake). */
+    val conversationIdleMs: Long get() = conversationTimeoutSeconds.let { if (it > 0) it * 1000L else UNTIL_STOPPED_IDLE_MS }
 
     var voice: String
         get() = prefs.getString("voice", null) ?: "cove"
         set(value) = prefs.edit { putString("voice", value) }
 
     fun clearAll() = prefs.edit { clear() }
+
+    private companion object {
+        const val UNTIL_STOPPED_IDLE_MS = 30 * 60_000L
+    }
 }

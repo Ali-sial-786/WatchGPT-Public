@@ -7,26 +7,40 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import io.github.alisial786.watchgpt.reminders.Entry
+import io.github.alisial786.watchgpt.reminders.EntryCodec
 import io.github.alisial786.watchgpt.reminders.Merge
-import kotlinx.serialization.json.Json
 import java.io.File
+import java.security.InvalidAlgorithmParameterException
 import java.security.KeyStore
 import java.util.UUID
+import javax.crypto.BadPaddingException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /** App-private SQLite index; titles, notes, dates and record contents are authenticated ciphertext. No backup. */
-internal class EntryDatabase(context: Context) : SQLiteOpenHelper(context, File(context.noBackupFilesDir, "organizer.db").absolutePath, null, 1) {
-    private val json = Json { ignoreUnknownKeys = true }
+internal class EntryDatabase(context: Context) : SQLiteOpenHelper(context, File(context.noBackupFilesDir, "organizer.db").absolutePath, null, 2) {
     private val alias = "${context.packageName}.organizer.v1"
+    private var key: SecretKey? = null
+
+    /** Decrypted rows by id, reused while their ciphertext is unchanged: Keystore decryption is an IPC per row. */
+    private val decoded = HashMap<String, Pair<ByteArray, Entry>>()
+
+    /** Rows that could not be decrypted or read in the last pass; kept on disk, left out of the list. */
+    @Volatile var unreadable = 0
+        private set
+
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE entries(id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload BLOB NOT NULL)")
         db.execSQL("CREATE TABLE meta(name TEXT PRIMARY KEY, value TEXT NOT NULL)")
         db.execSQL("CREATE TABLE delivered(token TEXT PRIMARY KEY)")
+        onUpgrade(db, 1, 2)
     }
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 2) db.execSQL("CREATE TABLE IF NOT EXISTS unreadable(id TEXT NOT NULL, payload BLOB NOT NULL, moved INTEGER NOT NULL)")
+    }
 
     @Synchronized fun meta(name: String): String? = readableDatabase.query("meta", arrayOf("value"), "name=?", arrayOf(name), null, null, null).use { if (it.moveToFirst()) it.getString(0) else null }
 
@@ -41,13 +55,39 @@ internal class EntryDatabase(context: Context) : SQLiteOpenHelper(context, File(
             SQLiteDatabase.CONFLICT_REPLACE,
         )
     }
-    val device: String get() = meta("device") ?: UUID.randomUUID().toString().also { meta("device", it) }
 
-    @Synchronized fun all(): List<Entry> = readableDatabase.query("entries", arrayOf("id", "payload"), null, null, null, null, null).use { c ->
-        buildList { while (c.moveToNext()) add(decode(c.getString(0), c.getBlob(1))) }
+    @Synchronized fun removeMeta(name: String) {
+        writableDatabase.delete("meta", "name=?", arrayOf(name))
     }
 
-    @Synchronized fun get(id: String): Entry? = readableDatabase.query("entries", arrayOf("payload"), "id=?", arrayOf(id), null, null, null).use { if (it.moveToFirst()) decode(id, it.getBlob(0)) else null }
+    /** Removes every meta value whose name starts with [prefix]. */
+    @Synchronized fun clearMeta(prefix: String) {
+        writableDatabase.delete("meta", "name LIKE ? ESCAPE '\\'", arrayOf(like(prefix) + "%"))
+    }
+
+    /** The names of meta values that start with [prefix]. */
+    @Synchronized fun metaNames(prefix: String): List<String> = readableDatabase.rawQuery("SELECT name FROM meta WHERE name LIKE ? ESCAPE '\\'", arrayOf(like(prefix) + "%")).use { c -> buildList { while (c.moveToNext()) add(c.getString(0)) } }
+
+    @get:Synchronized val device: String get() = meta("device") ?: UUID.randomUUID().toString().also { meta("device", it) }
+
+    @Synchronized fun all(): List<Entry> {
+        var failed = 0
+        val seen = HashSet<String>()
+        val list = readableDatabase.query("entries", arrayOf("id", "payload"), null, null, null, null, null).use { c ->
+            buildList {
+                while (c.moveToNext()) {
+                    val id = c.getString(0)
+                    seen += id
+                    read(id, c.getBlob(1))?.let(::add) ?: failed++
+                }
+            }
+        }
+        decoded.keys.retainAll(seen)
+        unreadable = failed
+        return list
+    }
+
+    @Synchronized fun get(id: String): Entry? = readableDatabase.query("entries", arrayOf("payload"), "id=?", arrayOf(id), null, null, null).use { if (it.moveToFirst()) read(id, it.getBlob(0)) else null }
 
     @Synchronized fun save(entry: Entry): Entry {
         entry.validate()
@@ -55,9 +95,9 @@ internal class EntryDatabase(context: Context) : SQLiteOpenHelper(context, File(
         db.beginTransaction()
         try {
             val old = get(entry.id)
-            require(old?.deleted != true) { "This item was deleted on another device. Create a new item instead." }
-            require(old == null || (old.revision == entry.revision && old.author == entry.author)) { "This item changed on another device. Reopen it before saving." }
-            val revision = maxOf(meta("clock")?.toLongOrNull() ?: 0, all().maxOfOrNull { it.revision } ?: 0) + 1
+            if (old?.deleted == true) throw ItemChangedException("This item was deleted on another device. Create a new item instead.")
+            if (old != null && (old.revision != entry.revision || old.author != entry.author)) throw ItemChangedException(STALE)
+            val revision = maxOf(meta("clock")?.toLongOrNull() ?: 0, old?.revision ?: 0, entry.revision) + 1
             val saved = entry.copy(revision = revision, author = device)
             write(saved)
             meta("clock", revision.toString())
@@ -68,56 +108,136 @@ internal class EntryDatabase(context: Context) : SQLiteOpenHelper(context, File(
         }
     }
 
-    @Synchronized fun merge(entry: Entry): Boolean {
-        val old = get(entry.id)
-        val next = Merge.winner(old, entry)
-        if (next == old) return false
-        write(next)
-        meta("clock", maxOf(meta("clock")?.toLongOrNull() ?: 0, next.revision).toString())
+    /**
+     * Deletes the item as it is now, whatever changed it meanwhile: a deletion is final (it wins every merge), so it
+     * needs no stale check. False when there was nothing left to delete.
+     */
+    @Synchronized fun tombstone(id: String): Boolean {
+        val current = get(id)?.takeUnless { it.deleted } ?: return false
+        save(current.tombstone())
         return true
+    }
+
+    /** Applies a record from the other device or the calendar; true when it changed what this device holds. */
+    @Synchronized fun merge(entry: Entry): Boolean {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            val old = get(entry.id)
+            val next = Merge.winner(old, entry)
+            meta("clock", maxOf(meta("clock")?.toLongOrNull() ?: 0, entry.revision).toString())
+            if (next != old) write(next)
+            db.setTransactionSuccessful()
+            return next != old
+        } finally {
+            db.endTransaction()
+        }
     }
 
     @Synchronized fun wasDelivered(token: String): Boolean = readableDatabase.rawQuery("SELECT 1 FROM delivered WHERE token=?", arrayOf(token)).use { it.moveToFirst() }
 
+    /** A receipt in the format before 2026-10, "id:revision:author:millis", for this id and alert time. */
+    @Synchronized fun wasDeliveredBefore(id: String, at: Long): Boolean = readableDatabase.rawQuery("SELECT 1 FROM delivered WHERE token LIKE ? ESCAPE '\\'", arrayOf(like(id) + ":%:$at")).use { it.moveToFirst() }
+
     @Synchronized fun delivered(token: String) {
         writableDatabase.execSQL("INSERT OR IGNORE INTO delivered(token) VALUES(?)", arrayOf(token))
     }
+
+    /** Forgets delivery receipts of deleted items; every other receipt is still needed to avoid ringing twice. */
+    @Synchronized fun forgetDeliveries(id: String) {
+        writableDatabase.execSQL("DELETE FROM delivered WHERE token LIKE ? ESCAPE '\\'", arrayOf(like(id) + "%"))
+    }
+
+    private fun like(text: String) = text.replace("\\", "\\\\").replace("_", "\\_").replace("%", "\\%")
+
     private fun write(entry: Entry) {
+        val payload = encrypt(entry.id, EntryCodec.encode(entry).toByteArray())
         writableDatabase.insertWithOnConflict(
             "entries",
             null,
             ContentValues().apply {
                 put("id", entry.id)
                 put("revision", entry.revision)
-                put("payload", encrypt(entry.id, json.encodeToString(Entry.serializer(), entry).toByteArray()))
+                put("payload", payload)
             },
             SQLiteDatabase.CONFLICT_REPLACE,
         )
+        decoded[entry.id] = payload to entry
     }
+
+    private fun read(id: String, payload: ByteArray): Entry? {
+        decoded[id]?.let { (bytes, entry) -> if (bytes.contentEquals(payload)) return entry }
+        return try {
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, payload.copyOfRange(0, 12)))
+            cipher.updateAAD(id.toByteArray())
+            EntryCodec.decode(cipher.doFinal(payload.copyOfRange(12, payload.size)).decodeToString()).also { decoded[id] = payload to it }
+        } catch (e: KeyUnavailable) {
+            throw e
+        } catch (_: BadPaddingException) {
+            // A corrupt row (its authentication tag doesn't match) must not take every other reminder down with it.
+            null
+        } catch (_: InvalidAlgorithmParameterException) {
+            null
+        } catch (_: IndexOutOfBoundsException) {
+            null
+        } catch (_: IllegalArgumentException) {
+            // Not a valid record (this includes serialization errors).
+            null
+        } catch (e: Exception) {
+            // Anything else is the Keystore failing for now, not a bad row: never read as "no row" (a merge or save
+            // would then overwrite it).
+            throw KeyUnavailable(e)
+        }
+    }
+
     private fun key(): SecretKey {
-        val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        (store.getKey(alias, null) as? SecretKey)?.let { return it }
-        // Never silently replace a missing key when records already exist.
-        check(
-            readableDatabase.rawQuery("SELECT COUNT(*) FROM entries", null).use {
-                it.moveToFirst()
-                it.getInt(0)
-            } == 0,
-        ) { "Reminder encryption key unavailable. Existing data was retained." }
-        return KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore").apply {
-            init(KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT).setKeySize(256).setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).setRandomizedEncryptionRequired(true).build())
-        }.generateKey()
+        key?.let { return it }
+        // A Keystore failure is not a lost key: report it, never treat it as missing (that would start over).
+        val existing = try {
+            KeyStore.getInstance("AndroidKeyStore").apply { load(null) }.getKey(alias, null) as? SecretKey
+        } catch (e: Exception) {
+            throw KeyUnavailable(e)
+        }
+        existing?.let { return it.also { key = it } }
+        val db = writableDatabase
+        val rows = db.rawQuery("SELECT COUNT(*) FROM entries", null).use {
+            it.moveToFirst()
+            it.getInt(0)
+        }
+        if (rows > 0) {
+            // The key is gone (it can't come back), so these rows can never be read again. Keep the ciphertext aside
+            // and start over: the other device re-sends its copies on the next sync.
+            db.beginTransaction()
+            try {
+                db.execSQL("INSERT INTO unreadable(id, payload, moved) SELECT id, payload, ? FROM entries", arrayOf(System.currentTimeMillis()))
+                db.execSQL("DELETE FROM entries")
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+            decoded.clear()
+        }
+        return try {
+            KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore").apply {
+                init(KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT).setKeySize(256).setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).setRandomizedEncryptionRequired(true).build())
+            }.generateKey().also { key = it }
+        } catch (e: Exception) {
+            throw KeyUnavailable(e)
+        }
     }
+
     private fun encrypt(id: String, bytes: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key())
         cipher.updateAAD(id.toByteArray())
         return cipher.iv + cipher.doFinal(bytes)
     }
-    private fun decode(id: String, bytes: ByteArray): Entry {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes.copyOfRange(0, 12)))
-        cipher.updateAAD(id.toByteArray())
-        return json.decodeFromString<Entry>(cipher.doFinal(bytes.copyOfRange(12, bytes.size)).decodeToString()).validate()
+
+    class KeyUnavailable(cause: Throwable) : IllegalStateException("Reminder encryption is unavailable on this device right now. Existing data was retained.", cause)
+
+    companion object {
+        const val STALE = "This item changed on another device. Reopen it before saving."
+        private const val TRANSFORMATION = "AES/GCM/NoPadding"
     }
 }

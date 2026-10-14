@@ -52,7 +52,7 @@ fun NoticeScreen(onAccept: () -> Unit) {
                 "Your words go to your own ChatGPT",
                 "When you talk to WatchGPT, on your watch or this phone, or chat with it, your words go from this phone to " +
                     "OpenAI under your own ChatGPT account and plan. We never see them. OpenAI's terms and your ChatGPT data " +
-                    "settings apply. Live voice uses Buddy’s undocumented ChatGPT endpoint. It may change or be unavailable for your account; a subscription does not guarantee access. No API key or paid fallback is used.",
+                    "settings apply. Live voice uses an undocumented ChatGPT voice endpoint (the one the open-source Buddy app uses). It may change or be unavailable for your account; a subscription does not guarantee access. No API key or paid fallback is used.",
             )
             Section(
                 R.drawable.sym_check_circle,

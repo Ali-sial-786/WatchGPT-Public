@@ -39,7 +39,7 @@ class StorageTest {
         val db = EntryDatabase(context)
         val saved = db.save(Entry(title = "Synthetic conflict", localTime = "2027-01-02T09:00"))
         db.save(saved.copy(title = "New version"))
-        assertThrows(IllegalArgumentException::class.java) { db.save(saved.copy(title = "Stale editor")) }
+        assertThrows(ItemChangedException::class.java) { db.save(saved.copy(title = "Stale editor")) }
         assertEquals("New version", db.get(saved.id)!!.title)
         db.close()
     }
@@ -48,5 +48,30 @@ class StorageTest {
         val token = "synthetic-${java.util.UUID.randomUUID()}"
         EntryDatabase(context).use { it.delivered(token) }
         EntryDatabase(context).use { assertTrue(it.wasDelivered(token)) }
+    }
+
+    @Test fun oneCorruptRowDoesNotHideTheOthers() {
+        val db = EntryDatabase(context)
+        val good = db.save(Entry(title = "Synthetic readable", localTime = "2027-01-02T09:00"))
+        val bad = java.util.UUID.randomUUID().toString()
+        db.writableDatabase.execSQL("INSERT INTO entries(id, revision, payload) VALUES(?, 1, ?)", arrayOf<Any>(bad, ByteArray(40) { 7 }))
+        try {
+            assertTrue(db.all().any { it.id == good.id })
+            assertTrue(db.unreadable >= 1)
+            assertEquals(null, db.get(bad))
+        } finally {
+            db.writableDatabase.execSQL("DELETE FROM entries WHERE id=?", arrayOf(bad))
+            db.close()
+        }
+    }
+
+    @Test fun deletionKeepsNoContent() {
+        val db = EntryDatabase(context)
+        val saved = db.save(Entry(title = "SYNTHETIC_PRIVATE_TITLE_901", notes = "Synthetic note", localTime = "2027-01-02T09:00"))
+        val removed = db.save(saved.tombstone())
+        assertTrue(removed.deleted)
+        assertEquals(Entry.DELETED_TITLE, db.get(saved.id)!!.title)
+        assertEquals("", db.get(saved.id)!!.notes)
+        db.close()
     }
 }

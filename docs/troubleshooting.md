@@ -8,7 +8,38 @@ Common problems and what to do about them.
 
 - The watch has to be paired with the phone in the Galaxy Wearable or Wear OS app.
 - Both apps have to be signed with the **same key**, or the Data Layer won't connect them. Install
-  both from this repository (`:app:installDebug` and `:wear:installRelease` use the same debug key).
+  both APKs from the same release, or build both on the same machine (`:app:installDebug` and
+  `:wear:installRelease` use the same debug key).
+
+### `INSTALL_FAILED_UPDATE_INCOMPATIBLE`
+
+adb refused the update because the installed WatchGPT was signed with a different key. CI pairs made
+without the signing secret each have their own key.
+
+- Set the `WATCHGPT_SIGNING_KEYSTORE` secret once, so every later pair has the same key:
+  [Signing](getting-started.md#signing-one-time-so-updates-install).
+- To install a pair with a different key, uninstall WatchGPT on that device first. **This deletes
+  the reminders stored on it.** Sync both devices first (**Sync now**): the other device sends its
+  reminders back only if both end up with apps signed by the same key. When you move both devices to
+  a new key, note any reminders you need first.
+
+### A reminder didn't ring on the watch
+
+- **Notifications on the watch.** Open **Reminders** on the watch. If it says "Reminder notifications
+  are off", tap **Enable alerts** and allow them.
+- **Alert device.** Open the item: **Alert on** must be **Watch** or **Both**. By default, items made
+  by hand alert on the device they were made on, and items made by voice on both unless you said one.
+- **Sync.** An item made on the phone reaches the watch only after a sync. Check the status line at
+  the bottom of the reminders screen on both devices, and tap **Sync now** with both nearby.
+- A missed alert is still delivered late for 12 hours (one-off) or 1 hour (a repeat's occurrence),
+  counted from the time it is for, then skipped.
+
+### The status says "N item(s) … could not be read"
+
+"N item(s) from your watch (or phone) could not be read; update both apps": the other device sent
+items this version can't read, for example because it runs a newer WatchGPT. Install both APKs from the
+same, newest release. The rest keeps syncing meanwhile. "N stored item(s) could not be decrypted"
+means rows on this device itself can't be read; the other items still work.
 
 ### The watch app is slow
 
@@ -42,7 +73,7 @@ at the start of each conversation. Without an offline model, the phone reads the
 
 ### WatchGPT Plus isn't there
 
-The build has no RevenueCat key. See [Getting started](getting-started.md#2-optional-buddy-plus). A
+The build has no RevenueCat key. See [Optional: WatchGPT Plus](getting-started.md#optional-watchgpt-plus). A
 Test Store key only goes into debug builds; release builds leave Plus out.
 
 ### Sign-in doesn't come back from the browser

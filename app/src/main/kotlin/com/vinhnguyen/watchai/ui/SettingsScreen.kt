@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
-    onDeleteEverything: suspend () -> Unit,
+    onDeleteEverything: suspend () -> String?,
     benchmark: BenchmarkViewModel?,
     offlineReady: Boolean,
     onSafetyCheck: () -> Unit,
@@ -46,6 +46,7 @@ fun SettingsScreen(
     var privateOnPhone by remember { mutableStateOf(settings.privateOnPhone) }
     var confirm by remember { mutableStateOf(false) }
     var deleted by remember { mutableStateOf(false) }
+    var left by remember { mutableStateOf<String?>(null) }
     var licences by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -65,14 +66,18 @@ fun SettingsScreen(
     }
 
     var timeout by remember { mutableStateOf(settings.conversationTimeoutSeconds) }
-    Group("Conversation timeout", footer = "Silence before ending phone and watch conversations. Changes apply to the next call. Longer sessions can use more battery and voice allowance.") {
+    Group(
+        "Conversation timeout",
+        footer = "Silence before ending phone and watch conversations; a call where nobody spoke ends within a minute either way. " +
+            "\"Until I stop\" still ends after 30 minutes of silence. Changes apply to the next call. Longer sessions use more battery and voice allowance.",
+    ) {
         FlowRow(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(30, 60, 120, 300, 900, 0).forEach { seconds ->
+            listOf(10, 30, 60, 120, 300, 900, 0).forEach { seconds ->
                 Pill(
                     if (seconds == 0) {
                         "Until I stop"
                     } else if (seconds < 60) {
-                        "30 sec"
+                        "$seconds sec"
                     } else {
                         "${seconds / 60} min"
                     },
@@ -129,8 +134,8 @@ fun SettingsScreen(
             onClick = onApps,
         )
         Item(
-            if (deleted) "Everything was deleted" else "Delete everything",
-            subtitle = "Signs you out and removes the offline model, notes, history and settings",
+            if (deleted) (if (left != null) "Not everything was deleted: try again" else "Everything was deleted") else "Delete everything",
+            subtitle = left?.takeIf { deleted } ?: "Signs you out and removes the offline model, notes, history, reminders and settings",
             danger = true,
             last = true,
             onClick = { confirm = true },
@@ -153,12 +158,12 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { confirm = false },
             title = { Text("Delete everything?") },
-            text = { Text("Signs you out of ChatGPT, deletes the offline model, your notes, what WatchGPT remembers, flagged answers and all settings.") },
+            text = { Text("Signs you out of ChatGPT, deletes the offline model, your notes, what WatchGPT remembers, flagged answers, your reminders (on the watch too, and their Google Calendar copies) and all settings.") },
             confirmButton = {
                 TextButton(onClick = {
                     confirm = false
                     scope.launch {
-                        onDeleteEverything()
+                        left = onDeleteEverything()
                         deleted = true
                     }
                 }) { Text("Delete", color = p.danger) }

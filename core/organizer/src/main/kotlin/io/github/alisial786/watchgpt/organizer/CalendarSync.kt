@@ -196,7 +196,7 @@ class CalendarSync internal constructor(private val organizer: Organizer) {
             }
             current = if (applied != entry) db.save(applied) else entry
             if (!outdated) {
-                db.meta(key, json.encodeToString(Link.serializer(), Link(existing.id, current.revision, current.author, fingerprint!!, link!!.zone, LINK_VERSION)))
+                db.meta(key, json.encodeToString(Link.serializer(), Link(existing.id, current.revision, current.author, fingerprint!!, link.zone, LINK_VERSION)))
                 return outcome
             }
         }

@@ -57,6 +57,7 @@ class Organizer internal constructor(context: Context, private val startWorkers:
     init {
         scope.launch {
             runCatching {
+                calendar.loadStatus()
                 refresh()
                 alerts.restore()
             }.onFailure { _status.value = "Local storage unavailable: ${it.message ?: it.javaClass.simpleName}" }
@@ -75,20 +76,28 @@ class Organizer internal constructor(context: Context, private val startWorkers:
     }
 
     /**
-     * Deletes every item here and, through tombstones, on the other device. Calendar copies are removed now (when
-     * calendar access still allows it) and the calendar opt-in is cleared with everything else.
+     * Deletes every item here and, through tombstones, on the other device. Calendar copies are removed now, in every
+     * calendar WatchGPT wrote to and whether or not sync is still on, and the calendar opt-in is cleared with
+     * everything else. Throws when something could not be removed (calling it again finishes the job).
      */
     suspend fun deleteAll() = withContext(Dispatchers.IO) {
-        // Contents go now; a concurrent edit to one item doesn't stop the others being deleted.
-        db.all().filterNot { it.deleted }.forEach { runCatching { db.save(it.tombstone()) } }
-        if (!isWatch) runCatching { lock.withLock { calendar.synchronize() } }
-        calendar.forget()
-        refresh()
-        alerts.restore()
-        requestSync()
+        try {
+            db.all().forEach { db.tombstone(it.id) }
+            if (!isWatch) lock.withLock { calendar.removeCopies(db.all().map { it.id }.toSet()) }
+            calendar.forget()
+        } finally {
+            refresh()
+            alerts.restore()
+            requestSync()
+        }
     }
-    suspend fun delete(id: String) {
-        update(id) { it.tombstone() }
+    suspend fun delete(id: String) = withContext(Dispatchers.IO) {
+        if (db.tombstone(id)) {
+            refresh()
+            db.get(id)?.let(alerts::schedule)
+            requestSync()
+        }
+        alerts.dismiss(id)
     }
     suspend fun complete(id: String) {
         update(id) { Recurrence.complete(it, Instant.now()) }

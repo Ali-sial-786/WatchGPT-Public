@@ -29,7 +29,10 @@ object Alerts {
         watch: Boolean,
     ): Boolean = entry.alertDevice == AlertDevice.BOTH || entry.alertDevice == if (watch) AlertDevice.WATCH else AlertDevice.PHONE
 
-    /** The next alert that has not been [delivered], or null for none. A missed one within its grace window is due now. */
+    /**
+     * The next alert that has not been [delivered], or null for none. A missed one is still due while the time it is
+     * for is within its grace window: an advance alert missed overnight still rings before the event.
+     */
     fun due(
         entry: Entry,
         now: Instant,
@@ -42,16 +45,24 @@ object Alerts {
         val snooze = entry.snoozeUntil?.let { Alert(Instant.ofEpochMilli(it), "snooze:$it") }
         if (entry.repeat == Repeat.NONE) {
             val alert = snooze ?: alert(entry, LocalDateTime.parse(entry.localTime), zone, lead)
-            return alert.takeUnless { delivered(it) || it.at < now.minus(GRACE_ONCE) }
+            val forTime = if (alert === snooze) alert.at else alert.at.plus(lead)
+            return alert.takeUnless { delivered(it) || forTime < now.minus(GRACE_ONCE) }
         }
         val earliest = now.minus(GRACE_REPEAT)
         if (snooze != null && snooze.at >= earliest && !delivered(snooze)) return snooze
+        // A snooze replaces the alerts it postponed.
+        val pending = { alert: Alert -> (snooze == null || alert.at > snooze.at) && !delivered(alert) }
         // Search by occurrence, starting early enough that an all-day item's morning alert isn't passed over.
-        var from = earliest.plus(lead).minus(if (entry.allDay) Duration.ofHours(ALL_DAY_AT.hour + 2L) else Duration.ZERO)
+        val shift = if (entry.allDay) Duration.ofHours(ALL_DAY_AT.hour + 2L) else Duration.ZERO
+        // The coming occurrence keeps an advance alert that was missed while that occurrence is still ahead.
+        generateSequence(Recurrence.occurrence(entry, earliest.minus(shift), zone)) { Recurrence.occurrence(entry, it.atZone(zone).toInstant().plusSeconds(1), zone) }
+            .take(2).firstOrNull { alert(entry, it, zone, Duration.ZERO).at >= earliest }
+            ?.let { alert(entry, it, zone, lead) }?.takeIf { it.at < earliest && pending(it) }?.let { return it }
+        var from = earliest.plus(lead).minus(shift)
         repeat(MAX_CANDIDATES) {
             val local = Recurrence.occurrence(entry, from, zone) ?: return null
             val alert = alert(entry, local, zone, lead)
-            if (alert.at >= earliest && !delivered(alert)) return alert
+            if (alert.at >= earliest && pending(alert)) return alert
             from = local.atZone(zone).toInstant().plusSeconds(1)
         }
         return null
@@ -69,24 +80,35 @@ object Alerts {
         alert: Alert,
     ): String = "${entry.id}@${alert.key}"
 
-    /** The receipt format before 2026-10: it changed with every revision, so edits and syncs re-rang overdue items. */
-    fun legacyToken(
+    /**
+     * When the alert would have rung under the receipt format before 2026-10 ("id:revision:author:millis"). Only the id
+     * and this time still identify it: the revision and author change with every edit and sync.
+     */
+    fun legacyAt(
         entry: Entry,
         alert: Alert,
-    ): String = "${entry.id}:${entry.revision}:${entry.author}:${alert.at.toEpochMilli()}"
+        deviceZone: ZoneId,
+    ): Long {
+        if (alert.key.startsWith("snooze:")) return alert.at.toEpochMilli()
+        val local = runCatching { LocalDateTime.parse(alert.key) }.getOrNull() ?: return alert.at.toEpochMilli()
+        // All-day items used to alert at midnight.
+        return local.atZone(entry.effectiveZone(deviceZone)).toInstant().minusSeconds(entry.alertMinutesBefore * 60L).toEpochMilli()
+    }
 
     /**
-     * Whether "Done" tapped on the notification for [key] still applies: a series that has already moved past that
-     * occurrence (completed on the other device, or by an earlier tap) is not advanced again.
+     * Whether an action tapped on the notification for [key] still applies. A series that has already moved past that
+     * occurrence (completed on the other device, or by an earlier tap), a one-off moved to another time, and a snooze
+     * that was replaced or cleared are left alone: the stale notification just goes.
      */
-    fun completes(
+    fun current(
         entry: Entry,
         key: String,
     ): Boolean {
         if (entry.deleted || entry.completed) return false
-        if (entry.repeat == Repeat.NONE || key.startsWith("snooze:")) return true
+        if (key.startsWith("snooze:")) return entry.snoozeUntil?.toString() == key.removePrefix("snooze:")
         val occurrence = runCatching { LocalDateTime.parse(key) }.getOrNull() ?: return true
-        return LocalDateTime.parse(entry.localTime) <= occurrence
+        val scheduled = LocalDateTime.parse(entry.localTime)
+        return if (entry.repeat == Repeat.NONE) scheduled == occurrence else scheduled <= occurrence
     }
 
     private fun alert(

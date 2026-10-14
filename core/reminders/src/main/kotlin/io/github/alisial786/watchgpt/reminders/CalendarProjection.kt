@@ -6,6 +6,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 /** An event row as Android's Calendar Provider stores it. */
 data class EventFields(
@@ -105,13 +106,16 @@ object CalendarProjection {
             // A date, not an instant: it stays on that day in whatever zone the entry uses.
             next = next.copy(localTime = startDate(event).atStartOfDay().toString())
         } else {
-            // Compared as wall time in the event's own zone: an item that follows the device was written in the zone
-            // the device had then, so travelling since doesn't look like a calendar edit.
+            // Compared in the event's own zone: an item that follows the device was written in the zone the device had
+            // then, so travelling since doesn't look like a calendar edit. Compared as instants, so a time written in a
+            // DST gap (02:30 on the spring-forward day reads back as 03:30) isn't one either.
             val zone = runCatching { ZoneId.of(event.zone) }.getOrDefault(entry.effectiveZone(deviceZone))
-            val local = Instant.ofEpochMilli(event.start).atZone(zone).toLocalDateTime().withSecond(0).withNano(0)
+            val start = Instant.ofEpochMilli(event.start).truncatedTo(ChronoUnit.MINUTES)
+            val local = start.atZone(zone).toLocalDateTime()
+            val same = !entry.allDay && seed.atZone(zone).toInstant().truncatedTo(ChronoUnit.MINUTES) == start
             next = when {
-                entry.followsDeviceZone -> next.copy(localTime = if (local == seed && !entry.allDay) entry.localTime else local.toString())
-                else -> next.copy(localTime = if (local == seed && zone.id == entry.zone && !entry.allDay) entry.localTime else local.toString(), zone = zone.id)
+                entry.followsDeviceZone -> next.copy(localTime = if (same) entry.localTime else local.toString())
+                else -> next.copy(localTime = if (same && zone.id == entry.zone) entry.localTime else local.toString(), zone = zone.id)
             }
         }
         val minutes = (event.end?.takeIf { it > event.start }?.let { (it - event.start) / 60_000 }) ?: event.duration?.let(::minutes)

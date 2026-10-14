@@ -320,7 +320,7 @@ fun OrganizerPanel(organizer: Organizer, onClose: () -> Unit, watch: Boolean = o
 @Composable
 private fun EntryCard(entry: Entry, now: Instant, zone: ZoneId, watch: Boolean, format: TimeFormat, onDone: () -> Unit, onEdit: () -> Unit, onSnooze: () -> Unit, onDelete: () -> Unit) {
     val shown = Agenda.nextShown(entry, now, zone)
-    val overdue = entry.repeat == Repeat.NONE && !entry.completed && shown.atZone(zone).toInstant() < now && snoozedUntil(entry, now) == null
+    val overdue = entry.repeat == Repeat.NONE && Agenda.overdue(entry, now, zone) && snoozedUntil(entry, now) == null
     // Snooze is offered while an alert is due, the moment it is useful; earlier it would only move the reminder.
     val dueNow = !entry.completed && Alerts.due(entry, now, zone)?.at?.let { it <= now } == true
     val align = if (watch) TextAlign.Center else TextAlign.Start

@@ -31,14 +31,18 @@ internal class ReminderAlerts(private val organizer: Organizer) {
         notifications.createNotificationChannel(NotificationChannel(CHANNEL, "Reminders", NotificationManager.IMPORTANCE_HIGH).apply { enableVibration(true) })
     }
 
-    private fun delivered(entry: Entry): (Alerts.Alert) -> Boolean = { alert -> organizer.db.wasDelivered(Alerts.token(entry, alert)) || organizer.db.wasDelivered(Alerts.legacyToken(entry, alert)) }
+    private fun delivered(entry: Entry): (Alerts.Alert) -> Boolean = { alert -> organizer.db.wasDelivered(Alerts.token(entry, alert)) || organizer.db.wasDeliveredBefore(entry.id, Alerts.legacyAt(entry, alert, ZoneId.systemDefault())) }
 
     @Synchronized fun restore() {
         organizer.db.all().forEach { schedule(it) }
     }
     fun dismiss(id: String) {
         NotificationManagerCompat.from(context).cancel(id, 1)
+        organizer.db.removeMeta(shown(id))
     }
+
+    /** What the notification on screen is about, so it goes when the item moves on elsewhere (Done on the other device). */
+    private fun shown(id: String) = "alert_shown_$id"
     private fun ring(entry: Entry): PendingIntent = PendingIntent.getBroadcast(
         context,
         0,
@@ -62,6 +66,7 @@ internal class ReminderAlerts(private val organizer: Organizer) {
             dismiss(entry.id)
             return
         }
+        organizer.db.meta(shown(entry.id))?.let { if (!Alerts.current(entry, it)) dismiss(entry.id) }
         val due = Alerts.due(entry, now, ZoneId.systemDefault(), delivered(entry)) ?: return
         val whenToRing = maxOf(due.at.toEpochMilli(), now.toEpochMilli() + 1000)
         val intent = ring(entry)
@@ -102,6 +107,7 @@ internal class ReminderAlerts(private val organizer: Organizer) {
             .addAction(0, "Done", action(entry, COMPLETE, due)).addAction(0, "Snooze 10 min", action(entry, SNOOZE, due))
         notification.setContentIntent(PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
         NotificationManagerCompat.from(context).notify(id, 1, notification.build())
+        organizer.db.meta(shown(id), due.key)
         organizer.db.delivered(Alerts.token(entry, due))
         schedule(entry, now)
     }
@@ -109,7 +115,13 @@ internal class ReminderAlerts(private val organizer: Organizer) {
     /** "Done" on a notification: completes the occurrence it was about, never a later one. */
     suspend fun complete(id: String, key: String?) {
         val entry = organizer.db.get(id) ?: return
-        if (key == null || Alerts.completes(entry, key)) organizer.complete(id)
+        if (key == null || Alerts.current(entry, key)) organizer.complete(id)
+    }
+
+    /** "Snooze" on a notification: only while the alert it was about is still the item's, so it never reopens one done elsewhere. */
+    suspend fun snooze(id: String, key: String?) {
+        val entry = organizer.db.get(id) ?: return
+        if (key == null || Alerts.current(entry, key)) organizer.snooze(id)
     }
 
     private fun action(entry: Entry, action: String, alert: Alerts.Alert) = PendingIntent.getBroadcast(
@@ -141,7 +153,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 if (id != null) {
                     when (intent.action) {
                         ReminderAlerts.COMPLETE -> organizer.alerts.complete(id, intent.getStringExtra(ReminderAlerts.EXTRA_KEY))
-                        ReminderAlerts.SNOOZE -> organizer.snooze(id)
+                        ReminderAlerts.SNOOZE -> organizer.alerts.snooze(id, intent.getStringExtra(ReminderAlerts.EXTRA_KEY))
                         ReminderAlerts.RING -> organizer.alerts.fire(id)
                     }
                 }

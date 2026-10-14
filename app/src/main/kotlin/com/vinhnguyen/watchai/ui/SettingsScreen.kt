@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
-    onDeleteEverything: suspend () -> Boolean,
+    onDeleteEverything: suspend () -> String?,
     benchmark: BenchmarkViewModel?,
     offlineReady: Boolean,
     onSafetyCheck: () -> Unit,
@@ -46,7 +46,7 @@ fun SettingsScreen(
     var privateOnPhone by remember { mutableStateOf(settings.privateOnPhone) }
     var confirm by remember { mutableStateOf(false) }
     var deleted by remember { mutableStateOf(false) }
-    var remindersLeft by remember { mutableStateOf(false) }
+    var left by remember { mutableStateOf<String?>(null) }
     var licences by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -134,8 +134,8 @@ fun SettingsScreen(
             onClick = onApps,
         )
         Item(
-            if (deleted) (if (remindersLeft) "Deleted, except reminders: try again" else "Everything was deleted") else "Delete everything",
-            subtitle = "Signs you out and removes the offline model, notes, history, reminders and settings",
+            if (deleted) (if (left != null) "Not everything was deleted: try again" else "Everything was deleted") else "Delete everything",
+            subtitle = left?.takeIf { deleted } ?: "Signs you out and removes the offline model, notes, history, reminders and settings",
             danger = true,
             last = true,
             onClick = { confirm = true },
@@ -163,7 +163,7 @@ fun SettingsScreen(
                 TextButton(onClick = {
                     confirm = false
                     scope.launch {
-                        remindersLeft = !onDeleteEverything()
+                        left = onDeleteEverything()
                         deleted = true
                     }
                 }) { Text("Delete", color = p.danger) }

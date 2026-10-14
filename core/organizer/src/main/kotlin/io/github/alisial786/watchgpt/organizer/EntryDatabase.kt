@@ -10,8 +10,10 @@ import io.github.alisial786.watchgpt.reminders.Entry
 import io.github.alisial786.watchgpt.reminders.EntryCodec
 import io.github.alisial786.watchgpt.reminders.Merge
 import java.io.File
+import java.security.InvalidAlgorithmParameterException
 import java.security.KeyStore
 import java.util.UUID
+import javax.crypto.BadPaddingException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -54,10 +56,17 @@ internal class EntryDatabase(context: Context) : SQLiteOpenHelper(context, File(
         )
     }
 
+    @Synchronized fun removeMeta(name: String) {
+        writableDatabase.delete("meta", "name=?", arrayOf(name))
+    }
+
     /** Removes every meta value whose name starts with [prefix]. */
     @Synchronized fun clearMeta(prefix: String) {
-        writableDatabase.delete("meta", "name LIKE ? ESCAPE '\\'", arrayOf(prefix.replace("\\", "\\\\").replace("_", "\\_").replace("%", "\\%") + "%"))
+        writableDatabase.delete("meta", "name LIKE ? ESCAPE '\\'", arrayOf(like(prefix) + "%"))
     }
+
+    /** The names of meta values that start with [prefix]. */
+    @Synchronized fun metaNames(prefix: String): List<String> = readableDatabase.rawQuery("SELECT name FROM meta WHERE name LIKE ? ESCAPE '\\'", arrayOf(like(prefix) + "%")).use { c -> buildList { while (c.moveToNext()) add(c.getString(0)) } }
 
     @get:Synchronized val device: String get() = meta("device") ?: UUID.randomUUID().toString().also { meta("device", it) }
 
@@ -99,6 +108,16 @@ internal class EntryDatabase(context: Context) : SQLiteOpenHelper(context, File(
         }
     }
 
+    /**
+     * Deletes the item as it is now, whatever changed it meanwhile: a deletion is final (it wins every merge), so it
+     * needs no stale check. False when there was nothing left to delete.
+     */
+    @Synchronized fun tombstone(id: String): Boolean {
+        val current = get(id)?.takeUnless { it.deleted } ?: return false
+        save(current.tombstone())
+        return true
+    }
+
     /** Applies a record from the other device or the calendar; true when it changed what this device holds. */
     @Synchronized fun merge(entry: Entry): Boolean {
         val db = writableDatabase
@@ -117,14 +136,19 @@ internal class EntryDatabase(context: Context) : SQLiteOpenHelper(context, File(
 
     @Synchronized fun wasDelivered(token: String): Boolean = readableDatabase.rawQuery("SELECT 1 FROM delivered WHERE token=?", arrayOf(token)).use { it.moveToFirst() }
 
+    /** A receipt in the format before 2026-10, "id:revision:author:millis", for this id and alert time. */
+    @Synchronized fun wasDeliveredBefore(id: String, at: Long): Boolean = readableDatabase.rawQuery("SELECT 1 FROM delivered WHERE token LIKE ? ESCAPE '\\'", arrayOf(like(id) + ":%:$at")).use { it.moveToFirst() }
+
     @Synchronized fun delivered(token: String) {
         writableDatabase.execSQL("INSERT OR IGNORE INTO delivered(token) VALUES(?)", arrayOf(token))
     }
 
     /** Forgets delivery receipts of deleted items; every other receipt is still needed to avoid ringing twice. */
     @Synchronized fun forgetDeliveries(id: String) {
-        writableDatabase.execSQL("DELETE FROM delivered WHERE token LIKE ? ESCAPE '\\'", arrayOf(id.replace("_", "\\_").replace("%", "\\%") + "%"))
+        writableDatabase.execSQL("DELETE FROM delivered WHERE token LIKE ? ESCAPE '\\'", arrayOf(like(id) + "%"))
     }
+
+    private fun like(text: String) = text.replace("\\", "\\\\").replace("_", "\\_").replace("%", "\\%")
 
     private fun write(entry: Entry) {
         val payload = encrypt(entry.id, EntryCodec.encode(entry).toByteArray())
@@ -150,9 +174,20 @@ internal class EntryDatabase(context: Context) : SQLiteOpenHelper(context, File(
             EntryCodec.decode(cipher.doFinal(payload.copyOfRange(12, payload.size)).decodeToString()).also { decoded[id] = payload to it }
         } catch (e: KeyUnavailable) {
             throw e
-        } catch (_: Exception) {
-            // A corrupt or undecryptable row must not take every other reminder down with it.
+        } catch (_: BadPaddingException) {
+            // A corrupt row (its authentication tag doesn't match) must not take every other reminder down with it.
             null
+        } catch (_: InvalidAlgorithmParameterException) {
+            null
+        } catch (_: IndexOutOfBoundsException) {
+            null
+        } catch (_: IllegalArgumentException) {
+            // Not a valid record (this includes serialization errors).
+            null
+        } catch (e: Exception) {
+            // Anything else is the Keystore failing for now, not a bad row: never read as "no row" (a merge or save
+            // would then overwrite it).
+            throw KeyUnavailable(e)
         }
     }
 

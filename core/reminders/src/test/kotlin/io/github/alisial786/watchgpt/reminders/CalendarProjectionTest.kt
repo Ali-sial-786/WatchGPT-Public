@@ -115,6 +115,12 @@ class CalendarProjectionTest {
         assertThrows(IllegalArgumentException::class.java) { CalendarProjection.apply(e, event, newYork) }
     }
 
+    @Test fun aSeriesWrittenInADstGapReadsBackUnchanged() {
+        // 02:30 doesn't exist on 8 March 2026 in New York; the calendar stores 03:30 EDT for it.
+        val e = entry().copy(repeat = Repeat.DAILY, localTime = "2026-03-08T02:30", snoozeUntil = 1_800_000_000_000)
+        assertEquals(e, CalendarProjection.apply(e, CalendarProjection.toEvent(e, newYork), newYork))
+    }
+
     @Test fun monthlyEndOfMonthRoundTrips() {
         val e = entry().copy(repeat = Repeat.MONTHLY, localTime = "2027-02-28T09:00", monthlyDay = 31)
         val applied = CalendarProjection.apply(e, CalendarProjection.toEvent(e, newYork), newYork)

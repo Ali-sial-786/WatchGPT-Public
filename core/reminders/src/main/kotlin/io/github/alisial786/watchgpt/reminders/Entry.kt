@@ -52,7 +52,9 @@ data class Entry(
         ZoneId.of(zone)
         require(snoozeUntil == null || snoozeUntil > 0)
     }
-    fun effectiveZone(deviceZone: ZoneId = ZoneId.systemDefault()): ZoneId = if (followsDeviceZone) deviceZone else ZoneId.of(zone)
+
+    /** The zone the wall time is read in. All-day items are dates, so they are on their day wherever the device is. */
+    fun effectiveZone(deviceZone: ZoneId = ZoneId.systemDefault()): ZoneId = if (followsDeviceZone || allDay) deviceZone else ZoneId.of(zone)
     fun initialInstant(deviceZone: ZoneId = ZoneId.systemDefault()): Instant = LocalDateTime.parse(localTime).atZone(effectiveZone(deviceZone)).toInstant()
 
     /** What a deletion keeps: enough to stop an offline peer restoring the item, none of its content or schedule. */

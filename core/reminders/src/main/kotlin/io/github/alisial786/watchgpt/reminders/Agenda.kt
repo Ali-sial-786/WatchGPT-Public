@@ -6,15 +6,31 @@ import java.time.ZoneId
 
 /** What lists show: when an item is next due and its occurrences in a range, in the device's local time. */
 object Agenda {
-    /** A series shows its next occurrence (or one missed moments ago), not the day it was made; a one-off its own time. */
+    /**
+     * A series shows its next occurrence (or one missed moments ago, or today's for an all-day item), not the day it
+     * was made; a one-off its own time.
+     */
     fun nextShown(
         entry: Entry,
         now: Instant,
         deviceZone: ZoneId,
     ): LocalDateTime {
         val zone = entry.effectiveZone(deviceZone)
-        val local = if (entry.repeat == Repeat.NONE || entry.completed) LocalDateTime.parse(entry.localTime) else Recurrence.occurrence(entry, now.minus(Alerts.GRACE_REPEAT), zone) ?: LocalDateTime.parse(entry.localTime)
+        val from = if (entry.allDay) now.atZone(zone).toLocalDate().atStartOfDay(zone).toInstant() else now.minus(Alerts.GRACE_REPEAT)
+        val local = if (entry.repeat == Repeat.NONE || entry.completed) LocalDateTime.parse(entry.localTime) else Recurrence.occurrence(entry, from, zone) ?: LocalDateTime.parse(entry.localTime)
         return shown(entry, local, zone, deviceZone)
+    }
+
+    /** Whether the item's time has passed: for an all-day item, once its day is over. */
+    fun overdue(
+        entry: Entry,
+        now: Instant,
+        deviceZone: ZoneId,
+    ): Boolean {
+        if (entry.completed || entry.deleted) return false
+        val shown = nextShown(entry, now, deviceZone)
+        val end = if (entry.allDay) shown.toLocalDate().plusDays(1).atStartOfDay() else shown
+        return end.atZone(deviceZone).toInstant() < now
     }
 
     /** The item's occurrences from [from] (inclusive) to [to] (exclusive), at most [max]. */

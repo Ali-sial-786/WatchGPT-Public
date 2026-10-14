@@ -1,6 +1,7 @@
 package io.github.alisial786.watchgpt.reminders
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
@@ -41,6 +42,20 @@ class AgendaTest {
     @Test fun allDayItemsStayOnTheirDate() {
         val birthday = entry(Repeat.WEEKLY, "2026-10-06T00:00").copy(allDay = true)
         assertEquals(listOf(t("2026-10-13T00:00")), Agenda.occurrences(birthday, t("2026-10-13T00:00"), t("2026-10-14T00:00"), ZoneId.of("America/New_York")))
+    }
+
+    @Test fun anAllDayItemIsShownOnItsDayAllDay() {
+        val weekly = entry(Repeat.WEEKLY, "2026-10-20T00:00").copy(allDay = true)
+        assertEquals(t("2026-10-20T00:00"), Agenda.nextShown(weekly, Instant.parse("2026-10-20T20:00:00Z"), utc))
+        val oneOff = entry(time = "2026-10-20T00:00").copy(allDay = true)
+        assertFalse(Agenda.overdue(oneOff, Instant.parse("2026-10-20T20:00:00Z"), utc))
+        assertTrue(Agenda.overdue(oneOff, Instant.parse("2026-10-21T00:01:00Z"), utc))
+        assertTrue(Agenda.overdue(entry(), Instant.parse("2026-10-05T09:01:00Z"), utc))
+    }
+
+    @Test fun aPinnedAllDayItemIsOnItsDateHere() {
+        val pinned = entry(Repeat.WEEKLY, "2026-10-06T00:00").copy(allDay = true, zone = "Asia/Tokyo", followsDeviceZone = false)
+        assertEquals(listOf(t("2026-10-13T00:00")), Agenda.occurrences(pinned, t("2026-10-13T00:00"), t("2026-10-14T00:00"), ZoneId.of("America/New_York")))
     }
 
     @Test fun completedItemsHaveNoOccurrences() {

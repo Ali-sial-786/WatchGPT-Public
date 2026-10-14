@@ -74,10 +74,15 @@ class Organizer internal constructor(context: Context, private val startWorkers:
         saved
     }
 
-    /** Deletes every item here and, through tombstones, on the other device and in the calendar copy. */
+    /**
+     * Deletes every item here and, through tombstones, on the other device. Calendar copies are removed now (when
+     * calendar access still allows it) and the calendar opt-in is cleared with everything else.
+     */
     suspend fun deleteAll() = withContext(Dispatchers.IO) {
         // Contents go now; a concurrent edit to one item doesn't stop the others being deleted.
         db.all().filterNot { it.deleted }.forEach { runCatching { db.save(it.tombstone()) } }
+        if (!isWatch) runCatching { lock.withLock { calendar.synchronize() } }
+        calendar.forget()
         refresh()
         alerts.restore()
         requestSync()
@@ -100,6 +105,12 @@ class Organizer internal constructor(context: Context, private val startWorkers:
         alerts.dismiss(id)
     }
     suspend fun refresh() = withContext(Dispatchers.IO) { _entries.value = db.all().filterNot { it.deleted }.sortedBy { it.localTime } }
+
+    /** "Sync now": says it started; the status shows the result when the sync ends. */
+    fun syncNow() {
+        _status.value = "Syncing…"
+        requestSync()
+    }
 
     fun requestSync() {
         if (!startWorkers || syncQueued.getAndSet(true)) return

@@ -53,6 +53,14 @@ class CalendarSync internal constructor(private val organizer: Organizer) {
         _status.value = if (id == null) "Calendar sync is off. Existing calendar copies were kept." else "Calendar sync queued"
         organizer.requestSync()
     }
+
+    /** "Delete everything": the opt-in and every link go; any copies left behind are no longer managed. */
+    internal fun forget() {
+        db.meta("calendar", "")
+        db.clearMeta("calendar_")
+        _status.value = "Calendar sync is off"
+    }
+
     internal suspend fun synchronize() {
         val calendar = selected ?: run {
             _status.value = "Calendar sync is off"

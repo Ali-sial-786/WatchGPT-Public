@@ -88,7 +88,8 @@ internal class ReminderAlerts(private val organizer: Organizer) {
         // Edited elsewhere since this alarm was set: it now belongs at another time.
         if (due.at > now.plusSeconds(EARLY_SECONDS)) return schedule(entry, now)
         if (!notificationsAllowed()) return
-        val open = context.packageManager.getLaunchIntentForPackage(context.packageName)?.putExtra("organizer", true)?.putExtra("quiet", true)?.putExtra("entry", id)
+        // Straight to the reminders, whether or not the app is already running (the launcher's extras were lost then).
+        val open = Intent(context, OrganizerActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val notification = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_reminder)
             .setContentTitle(entry.title).setContentText(entry.notes.ifBlank { "WatchGPT reminder" })
             .setStyle(NotificationCompat.BigTextStyle().bigText(entry.notes.ifBlank { entry.title }))
@@ -99,7 +100,7 @@ internal class ReminderAlerts(private val organizer: Organizer) {
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setLocalOnly(true).setAutoCancel(true).setPriority(NotificationCompat.PRIORITY_HIGH)
             .addAction(0, "Done", action(entry, COMPLETE, due)).addAction(0, "Snooze 10 min", action(entry, SNOOZE, due))
-        if (open != null) notification.setContentIntent(PendingIntent.getActivity(context, id.hashCode(), open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+        notification.setContentIntent(PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
         NotificationManagerCompat.from(context).notify(id, 1, notification.build())
         organizer.db.delivered(Alerts.token(entry, due))
         schedule(entry, now)

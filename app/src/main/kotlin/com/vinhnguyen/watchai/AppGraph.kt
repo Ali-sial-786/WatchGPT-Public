@@ -246,7 +246,6 @@ class AppGraph(
 
     /** "Delete everything": tokens, keys, reports, notes, what WatchGPT remembers, models, settings. */
     suspend fun deleteEverything() {
-        io.github.alisial786.watchgpt.organizer.Organizer.get(appContext).deleteAll()
         runCatching { session.signOut() }
         vault.wipe()
         notesVault.wipe()
@@ -259,6 +258,8 @@ class AppGraph(
         onDeviceSettings.clearAll()
         settings.clearAll()
         appContext.noBackupFilesDir.resolve("litertlm-cache").deleteRecursively()
+        // Last, and on its own: a reminder storage problem must not stop the rest of the wipe.
+        runCatching { io.github.alisial786.watchgpt.organizer.Organizer.get(appContext).deleteAll() }
     }
 
     private companion object {

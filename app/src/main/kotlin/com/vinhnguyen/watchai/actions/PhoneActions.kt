@@ -9,11 +9,13 @@ import io.github.alisial786.watchgpt.brain.BrainLogger
 import io.github.alisial786.watchgpt.brain.LogEvent
 import io.github.alisial786.watchgpt.brain.ToolSpec
 import io.github.alisial786.watchgpt.brain.Toolbox
+import io.github.alisial786.watchgpt.organizer.ItemChangedException
 import io.github.alisial786.watchgpt.organizer.Organizer
 import io.github.alisial786.watchgpt.reminders.AlertDevice
 import io.github.alisial786.watchgpt.reminders.Entry
 import io.github.alisial786.watchgpt.reminders.Kind
 import io.github.alisial786.watchgpt.reminders.Repeat
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
@@ -78,10 +80,14 @@ class PhoneActions(
                 DEVICE_STATUS -> outcome(name, listOfNotNull(controls.status(), watch?.battery()).joinToString("; "))
                 else -> done(name, "unknown", "error: there is no action called $name")
             }
+        } catch (e: ItemChangedException) {
+            done(name, "conflict", "error: that item changed on the user's other device just now; nothing was saved. Ask them to try again.")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: IllegalArgumentException) {
             done(name, "invalid", "error: invalid reminder or event details; nothing was saved")
         } catch (e: IllegalStateException) {
-            done(name, "conflict", "error: the item changed on another device; refresh and try again")
+            done(name, "failed", "error: WatchGPT's reminder storage isn't available on the phone right now; nothing was saved")
         } catch (e: SecurityException) {
             done(name, "denied", "error: the phone refused this action")
         }
@@ -141,7 +147,7 @@ class PhoneActions(
         val text = ActionArgs.text(args, "text", TITLE_MAX) ?: return done(ADD_REMINDER, "invalid", "error: the reminder needs text")
         val at = ActionArgs.time(ActionArgs.text(args, "at", 40), zone()) as? ActionArgs.When.At ?: return done(ADD_REMINDER, "invalid", "error: at must be a date and time like 2026-09-28T15:00")
         if (!plausible(at.time)) return done(ADD_REMINDER, "invalid", "error: that time is in the past or too far away")
-        val repeat = ActionArgs.choice(args, "repeat", setOf("none", "daily", "weekdays", "weekly", "monthly")) ?: "none"
+        val repeat = ActionArgs.choice(args, "repeat", REPEATS) ?: "none"
         val target = when (ActionArgs.choice(args, "on", PLACES)) {
             "watch" -> AlertDevice.WATCH
             "phone" -> AlertDevice.PHONE
@@ -173,16 +179,24 @@ class PhoneActions(
 
             "delete" -> organizer.delete(selectedId)
 
-            "edit" -> organizer.save(
-                item.copy(
-                    title = ActionArgs.text(args, "title", 200) ?: item.title,
-                    notes = ActionArgs.text(args, "notes", 8000) ?: item.notes,
-                    monthlyDay = null,
-                    localTime = (ActionArgs.time(ActionArgs.text(args, "at", 40), zone()) as? ActionArgs.When.At)?.time?.toString() ?: item.localTime,
-                    repeat = ActionArgs.choice(args, "repeat", setOf("none", "daily", "weekdays", "weekly", "monthly"))?.let { Repeat.valueOf(it.uppercase()) } ?: item.repeat,
-                    snoozeUntil = null,
-                ),
-            )
+            "edit" -> {
+                val at = (ActionArgs.time(ActionArgs.text(args, "at", 40), zone()) as? ActionArgs.When.At)?.time
+                if (at != null && !plausible(at)) return done(CHANGE_REMINDER, "invalid", "error: that time is in the past or too far away")
+                val repeat = ActionArgs.choice(args, "repeat", REPEATS)?.let { Repeat.valueOf(it.uppercase()) }
+                // A new time or repeat starts the item afresh (reopened if it was done); a new title alone doesn't.
+                val retimed = (at != null && at.toString() != item.localTime) || (repeat != null && repeat != item.repeat)
+                organizer.save(
+                    item.copy(
+                        title = ActionArgs.text(args, "title", 200) ?: item.title,
+                        notes = ActionArgs.text(args, "notes", 8000) ?: item.notes,
+                        localTime = at?.toString() ?: item.localTime,
+                        repeat = repeat ?: item.repeat,
+                        monthlyDay = if (retimed) null else item.monthlyDay,
+                        snoozeUntil = if (retimed) null else item.snoozeUntil,
+                        completed = item.completed && !retimed,
+                    ),
+                )
+            }
 
             else -> return invalid(CHANGE_REMINDER, "operation")
         }
@@ -237,9 +251,13 @@ class PhoneActions(
         result: String,
         card: (() -> WatchGPTCard)? = null,
     ): String {
-        val failed = result.startsWith("error")
         if (result.startsWith("ok:")) card?.let { cards?.show(it()) }
-        return done(tool, if (failed) "failed" else "ok", result)
+        val status = when {
+            result.startsWith("error") -> "failed"
+            result.startsWith("not done yet") -> "proposed"
+            else -> "ok"
+        }
+        return done(tool, status, result)
     }
 
     /** "10 min", "1 h 30 min", "45 s". */
@@ -368,6 +386,7 @@ class PhoneActions(
         private const val LIST_MAX_EVENTS = 15
         private const val RING_SECONDS = 30
         private val PLACES = setOf("watch", "phone")
+        private val REPEATS = setOf("none", "daily", "weekdays", "weekly", "monthly")
         private val MEDIA_TITLES = mapOf("play" to "Playing", "pause" to "Paused", "next" to "Next track", "previous" to "Previous track")
         private const val NO_WATCH = "error: timers and alarms only go on the watch while the user talks through it; offer the phone instead"
 

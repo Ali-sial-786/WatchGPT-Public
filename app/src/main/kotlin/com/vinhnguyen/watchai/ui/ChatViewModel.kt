@@ -58,7 +58,7 @@ class ChatViewModel(
     private var conversationId = UUID.randomUUID().toString()
 
     // Typed in the app, so the phone is in hand; private answers are shown here, made on the phone.
-    private var guard = graph.guard(graph.tools, { true }, ChatReply(::showPrivate))
+    private var guard = graph.guard(graph.tools, { true }, spoken = false, reply = ChatReply(::showPrivate))
 
     fun send(text: String) {
         val prompt = text.trim()
@@ -140,7 +140,7 @@ class ChatViewModel(
     fun newConversation() {
         stop()
         conversationId = UUID.randomUUID().toString()
-        guard = graph.guard(graph.tools, { true }, ChatReply(::showPrivate))
+        guard = graph.guard(graph.tools, { true }, spoken = false, reply = ChatReply(::showPrivate))
         _state.update { it.copy(messages = emptyList()) }
     }
 

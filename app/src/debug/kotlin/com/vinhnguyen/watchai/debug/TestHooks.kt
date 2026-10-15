@@ -64,7 +64,7 @@ class TestHooks : BroadcastReceiver() {
                 val started = SystemClock.elapsedRealtime()
                 var said = ""
                 val guard =
-                    graph.guard(graph.screen, { true }) { answer ->
+                    graph.guard(graph.screen, { true }, spoken = false) { answer ->
                         said = answer()
                         if (aloud) graph.speech.synthesize(said)?.let { graph.speech.play(it) }
                         true
@@ -143,7 +143,7 @@ class TestHooks : BroadcastReceiver() {
             val args = intent.getStringExtra("args") ?: "{}"
             graph.scope.launch {
                 graph.userTurns.heard()
-                val result = graph.guard(graph.tools, { true }) { answer -> answer().isNotEmpty() }.run(tool, args)
+                val result = graph.guard(graph.tools, { true }, spoken = false) { answer -> answer().isNotEmpty() }.run(tool, args)
                 Timber.tag(TAG).i("tool %s %s: %s", tool, args, result)
             }
         }

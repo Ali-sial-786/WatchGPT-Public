@@ -509,12 +509,14 @@ class PhoneActions(
                 ToolSpec(STOP_RINGING, "Stop the phone ringing (after ring_phone).", NO_ARGS),
                 ToolSpec(
                     MEDIA,
-                    "Control what plays on the phone, also in the user's earbuds (music, podcasts, videos): play, pause, next or previous.",
+                    "Control what plays on the phone, also in the user's earbuds (music, podcasts, videos): play, pause, next or previous. " +
+                        "Only when the user asks for exactly that; never for the volume.",
                     """{"type":"object","properties":{"command":{"type":"string","enum":["play","pause","next","previous"]}},"required":["command"],"additionalProperties":false}""",
                 ),
                 ToolSpec(
                     SET_VOLUME,
-                    "Set the phone's media volume (music, videos, the user's earbuds): a level in percent, or one step up or down.",
+                    "Set the phone's media volume (music, videos, the user's earbuds): a level in percent, or one step up or down. " +
+                        "Not how loud your own voice is on the watch's speaker: the user sets that by turning the watch's bezel (or crown) while you talk.",
                     """{"type":"object","properties":{"level":{"type":"integer","minimum":0,"maximum":100},"change":{"type":"string","enum":["up","down"]}},"additionalProperties":false}""",
                 ),
                 ToolSpec(

@@ -50,7 +50,7 @@ object EndToEnd {
         graph: AppGraph,
         text: String,
     ) = lock.withLock {
-        val gate = guard ?: graph.guard(Toolboxes(listOf(graph.tools, ConversationActions({}, graph.logger))), OwnerPresence(graph.appContext) { null }, PhoneSays(graph)).also { guard = it }
+        val gate = guard ?: graph.guard(Toolboxes(listOf(graph.tools, ConversationActions({}, graph.logger))), OwnerPresence(graph.appContext) { null }, spoken = true, reply = PhoneSays(graph)).also { guard = it }
         graph.userTurns.heard()
         log("user> $text")
         val started = SystemClock.elapsedRealtime()

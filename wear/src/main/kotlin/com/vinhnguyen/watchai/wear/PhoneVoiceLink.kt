@@ -83,7 +83,10 @@ class PhoneVoiceLink private constructor(
         /** WatchGPT's latest reaction from the phone; [reactionId] goes up with each, so a repeat plays again. */
         val reaction: Reaction? = null,
         val reactionId: Int = 0,
-    )
+    ) {
+        /** A tap stops the answer, not the conversation: as media on the watch's speaker, which can't be talked over. */
+        val tapStopsAnswer: Boolean get() = phase == Phase.SPEAKING && answersAsMedia && answersOnWatch
+    }
 
     private val appContext = context.applicationContext
     private val channels = Wearable.getChannelClient(appContext)
@@ -124,7 +127,7 @@ class PhoneVoiceLink private constructor(
 
     @Volatile private var micOn: Boolean? = null
 
-    /** The phone's setting: answers as media, louder but not echo-cancelled, so the mic waits while they play. */
+    /** The phone's setting, which can change mid-conversation: answers as media, not echo-cancelled, so the mic waits while they play. */
     @Volatile private var asMedia = false
 
     /** When answer audio last went to the speaker: as media, the mic stays shut until its echo has died away. */
@@ -163,11 +166,12 @@ class PhoneVoiceLink private constructor(
             chimed = false
             speakerOn = null
             micOn = null
-            asMedia = false
+            // As in the last conversation until the phone says, so the bezel and a tap do the right thing from the start.
+            asMedia = prefs.getBoolean(AS_MEDIA, false)
             chimeLeft.set(0)
             dropAnswer = false
             phoneHungUp = false
-            _state.value = State(Phase.CONNECTING, detail = "Calling your phone…")
+            _state.value = State(Phase.CONNECTING, detail = "Calling your phone…", answersAsMedia = asMedia)
             Log.i(TAG, "calling the phone")
             CallService.talk(appContext)
             val s = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -323,9 +327,12 @@ class PhoneVoiceLink private constructor(
                 val speaker = control.speaker ?: true
                 val mic = control.mic ?: true
                 val media = control.media ?: false
-                speakerOn = speaker
-                micOn = mic
+                Log.i(TAG, "route from the phone: speaker=$speaker mic=$mic media=$media")
+                // The speaker last: speak() opens the track once it's on, as a call or as media, so that has to be known first.
                 asMedia = media
+                micOn = mic
+                speakerOn = speaker
+                if (prefs.getBoolean(AS_MEDIA, false) != media) prefs.edit { putBoolean(AS_MEDIA, media) }
                 _state.update { it.copy(answersOnWatch = speaker, micOnWatch = mic, answersAsMedia = media) }
             }
         }
@@ -453,6 +460,12 @@ class PhoneVoiceLink private constructor(
                             trackAsMedia = asMedia
                             if (trackAsMedia) restoreAudio() else useWatchSpeaker()
                             track = newTrack(trackAsMedia).also { it.play() }
+                            val stream = if (trackAsMedia) AudioManager.STREAM_MUSIC else AudioManager.STREAM_VOICE_CALL
+                            Log.i(
+                                TAG,
+                                "answers as ${if (trackAsMedia) "media" else "a call"}: audio mode ${audioManager.mode}, " +
+                                    "volume ${audioManager.getStreamVolume(stream)} of ${audioManager.getStreamMaxVolume(stream)}",
+                            )
                         }
 
                     false ->
@@ -566,6 +579,7 @@ class PhoneVoiceLink private constructor(
     companion object {
         private const val PING_MS = 2_000L
         private const val SEED = "buddy_seed"
+        private const val AS_MEDIA = "answers_as_media"
         private const val TAG = "WatchLink"
         private const val MIC_SILENCE = 0.004f
         private const val MIC_HANGOVER = 8 // 320 ms

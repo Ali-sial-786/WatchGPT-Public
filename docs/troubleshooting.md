@@ -55,8 +55,27 @@ set stays for the next conversation (and for calls on the watch).
 
 Call and media volume are separate, each with its own top level. If the call volume at its top is still too quiet,
 switch on **Settings → Answers on the watch → Play answers as media** on the phone: answers then follow the media
-volume (the bezel sets it too) and can be louder, but without echo cancelling the watch listens again only once an
-answer has finished, so you can't talk over it: tap the face to stop the answer, then talk.
+volume (the bezel sets it too), which may go louder, but without echo cancelling the watch listens again only once an
+answer has finished, so you can't talk over it: tap the face to stop the answer, then talk. The switch counts at once,
+also in a conversation already on.
+
+### Play answers as media still sounds like a call
+
+- The switch counts at once, also mid-conversation (older builds waited for the next conversation).
+- Look at the face while WatchGPT talks: as media it says **Speaking · tap to interrupt**, as a call just **Speaking**.
+  Turning the bezel shows **Media volume** or **Call volume**. As a call or as media, the voice is the same, sent from
+  the phone in the same quality, so it can sound much the same either way.
+- With earbuds on the phone, answers play there whatever this switch says: set their volume on the phone.
+- Install both apps from the same release: an older watch app doesn't know the setting and always plays as a call.
+
+### Music starts when I turn the volume down
+
+Set WatchGPT's volume with the bezel (or the crown) on WatchGPT's face while it talks; on a Galaxy Watch without a
+turning bezel, switch on Touch bezel in the watch's settings and swipe around the edge. On WatchGPT's face this only
+changes the volume, never presses play. The watch's own volume settings may play a sample of music while you drag the
+media slider, and with answers as media the watch's media controls may come up over WatchGPT and start the last song.
+Asked to talk quieter, WatchGPT is told to point you to the bezel, not to change the phone's volume or press play. If
+music still starts, note how you turned it down and which app played.
 
 ### "Hey Watch G P T" (or my own phrase) doesn't hear me
 
@@ -94,6 +113,17 @@ answer has finished, so you can't talk over it: tap the face to stop the answer,
 - There's no sleep score: Samsung Health keeps it to itself and doesn't share it through Health Connect. WatchGPT
   says so and tells you when you slept, for how long, and your sleep stages. With the phone unlocked, you can also ask
   it to open Samsung Health and read the score off its screen.
+
+### WatchGPT tells me my sleep in a different, robotic voice
+
+- That's your phone's own voice, on purpose: your sleep is health data, so it stays on the phone and ChatGPT never
+  gets it, and ChatGPT's voice can only say what ChatGPT gets.
+- To hear it in ChatGPT's voice, turn on **Say it in ChatGPT's voice** under Sleep in "What WatchGPT can do". Your
+  sleep then goes to ChatGPT (OpenAI, under your account) when you ask out loud. It counts at once. In the chat your
+  phone still shows it on screen.
+- "Private things stay on this phone" in Settings doesn't change this; it covers messages, notes and the calendar.
+- A score read off Samsung Health's screen still comes in your phone's voice, even with this on: what's on an app's
+  screen always stays on the phone.
 
 ### Nothing was sent after I said yes
 

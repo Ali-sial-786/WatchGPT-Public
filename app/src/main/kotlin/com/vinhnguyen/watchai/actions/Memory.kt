@@ -42,7 +42,12 @@ class Memory(
         val at: Long,
         /** Said with the phone's own model only (the chat without ChatGPT): shown in History, never given to ChatGPT. */
         val local: Boolean = false,
-    )
+        /** Said after the user's sleep went to ChatGPT in that conversation: shown in History, never given to ChatGPT again. */
+        val health: Boolean = false,
+    ) {
+        /** What later conversations may hand ChatGPT. */
+        val shared: Boolean get() = !local && !health
+    }
 
     @Serializable
     data class Conversation(
@@ -80,7 +85,8 @@ class Memory(
 
     /**
      * A turn of conversation [id], which starts with its first turn; [local] when only the phone's own
-     * model heard it. Saved a moment later, so a busy conversation isn't written at every word.
+     * model heard it, [health] when it may hold the user's sleep. Saved a moment later, so a busy
+     * conversation isn't written at every word.
      */
     fun add(
         id: String,
@@ -88,6 +94,7 @@ class Memory(
         user: Boolean,
         text: String,
         local: Boolean = false,
+        health: Boolean = false,
     ) {
         val said = text.trim().take(TURN_MAX)
         if (said.isEmpty()) return
@@ -95,7 +102,7 @@ class Memory(
             mutex.withLock {
                 val kept = loadLocked()
                 val at = now()
-                val turn = Turn(user, said, at, local)
+                val turn = Turn(user, said, at, local, health)
                 val old = kept.conversations.firstOrNull { it.id == id }
                 val conversation = old?.copy(turns = (old.turns + turn).takeLast(TURNS_MAX)) ?: Conversation(id, where, at, listOf(turn))
                 _kept.value = kept.copy(conversations = trimmed(kept.conversations.filterNot { it.id == id } + conversation, at))
@@ -153,7 +160,7 @@ class Memory(
             } else {
                 kept.conversations
                     .filter { it.id != except && it.lastAt > since }
-                    .map { it.copy(turns = it.turns.filterNot(Turn::local)) }
+                    .map { it.copy(turns = it.turns.filter(Turn::shared)) }
                     .filter { it.turns.isNotEmpty() }
                     .takeLast(RECENT_CONVERSATIONS)
             }
@@ -190,8 +197,8 @@ class Memory(
                 .asReversed()
                 .filter { c -> (from == null || c.lastAt >= from) && (to == null || c.startedAt <= to) }
                 .mapNotNull { c ->
-                    // What only the phone's own model heard stays on the phone: recall goes to ChatGPT.
-                    val shared = c.turns.filterNot(Turn::local)
+                    // What only the phone's own model heard, and the user's sleep, stay on the phone: recall goes to ChatGPT.
+                    val shared = c.turns.filter(Turn::shared)
                     val turns = if (wanted.isEmpty()) shared else shared.filter { t -> normal(t.text).let { text -> wanted.any { it in text } } }
                     if (turns.isEmpty()) null else c to turns
                 }.take(RECALL_CONVERSATIONS)

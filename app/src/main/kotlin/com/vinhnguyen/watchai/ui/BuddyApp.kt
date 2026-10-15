@@ -207,6 +207,7 @@ fun WatchGPTApp(
                         offlineReady = offlineReady,
                         onSafetyCheck = { open(Page.SAFETY) },
                         onApps = { open(Page.APPS) },
+                        onAnswersAsMedia = graph.watchCalls::setAnswersAsMedia,
                     )
                 }
 

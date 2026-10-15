@@ -73,9 +73,21 @@ object Safety {
 
     /**
      * Private tools whose data may go to ChatGPT (cleaned) when the user turns "Private on the phone"
-     * off in Settings. What's on an app's screen and their sleep aren't among them: those always stay on the phone.
+     * off in Settings. What's on an app's screen and their sleep aren't among them: what's on the screen always stays on
+     * the phone, and sleep has a switch of its own ([toCloud]).
      */
     val MAY_GO_TO_CLOUD: Set<String> = setOf(PhoneActions.LIST_REMINDERS, ReachActions.READ_MESSAGES, PhoneActions.LIST_NOTES, PhoneActions.LIST_EVENTS)
+
+    /**
+     * The private tools whose data goes to ChatGPT in a conversation: [MAY_GO_TO_CLOUD] with "Private things stay on this
+     * phone" off, and sleep with "Say it in ChatGPT's voice" on ([sleepToChatGpt]; it's health data, so it asks on its own),
+     * in a [spoken] conversation only: in the chat the phone shows it itself, in no voice at all.
+     */
+    fun toCloud(
+        privateOnPhone: Boolean,
+        sleepToChatGpt: Boolean,
+        spoken: Boolean,
+    ): Set<String> = (if (privateOnPhone) emptySet() else MAY_GO_TO_CLOUD) + (if (sleepToChatGpt && spoken) setOf(SleepActions.READ_SLEEP) else emptySet())
 }
 
 /**

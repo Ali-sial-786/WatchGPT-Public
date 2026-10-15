@@ -49,7 +49,7 @@ class GuardTest {
         phone: FakePhone,
         reader: LocalReader? = null,
         reply: PrivateReply? = null,
-        toCloud: Set<String> = emptySet(),
+        toCloud: () -> Set<String> = { emptySet() },
     ) = Guard(
         inner = phone,
         levels = levels,
@@ -320,8 +320,23 @@ class GuardTest {
         val phone = FakePhone(messages = "Anna: dinner at 8?")
         val told = guard(phone, reply = { true }).run("read_messages", "{}", ToolContext("any news?"))
         assertThat(told).isEqualTo(TOLD_ON_PHONE)
-        val cloud = guard(phone, reply = { true }, toCloud = setOf("read_messages")).run("read_messages", "{}", ToolContext("any news?"))
+        val cloud = guard(phone, reply = { true }, toCloud = { setOf("read_messages") }).run("read_messages", "{}", ToolContext("any news?"))
         assertThat(cloud).contains("dinner at 8")
+    }
+
+    @Test
+    fun `a switch counts from the next call, in the same conversation`() = runBlocking {
+        val phone = FakePhone(messages = "Anna: dinner at 8?")
+        var allowed = setOf("read_messages")
+        val g = guard(phone, reply = { true }, toCloud = { allowed })
+        assertThat(g.run("read_messages", "{}", ToolContext("any news?"))).contains("dinner at 8")
+        assertThat(g.sentToCloud).containsExactly("read_messages")
+        // Turned off: the next read stays on the phone, and what went before still counts.
+        allowed = emptySet()
+        assertThat(g.run("read_messages", "{}", ToolContext("any news?"))).isEqualTo(TOLD_ON_PHONE)
+        assertThat(g.sentToCloud).containsExactly("read_messages")
+        assertThat(g.sharedPrivateData).isTrue()
+        assertThat(guard(phone, reply = { true }).sentToCloud).isEmpty()
     }
 
     @Test

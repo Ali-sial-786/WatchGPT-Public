@@ -7,6 +7,7 @@ import io.github.alisial786.watchgpt.PhoneTalkService
 import io.github.alisial786.watchgpt.actions.ConversationActions
 import io.github.alisial786.watchgpt.actions.OwnerPresence
 import io.github.alisial786.watchgpt.actions.Pending
+import io.github.alisial786.watchgpt.actions.SleepActions
 import io.github.alisial786.watchgpt.actions.VoiceReply
 import io.github.alisial786.watchgpt.actions.WatchGPTCard
 import io.github.alisial786.watchgpt.brain.Toolboxes
@@ -131,24 +132,27 @@ class TalkViewModel(
                 // The conversation starts knowing what WatchGPT remembers, and its turns go to the history.
                 val conversation = UUID.randomUUID().toString()
                 val remembered = graph.remembered()
+                val guard =
+                    graph.guard(
+                        Toolboxes(listOf(graph.tools, ConversationActions({ session?.endSoon() }, graph.logger))),
+                        OwnerPresence(graph.appContext) { false },
+                        spoken = true,
+                        reply = VoiceReply(graph.speech, graph.cards, readouts, graph.languages) { session },
+                    )
                 val s =
                     ChatGptRealtimeSession(
                         graph.appContext,
                         graph.session,
                         ChatGptHttp.authClient(),
                         graph.chatGpt,
-                        graph.guard(
-                            Toolboxes(listOf(graph.tools, ConversationActions({ session?.endSoon() }, graph.logger))),
-                            OwnerPresence(graph.appContext) { false },
-                            VoiceReply(graph.speech, graph.cards, readouts, graph.languages) { session },
-                        ),
+                        guard,
                         graph.logger,
                         voice = graph.settings.voice,
                         idleHangUpMs = graph.settings.conversationIdleMs,
                         onIdle = { end() },
                         instructions = listOfNotNull(ChatGptRealtimeSession.VOICE_INSTRUCTIONS, remembered).joinToString("\n"),
                         onUserWords = graph.userTurns::heard,
-                        onTurn = { graph.keepTurn(conversation, ON_PHONE, it) },
+                        onTurn = { graph.keepTurn(conversation, ON_PHONE, it, health = SleepActions.READ_SLEEP in guard.sentToCloud) },
                         remembered = { graph.remembered(except = conversation) },
                     )
                 session = s

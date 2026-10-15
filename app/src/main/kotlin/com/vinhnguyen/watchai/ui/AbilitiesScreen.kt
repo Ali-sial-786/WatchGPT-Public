@@ -10,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -60,6 +61,9 @@ class AbilitiesViewModel(
     private val _sleep = MutableStateFlow<SleepActions.Access?>(null)
     val sleep: StateFlow<SleepActions.Access?> = _sleep.asStateFlow()
 
+    private val _sleepToChatGpt = MutableStateFlow(graph.settings.sleepToChatGpt)
+    val sleepToChatGpt: StateFlow<Boolean> = _sleepToChatGpt.asStateFlow()
+
     init {
         viewModelScope.launch { runCatching { graph.notes.list() } }
     }
@@ -67,11 +71,18 @@ class AbilitiesViewModel(
     /** The answers come back from Android's own screens: read them again whenever this one returns. */
     fun refresh() {
         _allowed.value = read()
+        _sleepToChatGpt.value = graph.settings.sleepToChatGpt
         viewModelScope.launch { _sleep.value = graph.sleep.access() }
     }
 
     /** What to ask Health Connect for. */
     fun sleepPermissions(): Set<String> = graph.sleep.permissions()
+
+    /** "Say it in ChatGPT's voice": from now on, sleep goes to ChatGPT when the user asks out loud. */
+    fun sendSleepToChatGpt(on: Boolean) {
+        graph.settings.sleepToChatGpt = on
+        _sleepToChatGpt.value = on
+    }
 
     fun deleteNote(id: Long) {
         viewModelScope.launch { runCatching { graph.notes.delete(id) } }
@@ -141,6 +152,7 @@ fun AbilitiesScreen(
             }
         }
     val sleep by vm.sleep.collectAsStateWithLifecycle()
+    val sleepToChatGpt by vm.sleepToChatGpt.collectAsStateWithLifecycle()
     val askMessages = {
         val listener = ComponentName(context, WatchGPTNotificationListener::class.java).flattenToString()
         openSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS).putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, listener))
@@ -209,7 +221,7 @@ fun AbilitiesScreen(
                 SleepActions.Access.ASK, SleepActions.Access.UPDATE -> false
                 SleepActions.Access.UNAVAILABLE, null -> null
             },
-            last = true,
+            last = sleep == SleepActions.Access.UNAVAILABLE,
             allowLabel =
             when {
                 sleep == SleepActions.Access.UPDATE -> "Update"
@@ -229,6 +241,15 @@ fun AbilitiesScreen(
                 }
             },
         )
+        if (sleep != SleepActions.Access.UNAVAILABLE) {
+            Item(
+                "Say it in ChatGPT's voice",
+                painter = painterResource(R.drawable.sym_graphic_eq),
+                subtitle = if (sleepToChatGpt) SLEEP_TO_CHATGPT else SLEEP_ON_PHONE,
+                last = true,
+                trailing = { Switch(checked = sleepToChatGpt, onCheckedChange = vm::sendSleepToChatGpt, colors = switchColors()) },
+            )
+        }
     }
     Group("Notes", footer = "Kept encrypted on this phone.") {
         Item(
@@ -295,8 +316,13 @@ private fun Ability(
 private const val NO_QUESTION_MS = 400L
 
 private const val SLEEP_FOOTER =
-    "Read only when you ask, and it stays on this phone. Samsung Health shares your sleep once you let it, in Samsung Health: " +
-        "Settings, Health Connect."
+    "Read only when you ask. Samsung Health shares your sleep once you let it, in Samsung Health: Settings, Health Connect."
+
+private const val SLEEP_ON_PHONE = "Off: your phone tells you in its own voice, and your sleep stays on this phone."
+
+private const val SLEEP_TO_CHATGPT =
+    "On: when you ask out loud, your sleep goes to ChatGPT (OpenAI, under your account) and ChatGPT tells you in its voice; " +
+        "your ChatGPT data settings apply. In the chat your phone still shows it itself."
 
 private const val SLEEP_HINT =
     "Health Connect won't ask again. In its settings, open App permissions, then WatchGPT, and allow Sleep. For Samsung Health's " +

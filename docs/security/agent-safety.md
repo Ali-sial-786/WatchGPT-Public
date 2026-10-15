@@ -62,9 +62,14 @@ presence check, two-minute limit and hourly budget. `list_reminders` and `list_c
 level 2; `list_calendar_events` reads WatchGPT's own agenda even without calendar access, and the
 phone's calendar only with it.
 
-Sleep (added 2026-10-15): `read_sleep` is level 2. Like `read_screen`, it stays on the phone whatever the
-"Private on the phone" setting says (it isn't in `Safety.MAY_GO_TO_CLOUD`), since it's health data. It only
-reads Health Connect's sleep, writes nothing there, and keeps nothing.
+Sleep (added 2026-10-15): `read_sleep` is level 2. Since it's health data, the "Private on the phone" setting
+doesn't cover it (it isn't in `Safety.MAY_GO_TO_CLOUD`): it stays on the phone unless the user turns on its own
+switch, **Say it in ChatGPT's voice** (`AppSettings.sleepToChatGpt`, off by default). `Safety.toCloud` puts it in
+the Guard's `toCloud` only then, and only in voice conversations (the chat shows it on the phone's screen); the
+Guard asks at each call, so either switch counts at once. Its result then goes to ChatGPT cleaned, as messages do
+with "Private on the phone" off, the conversation counts as holding private data, and the turns kept after it are
+marked `health` (`Guard.sentToCloud`), so History keeps them but later conversations and recall never give them to
+ChatGPT again. It only reads Health Connect's sleep, writes nothing there, and keeps nothing.
 
 ## On the phone
 
@@ -255,7 +260,7 @@ logs into themselves, and passkeys where possible (they need the user's fingerpr
 - "What WatchGPT did" in the menu: kind, time and outcome, encrypted, 30 days.
 
 Then, same day: **private things stay on the phone** (on by default, Settings, Privacy). With it
-on, a private result never goes to ChatGPT at all, not even as a summary. Gemma answers the question
+on, a private result never goes to ChatGPT at all, not even as a summary (sleep has a switch of its own, above). Gemma answers the question
 from it on the phone (`LocalReader.answer`), the phone says the answer in its own voice
 (`LocalSpeech`: Android's speech engine, offline voices only) where the answers play (watch,
 earbuds, phone), or shows it in the chat, and ChatGPT only hears "the phone is telling the user"

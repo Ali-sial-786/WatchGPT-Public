@@ -48,7 +48,8 @@ public sealed interface Frame {
  * "ping" / "pong" (either way, [at] echoed, to measure the link's round trip), "bye" (either side ends),
  * "route" (phone to watch: [mic] true = the watch is the microphone, [speaker] true = the watch
  * plays the answer; with a headset on the phone both are false and the watch only shows the face; [media]
- * true = it plays the answer as media rather than as a call, louder but without echo cancelling),
+ * true = it plays the answer as media rather than as a call, set by the media volume and without echo cancelling;
+ * sent again whenever one of them changes, also mid-conversation),
  * "timer" / "alarm" (phone to watch: set one on the watch's own clock, [seconds] or [hour]:[minute],
  * with an optional [label]), "battery" (phone to watch: its battery) and "locked" (phone to watch,
  * before a text or call goes out: "locked", "unlocked" or "no lock"), each answered by "done"

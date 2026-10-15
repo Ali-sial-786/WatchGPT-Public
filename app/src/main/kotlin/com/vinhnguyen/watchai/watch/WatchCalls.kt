@@ -65,7 +65,8 @@ class WatchCalls(
     private val lock = Mutex()
     private val bridge = WatchBridge(graph.appContext)
     private var session: ChatGptRealtimeSession? = null
-    private var audio: WatchAudio? = null
+
+    @Volatile private var audio: WatchAudio? = null
     private var channel: ChannelClient.Channel? = null
     private var watcher: Job? = null
     private var warmth: Job? = null
@@ -126,13 +127,14 @@ class WatchCalls(
             // The call starts knowing what WatchGPT remembers, and its turns go to the history.
             val conversation = UUID.randomUUID().toString()
             val remembered = graph.remembered()
+            val guard = graph.guard(tools, OwnerPresence(graph.appContext) { onCall.unlocked() }, spoken = true, reply = VoiceReply(graph.speech, graph.cards, readouts, graph.languages) { session })
             val s =
                 ChatGptRealtimeSession(
                     graph.appContext,
                     graph.session,
                     ChatGptHttp.authClient(),
                     graph.chatGpt,
-                    graph.guard(tools, OwnerPresence(graph.appContext) { onCall.unlocked() }, VoiceReply(graph.speech, graph.cards, readouts, graph.languages) { session }),
+                    guard,
                     graph.logger,
                     voice = graph.settings.voice,
                     external = watch,
@@ -140,11 +142,13 @@ class WatchCalls(
                     onIdle = { graph.scope.launch { hangUp() } },
                     instructions = listOfNotNull(ChatGptRealtimeSession.VOICE_INSTRUCTIONS, remembered).joinToString("\n"),
                     onUserWords = graph.userTurns::heard,
-                    onTurn = { graph.keepTurn(conversation, ON_WATCH, it) },
+                    onTurn = { graph.keepTurn(conversation, ON_WATCH, it, health = SleepActions.READ_SLEEP in guard.sentToCloud) },
                     remembered = { graph.remembered(except = conversation) },
                 )
             session = s
             audio = watch
+            // A switch in Settings while this conversation was being set up found no audio to tell: catch up (sends nothing if unchanged).
+            watch.setMedia(graph.settings.watchAnswersAsMedia)
             channel = opened
             watcher =
                 graph.scope.launch {
@@ -154,6 +158,11 @@ class WatchCalls(
                 }
             s.start()
         }
+    }
+
+    /** Answers as media switched on or off in Settings: the watch in a conversation now switches too. */
+    fun setAnswersAsMedia(on: Boolean) {
+        audio?.setMedia(on)
     }
 
     /** Debug builds: plays [pcm] into the current call as if said on the watch. False if there's no call. */

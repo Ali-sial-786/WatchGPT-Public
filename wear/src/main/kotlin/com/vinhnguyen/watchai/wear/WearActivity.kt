@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -64,6 +65,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
+private const val TAG = "WatchLink"
+
 class WearActivity : ComponentActivity() {
     private val ambient = MutableStateFlow(false)
 
@@ -111,6 +114,13 @@ class WearActivity : ComponentActivity() {
         super.onStop()
     }
 
+    /** Something came over the face mid-conversation (media controls, the volume panel): the log says when. */
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        val phase = PhoneVoiceLink.get(this).state.value.phase
+        if (phase != Phase.IDLE && phase != Phase.ERROR) Log.i(TAG, if (hasFocus) "face back in front" else "something came over the face")
+    }
+
     /** Opened again while already running (single task): talk again, unless a conversation is on. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -152,7 +162,7 @@ class WatchViewModel(
     fun toggle() {
         val state = link.state.value
         // Answers as media can't be talked over: a tap stops the answer instead of ending the conversation.
-        if (state.phase == Phase.SPEAKING && state.answersAsMedia) {
+        if (state.tapStopsAnswer) {
             link.interrupt()
             return
         }
@@ -185,9 +195,12 @@ class WatchViewModel(
         if (abs(turned) < VOLUME_STEP_PX) return
         val louder = turned > 0
         turned = 0f
-        val stream = if (link.state.value.answersAsMedia) AudioManager.STREAM_MUSIC else AudioManager.STREAM_VOICE_CALL
+        val asMedia = link.state.value.answersAsMedia
+        val stream = if (asMedia) AudioManager.STREAM_MUSIC else AudioManager.STREAM_VOICE_CALL
         runCatching { audio.adjustStreamVolume(stream, if (louder) AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER, 0) }
-        volumeShown.value = "Volume ${audio.getStreamVolume(stream)} of ${audio.getStreamMaxVolume(stream)}"
+        // Which volume it is, so the user can see whether answers play as media or as a call.
+        volumeShown.value = "${if (asMedia) "Media" else "Call"} volume ${audio.getStreamVolume(stream)} of ${audio.getStreamMaxVolume(stream)}"
+        Log.i(TAG, "bezel: ${volumeShown.value}")
         hideVolume?.cancel()
         hideVolume =
             viewModelScope.launch {
@@ -375,7 +388,7 @@ private fun act(
 /** What tapping the face does now. */
 private fun tapLabel(state: PhoneVoiceLink.State) = when {
     state.phase == Phase.IDLE || state.phase == Phase.ERROR -> "Start talking"
-    state.phase == Phase.SPEAKING && state.answersAsMedia -> "Stop the answer"
+    state.tapStopsAnswer -> "Stop the answer"
     else -> "End the conversation"
 }
 
@@ -402,6 +415,6 @@ private fun label(
     Phase.CONNECTING -> state.detail ?: "Connecting…"
     Phase.LISTENING -> "Listening"
     Phase.THINKING -> "Thinking…"
-    Phase.SPEAKING -> if (state.answersAsMedia) "Speaking · tap to interrupt" else "Speaking"
+    Phase.SPEAKING -> if (state.tapStopsAnswer) "Speaking · tap to interrupt" else "Speaking"
     Phase.ERROR -> state.detail ?: "Something went wrong"
 }

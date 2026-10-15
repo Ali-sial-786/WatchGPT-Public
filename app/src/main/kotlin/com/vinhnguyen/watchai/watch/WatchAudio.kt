@@ -44,8 +44,10 @@ class WatchAudio(
     route: Route,
     private val onEnd: () -> Unit,
     /** The watch plays the answer as media, not as a call ([io.github.alisial786.watchgpt.AppSettings.watchAnswersAsMedia]). */
-    private val asMedia: Boolean = false,
+    asMedia: Boolean = false,
 ) : ExternalAudio {
+    @Volatile private var asMedia = asMedia
+
     @Volatile
     var route: Route = route
         private set
@@ -78,7 +80,18 @@ class WatchAudio(
         outbox.offer(routeMessage())
     }
 
-    private fun routeMessage() = Frame.Message(Control("route", speaker = route == Route.WATCH, mic = route != Route.HEADSET || catchUp, media = asMedia))
+    /** The user switched answers as media on or off in Settings: it counts at once, also in this conversation. */
+    fun setMedia(on: Boolean) {
+        if (on == asMedia) return
+        asMedia = on
+        outbox.offer(routeMessage())
+    }
+
+    private fun routeMessage(): Frame.Message {
+        val control = Control("route", speaker = route == Route.WATCH, mic = route != Route.HEADSET || catchUp, media = asMedia)
+        Log.i(TAG, "route to the watch: speaker=${control.speaker} mic=${control.mic} media=${control.media}")
+        return Frame.Message(control)
+    }
 
     private val mic = PcmQueue(WatchLink.SAMPLE_RATE * EARLY_MAX_S)
     private val outbox = Outbox(maxAudio = OUTBOX_FRAMES)

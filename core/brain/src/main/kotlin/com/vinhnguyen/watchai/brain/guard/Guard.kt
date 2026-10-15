@@ -190,10 +190,10 @@ public class Budget(
  *   itself; the cloud model only hears that it was done. The cloud model may say what to do with the
  *   data (an `instruction` argument, in English: "say the newest message"); the phone's model gets that
  *   as its task and answers in the user's `language`, whatever language the data is in.
- *   For the tools in [toCloud] (the user turned that on), or without a [reply], the data goes to the
- *   cloud model through the [Redactor] (codes, card numbers, links, phone numbers…);
- *   the conversation then counts as holding private data ([sharedPrivateData]), which keeps the
- *   cloud model off the live web.
+ *   For the tools in [toCloud] (the user turned that on; asked at each call, so a switch counts at once), or
+ *   without a [reply], the data goes to the cloud model through the [Redactor] (codes, card numbers, links,
+ *   phone numbers…); the conversation then counts as holding private data ([sharedPrivateData]), which keeps
+ *   the cloud model off the live web, and [sentToCloud] says which tools' data went.
  * - A yes to a text or call ([confirmTool]) needs the user to be there ([presence]) and room in the
  *   [budget]. The yes itself still has to come in a later turn: `Pending` checks that.
  * - The [stopTool] ("bye", "stop") stops everything that isn't a lookup for the rest of the
@@ -214,15 +214,20 @@ public class Guard(
     private val reply: PrivateReply? = null,
     private val stopTool: String? = null,
     private val onStop: () -> Unit = {},
-    /** Private tools whose data the user lets ChatGPT read (cleaned) instead of hearing it from the phone. */
-    private val toCloud: Set<String> = emptySet(),
+    /** Private tools whose data the user lets ChatGPT read (cleaned) instead of hearing it from the phone, as they are now. */
+    private val toCloud: () -> Set<String> = { emptySet() },
     private val now: () -> Long = System::currentTimeMillis,
 ) : Toolbox {
     @Volatile private var shared = false
 
+    @Volatile private var sent = emptySet<String>()
+
     @Volatile private var stopped = false
 
     override val sharedPrivateData: Boolean get() = shared || inner.sharedPrivateData
+
+    /** The private tools whose data went to the cloud model in this conversation. */
+    public val sentToCloud: Set<String> get() = sent
 
     override fun tools(): List<ToolSpec> = inner.tools().filter { levels[it.name].let { level -> level != null && level != Level.NEVER } }
 
@@ -254,7 +259,7 @@ public class Guard(
         val out =
             when {
                 level != Level.PRIVATE || result.startsWith("error") -> result
-                reply == null || name in toCloud -> private(name, result, question)
+                reply == null || name in toCloud() -> private(name, result, question)
                 reply.tell(languageOf(argumentsJson)) { localAnswer(name, result, question, argumentsJson) } -> TOLD_ON_PHONE
                 else -> NOT_SAID
             }
@@ -268,6 +273,7 @@ public class Guard(
         question: String,
     ): String {
         shared = true
+        sent = sent + name
         return forModel(result, question, readable[name], reader)
     }
 

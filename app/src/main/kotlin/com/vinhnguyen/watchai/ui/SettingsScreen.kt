@@ -40,6 +40,7 @@ fun SettingsScreen(
     offlineReady: Boolean,
     onSafetyCheck: () -> Unit,
     onApps: () -> Unit,
+    onAnswersAsMedia: (Boolean) -> Unit,
 ) {
     val p = LocalPalette.current
     var voice by remember { mutableStateOf(settings.voice) }
@@ -94,19 +95,21 @@ fun SettingsScreen(
     var asMedia by remember { mutableStateOf(settings.watchAnswersAsMedia) }
     Group(
         "Answers on the watch",
-        footer = "As a call, the watch cancels the answer's echo, so you can talk over it; turn the bezel for the call volume. " +
-            "As media they can be louder and follow the media volume, but the watch only listens once an answer has finished: " +
-            "tap the watch face to stop an answer and talk. From your next conversation.",
+        footer = "As a call, the watch cancels the answer's echo, so you can talk over it. As media, answers follow the media " +
+            "volume, which may go louder, but the watch only listens once an answer has finished: tap the watch face to stop an " +
+            "answer and talk. Either way, turn the bezel (or crown) on WatchGPT's face while it talks to set how loud. Applies right away, " +
+            "also to a conversation already on.",
     ) {
         Item(
             "Play answers as media",
-            subtitle = if (asMedia) "Louder; tap the watch face to interrupt an answer" else "Off: as a call, so you can talk over answers",
+            subtitle = if (asMedia) "On: as media; tap the watch face to interrupt an answer" else "Off: as a call, so you can talk over answers",
             trailing = {
                 Switch(
                     checked = asMedia,
                     onCheckedChange = {
                         settings.watchAnswersAsMedia = it
                         asMedia = it
+                        onAnswersAsMedia(it)
                     },
                     colors = switchColors(),
                 )

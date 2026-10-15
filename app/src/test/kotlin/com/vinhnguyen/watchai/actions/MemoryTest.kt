@@ -66,6 +66,20 @@ class MemoryTest {
     }
 
     @Test
+    fun `what was said after the user's sleep went to ChatGPT is in the history but never goes to ChatGPT again`() = runBlocking {
+        val m = memory()
+        m.add("a", "on the watch", user = true, text = "How did I sleep?")
+        m.add("a", "on the watch", user = false, text = "You slept 6 hours 51 minutes, with 1 hour 10 minutes deep.", health = true)
+        m.add("a", "on the watch", user = true, text = "And what's the weather?", health = true)
+        assertThat(m.load().conversations.first().turns).hasSize(3)
+        val context = m.context(history = true)!!
+        assertThat(context).contains("How did I sleep?")
+        assertThat(context).doesNotContain("6 hours 51")
+        assertThat(context).doesNotContain("weather")
+        assertThat(m.recall(null, null, "deep")).startsWith("nothing")
+    }
+
+    @Test
     fun `with the history off, only what the user asked to keep is used`() = runBlocking {
         val m = memory()
         m.add("a", "on the watch", user = true, text = "Remind me to call the dentist")

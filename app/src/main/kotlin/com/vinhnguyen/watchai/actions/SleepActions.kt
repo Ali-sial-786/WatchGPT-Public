@@ -23,8 +23,9 @@ import java.time.ZoneId
 /**
  * How the user slept, from Health Connect: the sleep Samsung Health (or another sleep app) shares there, with its
  * stages ([SleepReport]). Read only when the user asks, at most two weeks back, and never kept. It's private
- * ([Safety]): the phone tells the user itself, and ChatGPT only hears that it did. Allowed in What WatchGPT can do ([access],
- * [permissions]); [io.github.alisial786.watchgpt.HealthPrivacyActivity] is what Health Connect shows for it.
+ * ([Safety]): the phone tells the user itself, and ChatGPT only hears that it did, unless the user turned on "Say it in
+ * ChatGPT's voice" ([Safety.toCloud]). Allowed in What WatchGPT can do ([access], [permissions]);
+ * [io.github.alisial786.watchgpt.HealthPrivacyActivity] is what Health Connect shows for it.
  */
 class SleepActions(
     context: Context,
@@ -186,9 +187,9 @@ class SleepActions(
                     READ_SLEEP,
                     "How the user slept, from Health Connect, where Samsung Health and other sleep apps share it: when they fell asleep and " +
                         "woke up, time asleep and sleep stages (deep, light, REM, awake), by the day they woke up. Read on the phone, which " +
-                        "tells the user itself. Health Connect has no sleep score: Samsung Health keeps its score to itself. Asked for the " +
-                        "score, still use this (the phone says there's none and how they slept); with the phone unlocked, the score can also " +
-                        "be read on Samsung Health's own screen.",
+                        "tells the user itself, unless they chose to hear it from you: then you get it. Health Connect has no sleep score: " +
+                        "Samsung Health keeps its score to itself. Asked for the score, still use this (it says there's none, and how they " +
+                        "slept); with the phone unlocked, the score can also be read on Samsung Health's own screen.",
                     """{"type":"object","properties":{"nights":{"type":"integer","minimum":1,"maximum":${SleepReport.MAX_NIGHTS},"description":"How many days back, counting today, at most ${SleepReport.MAX_NIGHTS}. Default 1: last night."},""" +
                         """"instruction":{"type":"string","description":"In English: exactly what the phone should find in it and tell the user."},""" +
                         """"language":{"type":"string","description":"The language the user is speaking, as a BCP 47 tag: the phone answers and speaks in it."}},"additionalProperties":false}""",

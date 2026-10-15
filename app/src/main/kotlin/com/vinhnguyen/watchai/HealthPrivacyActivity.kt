@@ -40,9 +40,17 @@ private fun HealthPrivacy(onBack: () -> Unit) {
             Part("When", "Only when you ask about your sleep, on your watch or in WatchGPT, and at most two weeks back.")
             Part(
                 "Where it goes",
-                "Nowhere else. This phone reads it and tells you itself: in its own voice (on your watch when you asked there) or on its " +
-                    "screen. It never goes to ChatGPT, to us or to anyone else, and WatchGPT doesn't keep it: the list of what WatchGPT did " +
-                    "only notes that it read your sleep.",
+                "Nowhere else, unless you choose. This phone reads it and tells you itself: in its own voice (on your watch when you " +
+                    "asked there) or on its screen. It doesn't go to ChatGPT, to us or to anyone else, and WatchGPT doesn't keep it: the " +
+                    "list of what WatchGPT did only notes that it read your sleep.",
+            )
+            Part(
+                "In ChatGPT's voice, if you turn it on",
+                "Only if you turn on Say it in ChatGPT's voice (What WatchGPT can do, Health): when you ask out loud, on your watch " +
+                    "or this phone, your sleep goes to ChatGPT, run by OpenAI, under your own ChatGPT account, and ChatGPT tells you in " +
+                    "its voice; OpenAI's terms and your ChatGPT data settings apply. In the chat this phone still shows it itself. What's " +
+                    "said after that in the conversation is kept in History on this phone, but never given to ChatGPT again. It never " +
+                    "goes to us. Turning it off counts at once.",
             )
             Part(
                 "In the background",
@@ -53,7 +61,8 @@ private fun HealthPrivacy(onBack: () -> Unit) {
             Part(
                 "Who's responsible, and your rights",
                 "Vinh Nguyen (VYDE), vyde.apps@gmail.com. WatchGPT reads your sleep with your explicit consent, given here in Health " +
-                    "Connect (Art. 9(2)(a) GDPR), and you can take it back at any time. For access, deletion or complaints, write to that " +
+                    "Connect (Art. 9(2)(a) GDPR), and sends it to ChatGPT only with your explicit consent too, given by turning on Say it " +
+                    "in ChatGPT's voice. You can take either back at any time. For access, deletion or complaints, write to that " +
                     "address; you can also complain to your data protection authority. This is the sleep part of WatchGPT's privacy " +
                     "policy (PRIVACY.md, with the app).",
             )

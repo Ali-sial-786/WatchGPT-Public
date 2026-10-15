@@ -154,14 +154,18 @@ class AppGraph(
     /** What a conversation starts with: what the user asked WatchGPT to keep, and the last conversations unless they turned that off. */
     suspend fun remembered(except: String? = null): String? = memory.context(history = settings.rememberChats, except = except)
 
-    /** A finished turn of a conversation for the history, unless the user turned it off; [local] if only the phone's own model heard it. */
+    /**
+     * A finished turn of a conversation for the history, unless the user turned it off; [local] if only the phone's own model
+     * heard it, [health] once the user's sleep went to ChatGPT in it ([Guard.sentToCloud]): never given to ChatGPT again.
+     */
     fun keepTurn(
         conversation: String,
         where: String,
         turn: ChatTurn,
         local: Boolean = false,
+        health: Boolean = false,
     ) {
-        if (settings.rememberChats) memory.add(conversation, where, turn.role == ChatTurn.Role.USER, turn.text, local)
+        if (settings.rememberChats) memory.add(conversation, where, turn.role == ChatTurn.Role.USER, turn.text, local, health)
     }
 
     /** Texts, replies and calls WatchGPT may send in an hour, across all conversations. */
@@ -182,11 +186,12 @@ class AppGraph(
 
     /**
      * The gate for one conversation: every tool call of it goes through here (docs/security/agent-safety.md).
-     * [presence] tells whether the owner is there for a yes.
+     * [presence] tells whether the owner is there for a yes; [spoken] for a voice conversation, not the chat.
      */
     fun guard(
         tools: Toolbox,
         presence: Presence,
+        spoken: Boolean,
         reply: PrivateReply,
     ): Guard = Guard(
         inner = tools,
@@ -200,9 +205,10 @@ class AppGraph(
         reply = reply,
         stopTool = ConversationActions.END,
         onStop = pending::cancel,
-        // On (the default): private things stay on the phone; off: ChatGPT reads messages, notes and the
-        // calendar, cleaned. What's on an app's screen stays on the phone either way.
-        toCloud = if (settings.privateOnPhone) emptySet() else Safety.MAY_GO_TO_CLOUD,
+        // By the user's switches, as they are at each call: messages, notes and the calendar go to ChatGPT (cleaned) with
+        // "Private things stay on this phone" off, and sleep, when talking, with "Say it in ChatGPT's voice" on. What's on an
+        // app's screen stays on the phone either way.
+        toCloud = { Safety.toCloud(settings.privateOnPhone, settings.sleepToChatGpt, spoken) },
     )
 
     /** Keeps Gemma loaded while a conversation runs, so reading private data on the phone is quick. Cancel the job to let it go. */
@@ -308,6 +314,14 @@ class AppSettings(
         get() = prefs.getBoolean("private_on_phone", true)
         set(value) = prefs.edit { putBoolean("private_on_phone", value) }
 
+    /**
+     * Off by default: sleep stays on this phone, which says it in its own voice. On (the user's explicit OK, next to Sleep in
+     * What WatchGPT can do): when they ask, their sleep goes to ChatGPT, cleaned, and ChatGPT says it in its own voice.
+     */
+    var sleepToChatGpt: Boolean
+        get() = prefs.getBoolean("sleep_to_chatgpt", false)
+        set(value) = prefs.edit { putBoolean("sleep_to_chatgpt", value) }
+
     /** The WatchGPT picked with Plus (a seed), or null. */
     var chosenWatchGPT: Long?
         get() = if (prefs.contains("chosen_buddy")) prefs.getLong("chosen_buddy", 0) else null
@@ -328,8 +342,8 @@ class AppSettings(
 
     /**
      * Off by default: the watch plays answers as a call, so its echo cancelling lets the user talk over them. On, as
-     * media: louder at the top and set by the media volume, but the watch's mic waits while an answer plays (a tap on the
-     * watch face stops the answer).
+     * media: set by the media volume, which may go louder, but the watch's mic waits while an answer plays (a tap on the
+     * watch face stops the answer). A conversation already on switches too ([io.github.alisial786.watchgpt.watch.WatchCalls.setAnswersAsMedia]).
      */
     var watchAnswersAsMedia: Boolean
         get() = prefs.getBoolean("watch_answers_media", false)

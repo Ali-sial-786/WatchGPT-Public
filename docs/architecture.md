@@ -49,7 +49,7 @@ design: [Agent safety](security/agent-safety.md).
 
 ### Private readout
 
-When a `PRIVATE` tool runs (reading messages, notes, the calendar), the result never goes to ChatGPT:
+When a `PRIVATE` tool runs (reading messages, notes, the calendar, your sleep), the result doesn't go to ChatGPT by default:
 
 1. **Gemma on the phone** (LiteRT-LM, `core/brain-ondevice`) answers your question from the data, in a
    few spoken sentences. Codes, numbers and links are only read out if you asked for them. On the S23
@@ -60,8 +60,12 @@ When a `PRIVATE` tool runs (reading messages, notes, the calendar), the result n
 3. **ChatGPT only gets** "done: the phone is telling the user this itself", and replies "Here you go".
 
 Without an offline model, the phone reads the items out plainly, with the same rules. You can switch
-the private readout off in Settings; then ChatGPT gets the data with codes, numbers and links taken
-out by the `Redactor`.
+the private readout off in Settings (it covers messages, notes and the calendar); then ChatGPT gets the
+data with codes, numbers and links taken out by the `Redactor`. What's on an app's screen stays on the
+phone either way. Sleep (`read_sleep`) has its own switch, **Say it in ChatGPT's voice** (What WatchGPT
+can do → Health, off by default): with it on, sleep asked for out loud goes to ChatGPT cleaned the same
+way (`Safety.toCloud`), so ChatGPT says it in its voice, and the turns after it stay out of later
+conversations (`Memory.Turn.health`). The Guard reads both switches at each call.
 
 ### Actions
 

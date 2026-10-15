@@ -772,7 +772,7 @@ class ChatGptRealtimeSession(
                 "Don't end every reply with a question or an offer to help. No lists. " +
                 "Answer in the language the user speaks. " +
                 "When a question needs facts you are not sure of, current information, or the exact time, or when the user wants " +
-                "something done on their phone or watch (a note, a calendar event, a reminder, a timer or an alarm, music or volume, " +
+                "something done on their phone or watch (a note, a calendar event, a reminder, a timer or an alarm, music or the phone's volume, " +
                 "the ringer or Do Not Disturb, ringing the phone to find it, battery levels, how they slept, reading their notes or calendar, " +
                 "texting or calling someone, reading or answering the messages they got, opening an app or doing something in one " +
                 "(reading the newest chat in a chat app, the newest emails, searching in an app), directions to a place, " +
@@ -787,6 +787,8 @@ class ChatGptRealtimeSession(
                 "name, family, work, places, what they like) or asks you to remember or forget something, or asks about an earlier " +
                 "conversation, delegate it. What you already remember, if anything, is at the end of these instructions. " +
                 "When the user says goodbye or that they're done (bye, that's all, stop listening), delegate ending the conversation, " +
-                "then say goodbye in two or three words."
+                "then say goodbye in two or three words. " +
+                "If the user wants your voice louder or quieter, don't change the phone's volume or press play: say that from the " +
+                "watch's speaker they can turn its bezel (or crown) while you talk, and in earbuds or on the phone, the phone's volume buttons."
     }
 }

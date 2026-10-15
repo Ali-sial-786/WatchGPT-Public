@@ -39,7 +39,7 @@ Pull requests, pushes to `main` and manual runs use [`.github/workflows/ci.yml`]
 
 | Job | What |
 |---|---|
-| `build` | Formatting, the synthetic-data check, tests, lint, both builds and the SBOM; 16 KB page alignment; the phone and watch certificates must match; checksums. On `main`, a private draft release with the pair (see [Signing](getting-started.md#signing-one-time-so-updates-install)). The release APKs as a 3-day artifact; reports only when something failed |
+| `build` | Formatting, the synthetic-data check, tests, lint, both builds and the SBOM; 16 KB page alignment; the classes WebRTC's native code looks up by name must survive shrinking; the phone and watch certificates must match; checksums. On `main`, a private draft release with the pair (see [Signing](getting-started.md#signing-one-time-so-updates-install)). The release APKs as a 3-day artifact; reports only when something failed |
 | `secrets` | gitleaks, with the rules in `.gitleaks.toml` |
 | `sast` | mobsfscan |
 | `osv` | OSV-Scanner on the dependencies |

@@ -9,6 +9,7 @@ class WatchAiApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        CrashReport.install(this)
         Timber.plant(if (BuildConfig.DEBUG) Timber.DebugTree() else ReleaseTree())
     }
 }

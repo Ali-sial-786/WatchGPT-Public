@@ -1,13 +1,19 @@
 package io.github.alisial786.watchgpt
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,6 +55,28 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WatchAiTheme {
+                // After WatchGPT closed unexpectedly: the details, for the owner to copy into a bug report.
+                var crash by remember { mutableStateOf(CrashReport.pending(this)) }
+                crash?.let { report ->
+                    AlertDialog(
+                        onDismissRequest = {},
+                        title = { Text("WatchGPT closed unexpectedly") },
+                        text = { Text("Copy the details to report it. They stay on this phone unless you paste them somewhere.") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("WatchGPT crash", report))
+                                CrashReport.dismiss(this)
+                                crash = null
+                            }) { Text("Copy details") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = {
+                                CrashReport.dismiss(this)
+                                crash = null
+                            }) { Text("Dismiss") }
+                        },
+                    )
+                }
                 var accepted by rememberSaveable { mutableStateOf(graph.settings.noticeAccepted) }
                 if (!accepted) {
                     NoticeScreen(onAccept = {

@@ -60,6 +60,13 @@ jobs:
         run: ./gradlew spotlessCheck checkSyntheticFixtures test testDebugUnitTest lintDebug assembleDebug assembleRelease cyclonedxBom --console=plain
       - name: 16 KB page alignment
         run: $ANDROID_HOME/build-tools/36.0.0/zipalign -c -P 16 -v 4 app/build/outputs/apk/release/app-release.apk > /dev/null
+      - name: Classes native code looks up by name survive shrinking
+        # WebRTC's native library aborts the app on the first call if one is missing.
+        run: |
+          unzip -p app/build/outputs/apk/release/app-release.apk 'classes*.dex' > "$RUNNER_TEMP/release.dex"
+          for class in 'Lorg/jni_zero/JniZero;' 'Lorg/webrtc/PeerConnectionFactory;'; do
+            grep -a -F -q "$class" "$RUNNER_TEMP/release.dex" || { echo "::error::$class is missing from the release APK"; exit 1; }
+          done
       - name: Verify matching installation identity and signing certificate
         run: |
           PHONE=app/build/outputs/apk/release/app-release.apk

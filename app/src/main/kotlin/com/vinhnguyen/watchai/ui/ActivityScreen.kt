@@ -17,6 +17,7 @@ import io.github.alisial786.watchgpt.actions.ConversationActions
 import io.github.alisial786.watchgpt.actions.PhoneActions
 import io.github.alisial786.watchgpt.actions.PhoneShortcuts
 import io.github.alisial786.watchgpt.actions.ReachActions
+import io.github.alisial786.watchgpt.actions.SleepActions
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Calendar
@@ -62,6 +63,7 @@ private fun describe(e: ActionLogStore.Item): Pair<String, Int> = when (e.tool) 
     ReachActions.READ_MESSAGES -> "Read your messages" to R.drawable.sym_forum
     PhoneActions.LIST_NOTES -> "Read your notes" to R.drawable.sym_sticky_note_2
     PhoneActions.LIST_EVENTS -> "Read your calendar" to R.drawable.sym_event
+    SleepActions.READ_SLEEP -> "Read your sleep" to R.drawable.sym_bedtime
     PhoneActions.ADD_NOTE -> "Added a note" to R.drawable.sym_sticky_note_2
     PhoneActions.ADD_EVENT -> "Added to WatchGPT agenda" to R.drawable.sym_event
     PhoneActions.ADD_REMINDER -> "Added a reminder" to R.drawable.sym_event

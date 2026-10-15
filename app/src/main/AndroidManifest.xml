@@ -32,6 +32,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <!-- "How did I sleep?": sleep from Health Connect (Samsung Health shares it there), asked for in What WatchGPT can do.
+         Conversations run in a foreground service, which Health Connect counts as open; reading in the background covers
+         the rest (the chat left while it answers). Nothing is written to Health Connect. -->
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
     <!-- No advertising ID: some libraries add it, we remove it. -->
     <uses-permission
         android:name="com.google.android.gms.permission.AD_ID"
@@ -74,6 +79,8 @@
         <intent>
             <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE" />
         </intent>
+        <!-- Health Connect as an app, on Android 13 and older. -->
+        <package android:name="com.google.android.apps.healthdata" />
     </queries>
 
     <application
@@ -127,6 +134,26 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- What WatchGPT does with sleep from Health Connect: Health Connect links to it from its permission screen, and won't
+             let an app in without it. The activity for Android 13 and older, the alias for 14 and newer. -->
+        <activity
+            android:name=".HealthPrivacyActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+        <activity-alias
+            android:name=".HealthPermissionUsage"
+            android:exported="true"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".HealthPrivacyActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
 

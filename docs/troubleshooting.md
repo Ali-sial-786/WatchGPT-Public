@@ -81,6 +81,20 @@ answer has finished, so you can't talk over it: tap the face to stop the answer,
 - Banking, payment, password and authenticator apps are skipped on purpose.
 - WatchGPT can reply to a chat that has a notification, but can't start a new WhatsApp chat hands-free.
 
+### WatchGPT can't tell how I slept, or what my sleep score is
+
+- Allow **Sleep** in "What WatchGPT can do"; Health Connect asks. After two no's it stops asking; then the button
+  opens Health Connect's settings: open App permissions, then WatchGPT, and allow Sleep.
+- Samsung Health has to share your sleep: **Samsung Health → Settings → Health Connect**, let it write Sleep.
+  Last night can take a while to get there after you wake up; opening Samsung Health sends it. Until then WatchGPT
+  tells you the night before, and says last night isn't in yet.
+- If WatchGPT says Health Connect only lets it read while it's open: that happens when no conversation is running,
+  for example after leaving the chat while it answers. Open WatchGPT on the phone and ask again, or allow WatchGPT's
+  access in the background in Health Connect (App permissions, then WatchGPT), where your phone's Health Connect has it.
+- There's no sleep score: Samsung Health keeps it to itself and doesn't share it through Health Connect. WatchGPT
+  says so and tells you when you slept, for how long, and your sleep stages. With the phone unlocked, you can also ask
+  it to open Samsung Health and read the score off its screen.
+
 ### Nothing was sent after I said yes
 
 A text or call waits for your yes **in a later turn**, **within two minutes**, **while you're there**

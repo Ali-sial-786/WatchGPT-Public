@@ -45,6 +45,7 @@ object Safety {
             ScreenActions.READ to Level.PRIVATE,
             PhoneActions.LIST_NOTES to Level.PRIVATE,
             PhoneActions.LIST_EVENTS to Level.PRIVATE,
+            SleepActions.READ_SLEEP to Level.PRIVATE,
             ReachActions.READ_MESSAGES to Level.PRIVATE,
             // These only read a text or call back; it goes out with the yes below.
             ReachActions.SEND_TEXT to Level.OUTBOUND,
@@ -66,12 +67,13 @@ object Safety {
             PhoneActions.LIST_REMINDERS to "WatchGPT reminders and their identifiers",
             PhoneActions.LIST_NOTES to "notes",
             PhoneActions.LIST_EVENTS to "calendar events",
+            SleepActions.READ_SLEEP to "sleep, from Health Connect",
             ScreenActions.READ to "phone screen (an app the user opened: their chats, emails, whatever it shows)",
         )
 
     /**
      * Private tools whose data may go to ChatGPT (cleaned) when the user turns "Private on the phone"
-     * off in Settings. What's on an app's screen isn't one of them: it always stays on the phone.
+     * off in Settings. What's on an app's screen and their sleep aren't among them: those always stay on the phone.
      */
     val MAY_GO_TO_CLOUD: Set<String> = setOf(PhoneActions.LIST_REMINDERS, ReachActions.READ_MESSAGES, PhoneActions.LIST_NOTES, PhoneActions.LIST_EVENTS)
 }

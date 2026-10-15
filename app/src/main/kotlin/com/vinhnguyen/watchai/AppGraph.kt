@@ -21,6 +21,7 @@ import io.github.alisial786.watchgpt.actions.PhoneControls
 import io.github.alisial786.watchgpt.actions.PhoneShortcuts
 import io.github.alisial786.watchgpt.actions.ReachActions
 import io.github.alisial786.watchgpt.actions.Safety
+import io.github.alisial786.watchgpt.actions.SleepActions
 import io.github.alisial786.watchgpt.actions.UserTurns
 import io.github.alisial786.watchgpt.actions.screen.ScreenActions
 import io.github.alisial786.watchgpt.brain.Availability
@@ -143,9 +144,12 @@ class AppGraph(
     val memory = Memory(memoryVault, scope)
     val memoryActions = MemoryActions(memory, userTurns, logger)
 
-    /** Everything the AI may use in the app (chat and the phone's own voice): the phone's actions, messages and calls, shortcuts, apps, memory. */
+    /** How the user slept, from Health Connect, once they allow it in Abilities. */
+    val sleep = SleepActions(appContext, logger)
+
+    /** Everything the AI may use in the app (chat and the phone's own voice): the phone's actions, messages and calls, shortcuts, apps, memory, sleep. */
     val tools: Toolbox =
-        Toolboxes(listOf(actions, ReachActions(appContext, contacts, inbox, pending, logger, cards = cards, limits = limits), shortcuts, screen, memoryActions))
+        Toolboxes(listOf(actions, ReachActions(appContext, contacts, inbox, pending, logger, cards = cards, limits = limits), shortcuts, screen, memoryActions, sleep))
 
     /** What a conversation starts with: what the user asked WatchGPT to keep, and the last conversations unless they turned that off. */
     suspend fun remembered(except: String? = null): String? = memory.context(history = settings.rememberChats, except = except)

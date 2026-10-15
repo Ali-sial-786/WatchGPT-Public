@@ -62,6 +62,10 @@ presence check, two-minute limit and hourly budget. `list_reminders` and `list_c
 level 2; `list_calendar_events` reads WatchGPT's own agenda even without calendar access, and the
 phone's calendar only with it.
 
+Sleep (added 2026-10-15): `read_sleep` is level 2. Like `read_screen`, it stays on the phone whatever the
+"Private on the phone" setting says (it isn't in `Safety.MAY_GO_TO_CLOUD`), since it's health data. It only
+reads Health Connect's sleep, writes nothing there, and keeps nothing.
+
 ## On the phone
 
 ### Guard

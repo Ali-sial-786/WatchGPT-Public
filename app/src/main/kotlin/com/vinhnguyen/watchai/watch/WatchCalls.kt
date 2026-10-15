@@ -11,6 +11,7 @@ import io.github.alisial786.watchgpt.actions.MemoryActions
 import io.github.alisial786.watchgpt.actions.OwnerPresence
 import io.github.alisial786.watchgpt.actions.PhoneActions
 import io.github.alisial786.watchgpt.actions.ReachActions
+import io.github.alisial786.watchgpt.actions.SleepActions
 import io.github.alisial786.watchgpt.actions.VoiceReply
 import io.github.alisial786.watchgpt.actions.screen.ScreenActions
 import io.github.alisial786.watchgpt.brain.Toolboxes
@@ -117,6 +118,7 @@ class WatchCalls(
                         graph.shortcuts,
                         graph.screen,
                         graph.memoryActions,
+                        graph.sleep,
                         ConversationActions({ session?.endSoon() }, graph.logger),
                     ),
                 ) { name, result -> afterTool(watch, name, result) }
@@ -260,7 +262,7 @@ class WatchCalls(
     private companion object {
         const val ON_WATCH = "on the watch"
         val QUIET_TOOLS =
-            setOf(PhoneActions.LIST_NOTES, PhoneActions.LIST_EVENTS, PhoneActions.DEVICE_STATUS, ReachActions.READ_MESSAGES, MemoryActions.RECALL, ConversationActions.END) +
+            setOf(PhoneActions.LIST_NOTES, PhoneActions.LIST_EVENTS, PhoneActions.DEVICE_STATUS, ReachActions.READ_MESSAGES, MemoryActions.RECALL, SleepActions.READ_SLEEP, ConversationActions.END) +
                 // The steps of using an app: WatchGPT is proud once the whole thing is done, not at every tap.
                 ScreenActions.SPECS.map { it.name }
     }

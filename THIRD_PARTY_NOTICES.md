@@ -78,7 +78,7 @@ The small map in the pop-up comes from OpenStreetMap: map data © OpenStreetMap 
 All Apache-2.0:
 
 - Kotlin standard library, kotlinx.coroutines, kotlinx.serialization (JetBrains)
-- AndroidX: Core, Activity, Lifecycle, WorkManager, Browser, Concurrent Futures, Jetpack Compose (UI, Foundation, Material 3), Wear, Wear Compose, Wear Tiles, ProtoLayout (Google)
+- AndroidX: Core, Activity, Lifecycle, WorkManager, Browser, Concurrent Futures, Health Connect client, Jetpack Compose (UI, Foundation, Material 3), Wear, Wear Compose, Wear Tiles, ProtoLayout (Google)
 - OkHttp 5 (Square)
 - Tink (Google)
 - Timber (Jake Wharton)

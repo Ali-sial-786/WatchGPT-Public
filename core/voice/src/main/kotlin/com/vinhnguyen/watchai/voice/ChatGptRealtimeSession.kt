@@ -773,7 +773,7 @@ class ChatGptRealtimeSession(
                 "Answer in the language the user speaks. " +
                 "When a question needs facts you are not sure of, current information, or the exact time, or when the user wants " +
                 "something done on their phone or watch (a note, a calendar event, a reminder, a timer or an alarm, music or volume, " +
-                "the ringer or Do Not Disturb, ringing the phone to find it, battery levels, reading their notes or calendar, " +
+                "the ringer or Do Not Disturb, ringing the phone to find it, battery levels, how they slept, reading their notes or calendar, " +
                 "texting or calling someone, reading or answering the messages they got, opening an app or doing something in one " +
                 "(reading the newest chat in a chat app, the newest emails, searching in an app), directions to a place, " +
                 "or the flashlight), " +

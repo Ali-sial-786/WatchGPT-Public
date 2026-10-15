@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,6 +33,7 @@ import io.github.alisial786.watchgpt.actions.MessageInbox
 import io.github.alisial786.watchgpt.actions.NoteStore
 import io.github.alisial786.watchgpt.actions.PhoneActions
 import io.github.alisial786.watchgpt.actions.ReachActions
+import io.github.alisial786.watchgpt.actions.SleepActions
 import io.github.alisial786.watchgpt.actions.WatchGPTNotificationListener
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +56,10 @@ class AbilitiesViewModel(
     val allowed: StateFlow<Allowed> = _allowed.asStateFlow()
     val notes: StateFlow<List<NoteStore.Note>> = graph.notes.notes
 
+    // Health Connect answers over IPC, so sleep comes a moment later; null until it has.
+    private val _sleep = MutableStateFlow<SleepActions.Access?>(null)
+    val sleep: StateFlow<SleepActions.Access?> = _sleep.asStateFlow()
+
     init {
         viewModelScope.launch { runCatching { graph.notes.list() } }
     }
@@ -61,7 +67,11 @@ class AbilitiesViewModel(
     /** The answers come back from Android's own screens: read them again whenever this one returns. */
     fun refresh() {
         _allowed.value = read()
+        viewModelScope.launch { _sleep.value = graph.sleep.access() }
     }
+
+    /** What to ask Health Connect for. */
+    fun sleepPermissions(): Set<String> = graph.sleep.permissions()
 
     fun deleteNote(id: Long) {
         viewModelScope.launch { runCatching { graph.notes.delete(id) } }
@@ -118,6 +128,19 @@ fun AbilitiesScreen(
         vm.refresh()
         onPauseOrDispose { }
     }
+    // Health Connect's own question, for sleep. After two no's it stops asking and answers at once: then its settings
+    // are the only way, so go there.
+    var sleepViaSettings by rememberSaveable { mutableStateOf(false) }
+    var sleepAskedAt by remember { mutableLongStateOf(0L) }
+    val askSleep =
+        rememberLauncherForActivityResult(remember { PermissionController.createRequestPermissionResultContract() }) { granted ->
+            vm.refresh()
+            if (SleepActions.READ !in granted && SystemClock.elapsedRealtime() - sleepAskedAt < SLEEP_NO_QUESTION_MS) {
+                sleepViaSettings = true
+                openSettings(SleepActions.settingsIntent())
+            }
+        }
+    val sleep by vm.sleep.collectAsStateWithLifecycle()
     val askMessages = {
         val listener = ComponentName(context, WatchGPTNotificationListener::class.java).flattenToString()
         openSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS).putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, listener))
@@ -174,6 +197,37 @@ fun AbilitiesScreen(
             allowed.doNotDisturb,
             last = true,
             onAllow = { openSettings(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)) },
+        )
+    }
+    Group("Health", footer = if (sleep == SleepActions.Access.ASK && sleepViaSettings) SLEEP_HINT else SLEEP_FOOTER) {
+        Ability(
+            R.drawable.sym_bedtime,
+            "Sleep",
+            if (sleep == SleepActions.Access.UNAVAILABLE) "Needs Health Connect, which this phone doesn't have" else "\"How did I sleep?\" · from Samsung Health, through Health Connect",
+            when (sleep) {
+                SleepActions.Access.ALLOWED -> true
+                SleepActions.Access.ASK, SleepActions.Access.UPDATE -> false
+                SleepActions.Access.UNAVAILABLE, null -> null
+            },
+            last = true,
+            allowLabel =
+            when {
+                sleep == SleepActions.Access.UPDATE -> "Update"
+                sleepViaSettings -> "Settings"
+                else -> "Allow"
+            },
+            onAllow = {
+                when {
+                    sleep == SleepActions.Access.UPDATE -> openSettings(SleepActions.updateIntent())
+
+                    sleepViaSettings -> openSettings(SleepActions.settingsIntent())
+
+                    else -> {
+                        sleepAskedAt = SystemClock.elapsedRealtime()
+                        runCatching { askSleep.launch(vm.sleepPermissions()) }.onFailure { openSettings(SleepActions.settingsIntent()) }
+                    }
+                }
+            },
         )
     }
     Group("Notes", footer = "Kept encrypted on this phone.") {
@@ -239,6 +293,17 @@ private fun Ability(
 
 /** Android answers at once, without a question on screen, when it won't ask the user anymore. */
 private const val NO_QUESTION_MS = 400L
+
+private const val SLEEP_FOOTER =
+    "Read only when you ask, and it stays on this phone. Samsung Health shares your sleep once you let it, in Samsung Health: " +
+        "Settings, Health Connect."
+
+private const val SLEEP_HINT =
+    "Health Connect won't ask again. In its settings, open App permissions, then WatchGPT, and allow Sleep. For Samsung Health's " +
+        "sleep to be there, also allow it in Samsung Health: Settings, Health Connect."
+
+/** Health Connect's question is in another app, so its at-once answer takes longer than Android's own. */
+private const val SLEEP_NO_QUESTION_MS = 1_000L
 
 private const val SETTINGS_HINT =
     "Android didn't let WatchGPT ask here. In WatchGPT's settings, open Permissions and allow Contacts, Phone and SMS. If it says " +

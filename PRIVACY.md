@@ -1,4 +1,4 @@
-# Privacy policy (draft, 2026-09-29)
+# Privacy policy (draft, 2026-09-29; sleep 2026-10-15)
 
 Controller: Vinh Nguyen (VYDE), contact vyde.apps@gmail.com.
 
@@ -21,6 +21,7 @@ crash reporting of its own.
 | Contacts (only with your OK) | Read on your phone when you name someone to text or call | To find the right person | Not stored |
 | Texts and calls you confirm | Sent or placed by your phone after your yes; a text reaches the other person through your carrier | You asked for it | Your phone's own message and call history |
 | Notes and calendar | Notes encrypted on your phone; calendar events read from your phone's calendar (with your OK). Events you add are WatchGPT agenda items (next row), not phone calendar entries | You asked for it | Read on your phone the same way as messages: with "Private things stay on this phone" on, never sent to OpenAI; notes you add go with your request, since you say them to ChatGPT |
+| Sleep (only if you allow it in Health Connect) | Read on your phone from Health Connect, where Samsung Health or another sleep app shares it: when you fell asleep and woke up, and your sleep stages. Only when you ask about your sleep, at most 14 days back. Your phone tells you itself, in its own voice (on your watch when you asked there) or in the chat. It never goes to OpenAI, to us or to anyone else, whatever "Private things stay on this phone" says, and WatchGPT writes nothing to Health Connect | To tell you how you slept | Not stored; What WatchGPT did only notes that sleep was read |
 | Reminders and agenda items (by hand or by voice) | Stored in WatchGPT on your phone and your watch, encrypted. To sync, Google Play services also keeps a copy on both devices that WatchGPT doesn't encrypt (see below). Copied to Google Calendar, as private events, only if you turn calendar sync on | To remind you | Until you delete them; a deleted item leaves a record without its content |
 | Places for directions, apps you open | Handed to Google Maps or the app on your phone | You asked for it | Their terms apply |
 | The small map in WatchGPT's pop-up (when you ask for directions) | The place name goes from your phone to OpenStreetMap, to find it and fetch the map around it; they see your IP address | To show you where it is | Not stored by the app; OpenStreetMap's privacy policy applies |
@@ -45,7 +46,8 @@ Everything is on your phone, so you control it directly: sign out, delete the mo
 vyde.apps@gmail.com. You can also complain to your data protection authority.
 
 Legal basis: your requests (Art. 6(1)(b) GDPR) for answers; consent (Art. 6(1)(a), § 25 TDDDG) for
-Gemini Nano's diagnostics. Storing the sign-in on your phone is strictly necessary for the service.
+Gemini Nano's diagnostics; explicit consent (Art. 9(2)(a) GDPR), given in Health Connect, for reading your sleep,
+which you can take back there at any time. Storing the sign-in on your phone is strictly necessary for the service.
 
 The app uses AI to generate answers. They can be wrong. Each answer shows which AI produced it.
 

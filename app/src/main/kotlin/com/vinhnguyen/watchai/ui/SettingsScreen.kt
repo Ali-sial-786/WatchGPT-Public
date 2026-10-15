@@ -91,6 +91,30 @@ fun SettingsScreen(
         }
     }
 
+    var asMedia by remember { mutableStateOf(settings.watchAnswersAsMedia) }
+    Group(
+        "Answers on the watch",
+        footer = "As a call, the watch cancels the answer's echo, so you can talk over it; turn the bezel for the call volume. " +
+            "As media they can be louder and follow the media volume, but the watch only listens once an answer has finished: " +
+            "tap the watch face to stop an answer and talk. From your next conversation.",
+    ) {
+        Item(
+            "Play answers as media",
+            subtitle = if (asMedia) "Louder; tap the watch face to interrupt an answer" else "Off: as a call, so you can talk over answers",
+            trailing = {
+                Switch(
+                    checked = asMedia,
+                    onCheckedChange = {
+                        settings.watchAnswersAsMedia = it
+                        asMedia = it
+                    },
+                    colors = switchColors(),
+                )
+            },
+            last = true,
+        )
+    }
+
     Group("Background") { BackgroundItem() }
 
     Group(

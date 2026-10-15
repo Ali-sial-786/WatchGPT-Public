@@ -198,9 +198,10 @@ fun AbilitiesScreen(
     }
     Group("On your watch") {
         Item(
-            "Hey WatchGPT",
+            "Your wake phrase",
             painter = painterResource(R.drawable.sym_watch),
-            subtitle = "Raise your wrist and say it. \"Always listening\" needs no wrist (more battery), \"Learn my voice\" helps it hear you. Say \"bye\" to finish.",
+            subtitle = "\"Hey WatchGPT\" unless you chose your own with \"Change phrase\" on the watch. Raise your wrist and say it. " +
+                "\"Always listening\" needs no wrist (more battery), \"Learn my voice\" helps it hear you. Say \"bye\" to finish.",
             last = true,
         )
     }

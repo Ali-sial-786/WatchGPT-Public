@@ -129,6 +129,14 @@ class CallService : Service() {
         if (wake != null) refresh()
     }
 
+    /** Another phrase to listen for (or the same one, taught or forgotten): the notification says which. */
+    @Synchronized
+    private fun onPhrase() {
+        val listener = wake ?: return
+        listener.useKeywords()
+        refresh()
+    }
+
     @Synchronized
     private fun wakeOff() {
         WakeSetting.set(this, false)
@@ -158,7 +166,7 @@ class CallService : Service() {
         val notifications = NotificationManagerCompat.from(this)
         if (!notifications.areNotificationsEnabled()) return
         getSystemService(NotificationManager::class.java)
-            .createNotificationChannel(NotificationChannel(FACE_CHANNEL, "Hey WatchGPT", NotificationManager.IMPORTANCE_HIGH).apply { setSound(null, null) })
+            .createNotificationChannel(NotificationChannel(FACE_CHANNEL, "Wake phrase", NotificationManager.IMPORTANCE_HIGH).apply { setSound(null, null) })
         val face = PendingIntent.getActivity(this, 3, Intent(this, WearActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val notification =
             NotificationCompat
@@ -201,7 +209,7 @@ class CallService : Service() {
                 setContentText("Your phone is listening through the watch")
                 addAction(0, "End", PendingIntent.getService(this@CallService, 1, Intent(this@CallService, CallService::class.java).setAction(ACTION_END), PendingIntent.FLAG_IMMUTABLE))
             } else {
-                setContentTitle("\"Hey WatchGPT\" is on")
+                setContentTitle("\"${WakeSetting.phrase(this@CallService)}\" is on")
                 setContentText(if (WakeSetting.isAlways(this@CallService)) "Say it any time" else "Raise your wrist and say it")
                 addAction(0, "Turn off", PendingIntent.getService(this@CallService, 2, Intent(this@CallService, CallService::class.java).setAction(ACTION_WAKE_OFF), PendingIntent.FLAG_IMMUTABLE))
             }
@@ -282,13 +290,23 @@ class CallService : Service() {
             instance?.onTeach(on)
         }
 
-        /** The user's own spellings from teaching, or null to go back to the default phrase. */
+        /** The user's own spellings from teaching, or null to forget them and listen for the phrase as typed. */
         fun learned(
             context: Context,
             keywords: String?,
         ) {
             WakeSetting.setKeywords(context, keywords)
-            instance?.wake?.useKeywords(keywords)
+            instance?.onPhrase()
+        }
+
+        /** The user chose another phrase ([PhraseActivity]): its keywords.txt lines, or nulls for "Hey WatchGPT". */
+        fun phraseChanged(
+            context: Context,
+            phrase: String?,
+            keywords: String?,
+        ) {
+            WakeSetting.setPhrase(context, phrase, keywords)
+            instance?.onPhrase()
         }
     }
 }

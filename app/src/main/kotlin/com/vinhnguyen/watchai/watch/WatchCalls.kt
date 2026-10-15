@@ -83,7 +83,7 @@ class WatchCalls(
             onEnded = ended
             val phone = PhoneAudio(graph.appContext).also { phoneAudio = it }
             var route = phone.route()
-            val watch = bridge.answer(opened, route) { graph.scope.launch { hangUp() } }
+            val watch = bridge.answer(opened, route, graph.settings.watchAnswersAsMedia) { graph.scope.launch { hangUp() } }
             phone.onChange {
                 // A headset or headphones going away hands the call to the watch; one arriving mid-call doesn't take it.
                 val next =

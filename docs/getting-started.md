@@ -97,10 +97,21 @@ Set **Settings → Conversation timeout** on the phone: 10 sec, 30 sec (the defa
 
 ## Activation
 
+On the watch:
+
+- **Button:** **Settings → Buttons and gestures → Home button → Double press → WatchGPT** (older One UI Watch: Settings → Advanced features → Customize buttons). Opening WatchGPT starts a conversation, subject to microphone permission (it asks) and phone connectivity.
+- **Press and hold:** make WatchGPT the watch's assistant in **Settings → Apps → Choose default apps → Digital assistant app**, then set the Home button's **Press and hold** to the digital assistant. Labels vary with One UI Watch, and this replaces Gemini there; not yet tried on a Watch9.
+- **Gesture:** **Settings → Buttons and gestures → Knock knock → WatchGPT**: make a fist, then bend the wrist down and up twice, with the screen on. Samsung's double pinch and Raise to talk can't open other apps.
+- **Wake phrase:** say **“Hey Watch G P T”**, spelling the three letters, or your own phrase (below). Enable wake listening first; **Learn my voice** can adapt the recognizer. Always listening costs battery and may generate false activations.
+- To use your own words, open WatchGPT on the watch (tap the face to end the conversation opening it starts), scroll down and tap **Change phrase**, under the wake phrase switch. Type, say or write it with the watch's input, or pick a suggestion. It takes two to five words, letters said one by one ("G P T") counting one each, and refuses very short phrases ("Hey AI") and ones made only of everyday words ("Hey watch", "Good morning"): those would wake it by mistake. A name or an unusual word works best. If **Learn my voice** learned your voice, it asks first, because a new phrase starts without that; then it offers to run it for the new phrase.
 - Add the **WatchGPT** talk tile from your watch's tile picker.
-- On Samsung, open **Settings → Advanced features → Customize buttons → Home button → Double press**, then choose **WatchGPT** (labels can vary with One UI Watch). The watch app starts a conversation when it opens, subject to microphone permission and phone connectivity.
-- Say **“Hey Watch G P T”**, spelling the three letters. Enable wake listening first; **Learn my voice** can adapt the recognizer. Always listening costs battery and may generate false activations. This is a longer phrase than upstream's original wake word.
-- The phone app registers an Android `ACTION_ASSIST` entry point. When WatchGPT is opened as the assistant, it starts listening. Whether the phone offers WatchGPT in its assistant settings varies by maker. No Wear OS `VoiceInteractionService`, long-press replacement, or privileged default-assistant claim is made. Samsung does not provide an ordinary app API to silently assign its hardware button.
+- During a conversation, turn the bezel (or crown) to change how loud the answers are.
+
+On the phone:
+
+- **WatchGPT Talk**, a second launcher entry, opens WatchGPT already listening. Use it wherever an app can be picked: **Settings → Advanced features → Side button → Double press → Open app**; Good Lock's RegiStar back tap or side-key actions; Modes and Routines; a lock-screen shortcut; or say "Hey Google, open WatchGPT Talk" or "Hi Bixby, open WatchGPT Talk".
+- The side button's **press and hold**: choose WatchGPT in **Settings → Apps → Choose default apps → Digital assistant app**, then **Settings → Advanced features → Side button → Press and hold → Digital assistant**. WatchGPT registers Android's `ACTION_ASSIST`; whether a phone offers it there varies by maker. No `VoiceInteractionService` is claimed, so it can't start from the lock screen.
+- A Bluetooth headset's or car's voice button (`VOICE_COMMAND`) can open WatchGPT listening; Android may ask which app to use the first time.
 
 ## Build
 

@@ -19,6 +19,7 @@ class WatchBridge(
     suspend fun answer(
         channel: ChannelClient.Channel,
         route: Route,
+        asMedia: Boolean,
         onEnd: () -> Unit,
     ): WatchAudio {
         val input = DataInputStream(BufferedInputStream(channels.getInputStream(channel).await()))
@@ -32,7 +33,7 @@ class WatchBridge(
                     .firstOrNull { it.id == channel.nodeId }
                     ?.displayName
             }.getOrNull() ?: "the watch"
-        return WatchAudio(input, output, name, route, onEnd).also { it.start() }
+        return WatchAudio(input, output, name, route, onEnd, asMedia).also { it.start() }
     }
 
     suspend fun hangUp(channel: ChannelClient.Channel) {

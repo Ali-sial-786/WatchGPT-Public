@@ -322,6 +322,15 @@ class AppSettings(
     /** The call's idle limit: "until I stop" still ends a call after half an hour of nothing at all (one left open by mistake). */
     val conversationIdleMs: Long get() = conversationTimeoutSeconds.let { if (it > 0) it * 1000L else UNTIL_STOPPED_IDLE_MS }
 
+    /**
+     * Off by default: the watch plays answers as a call, so its echo cancelling lets the user talk over them. On, as
+     * media: louder at the top and set by the media volume, but the watch's mic waits while an answer plays (a tap on the
+     * watch face stops the answer).
+     */
+    var watchAnswersAsMedia: Boolean
+        get() = prefs.getBoolean("watch_answers_media", false)
+        set(value) = prefs.edit { putBoolean("watch_answers_media", value) }
+
     var voice: String
         get() = prefs.getString("voice", null) ?: "cove"
         set(value) = prefs.edit { putString("voice", value) }

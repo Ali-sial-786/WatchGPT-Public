@@ -36,7 +36,7 @@ More detail: [Installation and permissions](docs/getting-started.md) · [Owner c
 - Optional Google Calendar copies through the phone's Calendar Provider, as private events in a Google calendar you own and choose. These are calendar events, **not Google Tasks**. No hosted database, server account, or extra subscription is required.
 - Voice reminders: reminders and events created by voice alert on both devices unless you name one. Deleting one by voice is read back and waits for your yes.
 - Configurable voice conversation timeout: 10 seconds to 15 minutes (default 30 seconds), or "Until I stop".
-- “Hey Watch G P T” wake phrase, existing voice training, launcher, talk tile, and Samsung double-press setup.
+- “Hey Watch G P T” wake phrase, or your own two to five words (**Change phrase** on the watch), existing voice training, launcher, talk tile, and Samsung double-press setup.
 - Native Clock requests with recurring weekdays and honest results: sent to Clock, waiting for a notification tap, or failed. Android gives no proof that its Clock app created an alarm.
 
 ## Build

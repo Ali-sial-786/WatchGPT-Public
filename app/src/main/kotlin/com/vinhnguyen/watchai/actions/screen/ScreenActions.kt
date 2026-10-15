@@ -1,7 +1,9 @@
 package io.github.alisial786.watchgpt.actions.screen
 
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.PowerManager
 import io.github.alisial786.watchgpt.actions.ActionArgs
 import io.github.alisial786.watchgpt.actions.AppLimits
 import io.github.alisial786.watchgpt.actions.CardHub
@@ -33,6 +35,8 @@ class ScreenActions(
     private val service: () -> WatchGPTAccessibility? = { WatchGPTAccessibility.current },
 ) : Toolbox {
     private val appContext = context.applicationContext
+    private val keyguard = appContext.getSystemService(KeyguardManager::class.java)
+    private val power = appContext.getSystemService(PowerManager::class.java)
 
     /** The last look at the screen: ids in tool calls point into it. */
     @Volatile private var last: WatchGPTAccessibility.Screen? = null
@@ -50,6 +54,8 @@ class ScreenActions(
         argumentsJson: String,
     ): String {
         val hands = service() ?: return done(name, "denied", OFF)
+        // Talking through the watch, the phone is often in a pocket: only the lock screen, or nothing, to see.
+        if (name != BACK) unavailable()?.let { return done(name, "failed", it) }
         val args = ActionArgs.parse(argumentsJson) ?: return done(name, "invalid", "error: the arguments were not valid JSON")
         return when (name) {
             LOOK -> look(hands)?.let { (app, screen) -> done(name, "ok", ScreenModel.controls(app, screen.nodes)) } ?: blocked(name, hands)
@@ -167,11 +173,19 @@ class ScreenActions(
         return if (kept != null && kept.packageName == now.packageName && limits.allowed(now.packageName)) appName(kept.packageName) to kept else look(hands)
     }
 
+    /** Why the phone's screen can't be used at all right now, or null if it can. */
+    private fun unavailable(): String? = when {
+        !power.isInteractive -> SCREEN_OFF
+        keyguard.isKeyguardLocked -> LOCKED
+        else -> null
+    }
+
     /** Why WatchGPT can't use the app in front; for one that's off, it offers to turn it on (with the user's yes). */
     private suspend fun blocked(
         name: String,
         hands: WatchGPTAccessibility,
     ): String {
+        unavailable()?.let { return done(name, "failed", it) }
         val pkg = hands.look()?.packageName
         return when {
             pkg == null -> done(name, "failed", "error: there's no app on the phone's screen to use; open one first")
@@ -222,6 +236,12 @@ class ScreenActions(
         private const val WORDS_MAX = 80
         private const val TYPE_MAX = 300
         private const val SETTLE_MS = 700L
+        private const val SCREEN_OFF =
+            "error: the phone's screen is off, so WatchGPT can't see the app. Ask the user to unlock the phone and keep it unlocked, " +
+                "then do it again; open the app again first if it was just opened."
+        private const val LOCKED =
+            "error: the phone is locked, so WatchGPT only sees the lock screen. Ask the user to unlock the phone, then do it again; " +
+                "open the app again first if it was just opened."
         private const val OFF =
             "error: WatchGPT can't use apps yet: the user has to switch on \"WatchGPT\" in the phone's Settings, Accessibility, Installed apps. " +
                 "Tell them that; it's needed once."

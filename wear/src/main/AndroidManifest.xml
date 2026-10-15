@@ -56,9 +56,14 @@
                 android:resource="@drawable/ic_launcher" />
         </service>
 
-        <!-- "Teach my voice": a few takes of "Hey WatchGPT", opened from WatchGPT's settings. -->
+        <!-- "Teach my voice": a few takes of the wake phrase, opened from WatchGPT's settings. -->
         <activity
             android:name=".TeachActivity"
+            android:exported="false" />
+
+        <!-- "Change phrase": the user's own wake phrase instead of "Hey WatchGPT". -->
+        <activity
+            android:name=".PhraseActivity"
             android:exported="false" />
 
         <activity
@@ -69,6 +74,12 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- So WatchGPT can be the watch's digital assistant: the Home button's press and hold then opens it, listening. -->
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <action android:name="android.intent.action.VOICE_ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
     </application>

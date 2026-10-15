@@ -55,6 +55,7 @@ import java.io.BufferedOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
 /**
@@ -77,6 +78,8 @@ class PhoneVoiceLink private constructor(
         val answersOnWatch: Boolean = true,
         /** False while earbuds on the phone are the microphone too: the watch only shows the face. */
         val micOnWatch: Boolean = true,
+        /** The answers play as media, not as a call (the phone's setting): the media volume sets how loud. */
+        val answersAsMedia: Boolean = false,
         /** WatchGPT's latest reaction from the phone; [reactionId] goes up with each, so a repeat plays again. */
         val reaction: Reaction? = null,
         val reactionId: Int = 0,
@@ -121,6 +124,18 @@ class PhoneVoiceLink private constructor(
 
     @Volatile private var micOn: Boolean? = null
 
+    /** The phone's setting: answers as media, louder but not echo-cancelled, so the mic waits while they play. */
+    @Volatile private var asMedia = false
+
+    /** When answer audio last went to the speaker: as media, the mic stays shut until its echo has died away. */
+    @Volatile private var playedAt = 0L
+
+    // Samples of the "listening" chime still queued: it doesn't shut the mic, or the user's first words would be lost.
+    private val chimeLeft = AtomicInteger()
+
+    /** The user tapped to stop the answer ([interrupt]): what's left of it isn't played, until the answer is over. */
+    @Volatile private var dropAnswer = false
+
     /** The phone said goodbye: the conversation ended normally (hung up, or nobody talked for a while). */
     @Volatile private var phoneHungUp = false
 
@@ -148,6 +163,9 @@ class PhoneVoiceLink private constructor(
             chimed = false
             speakerOn = null
             micOn = null
+            asMedia = false
+            chimeLeft.set(0)
+            dropAnswer = false
             phoneHungUp = false
             _state.value = State(Phase.CONNECTING, detail = "Calling your phone…")
             Log.i(TAG, "calling the phone")
@@ -238,16 +256,17 @@ class PhoneVoiceLink private constructor(
             when (frame) {
                 is Frame.Audio -> {
                     stats.add("inPcm")
-                    playback.offer(Pcm.toShorts(frame.pcm))
+                    if (!dropAnswer) playback.offer(Pcm.toShorts(frame.pcm))
                 }
 
                 is Frame.Adpcm -> {
                     stats.add("inAdpcm")
-                    playback.offer(Adpcm.decode(frame.packet))
+                    if (!dropAnswer) playback.offer(Adpcm.decode(frame.packet))
                 }
 
                 Frame.Flush -> {
                     playback.clear()
+                    chimeLeft.set(0)
                     flushRequested = true
                 }
 
@@ -263,10 +282,16 @@ class PhoneVoiceLink private constructor(
         when (control.type) {
             "status" -> {
                 val phase = runCatching { Phase.valueOf(control.phase.orEmpty().uppercase()) }.getOrNull() ?: return
+                // The interrupted answer is over (or the user's talking stopped it): the next one plays.
+                if (phase != Phase.SPEAKING) dropAnswer = false
                 // Listening for the first time: a chime on the watch, unless the answers play on the phone (which chimes itself).
                 if (phase == Phase.LISTENING && !chimed) {
                     chimed = true
-                    if (speakerOn == true) playback.offer(Chime.pcm(WatchLink.SAMPLE_RATE))
+                    if (speakerOn == true) {
+                        val chime = Chime.pcm(WatchLink.SAMPLE_RATE)
+                        chimeLeft.addAndGet(chime.size)
+                        playback.offer(chime)
+                    }
                 }
                 // Listening: show the user's own loudness, measured here with no delay (unless earbuds are the mic).
                 val level = if (phase == Phase.LISTENING && micOn != false) micLevel else control.level ?: 0f
@@ -297,9 +322,11 @@ class PhoneVoiceLink private constructor(
             "route" -> {
                 val speaker = control.speaker ?: true
                 val mic = control.mic ?: true
+                val media = control.media ?: false
                 speakerOn = speaker
                 micOn = mic
-                _state.update { it.copy(answersOnWatch = speaker, micOnWatch = mic) }
+                asMedia = media
+                _state.update { it.copy(answersOnWatch = speaker, micOnWatch = mic, answersAsMedia = media) }
             }
         }
     }
@@ -357,6 +384,12 @@ class PhoneVoiceLink private constructor(
                     continue
                 }
                 if (!earlySent) sendEarly(encoder)
+                // As media there's no echo cancelling: the answer playing would be heard as the user talking over it.
+                if (asMedia && SystemClock.elapsedRealtime() - playedAt < ECHO_TAIL_MS) {
+                    stats.add("outEcho")
+                    previous = null
+                    continue
+                }
                 val pcm = frame.copyOf(n)
                 val wasOpen = previous == null
                 if (gate.shouldSend(micLevel)) {
@@ -389,17 +422,37 @@ class PhoneVoiceLink private constructor(
         Log.i(TAG, "sent ${frames.size * FRAME_MS} ms said before the phone picked up")
     }
 
+    /**
+     * The face was tapped while an answer played as media, where the user can't talk over it: the rest of the answer
+     * isn't played and the mic opens at once. What the user then says reaches ChatGPT, which stops that answer for a new
+     * one, as when talking over it; said nothing, the old one runs out unheard.
+     */
+    fun interrupt() {
+        dropAnswer = true
+        playback.clear()
+        chimeLeft.set(0)
+        flushRequested = true
+        playedAt = 0L
+        buzz(VibrationEffect.EFFECT_TICK)
+    }
+
     /** Plays the answer as it arrives; a flush drops what is queued the moment the user interrupts. */
     private suspend fun speak() = withContext(Dispatchers.IO) {
         var track: AudioTrack? = null
+        var trackAsMedia = false
         try {
             while (isActive) {
-                // Earbuds on the phone play the answer: no speaker, no call audio mode on the watch.
+                // Earbuds on the phone play the answer: no speaker, no call audio mode on the watch. As media, no call mode either.
                 when (speakerOn) {
                     true ->
-                        if (track == null) {
-                            useWatchSpeaker()
-                            track = newTrack().also { it.play() }
+                        if (track == null || trackAsMedia != asMedia) {
+                            track?.let {
+                                runCatching { it.stop() }
+                                it.release()
+                            }
+                            trackAsMedia = asMedia
+                            if (trackAsMedia) restoreAudio() else useWatchSpeaker()
+                            track = newTrack(trackAsMedia).also { it.play() }
                         }
 
                     false ->
@@ -408,6 +461,7 @@ class PhoneVoiceLink private constructor(
                             it.release()
                             track = null
                             playback.clear()
+                            chimeLeft.set(0)
                             restoreAudio()
                         }
 
@@ -428,6 +482,7 @@ class PhoneVoiceLink private constructor(
                 if (playback.awaitAtLeast(WatchLink.FRAME_SAMPLES, timeoutMs = 50)) {
                     val chunk = playback.take(WatchLink.FRAME_SAMPLES)
                     playing.write(chunk, 0, chunk.size)
+                    if (chimeLeft.getAndUpdate { maxOf(0, it - chunk.size) } == 0) playedAt = SystemClock.elapsedRealtime()
                 }
             }
         } finally {
@@ -438,14 +493,14 @@ class PhoneVoiceLink private constructor(
         }
     }
 
-    private fun newTrack(): AudioTrack {
+    private fun newTrack(asMedia: Boolean): AudioTrack {
         val minBuffer = AudioTrack.getMinBufferSize(WatchLink.SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
         return AudioTrack
             .Builder()
             .setAudioAttributes(
                 AudioAttributes
                     .Builder()
-                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                    .setUsage(if (asMedia) AudioAttributes.USAGE_MEDIA else AudioAttributes.USAGE_VOICE_COMMUNICATION)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                     .build(),
             ).setAudioFormat(
@@ -519,6 +574,9 @@ class PhoneVoiceLink private constructor(
         private const val FRAME_MS = 40
         private const val EARLY_FRAMES = 200 // 8 s said before the phone picks up
         private const val ANSWER_TIMEOUT_MS = 20_000L
+
+        // The track's own buffer (about 160 ms) and the speaker's: what was written last is still playing this long after.
+        private const val ECHO_TAIL_MS = 350L
 
         @Volatile private var instance: PhoneVoiceLink? = null
 

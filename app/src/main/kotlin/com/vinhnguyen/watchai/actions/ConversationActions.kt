@@ -5,7 +5,7 @@ import io.github.alisial786.watchgpt.brain.LogEvent
 import io.github.alisial786.watchgpt.brain.ToolSpec
 import io.github.alisial786.watchgpt.brain.Toolbox
 
-/** Ending the conversation by voice ("bye", "that's all"): WatchGPT says goodbye and goes back to waiting for "Hey WatchGPT". */
+/** Ending the conversation by voice ("bye", "that's all"): WatchGPT says goodbye and goes back to waiting for its wake phrase. */
 class ConversationActions(
     private val end: () -> Unit,
     private val logger: BrainLogger = BrainLogger.None,
@@ -30,7 +30,7 @@ class ConversationActions(
                 ToolSpec(
                     END,
                     "End the conversation when the user says goodbye or that they're done ('bye', 'that's all', 'stop listening', " +
-                        "'thanks, that's it', in any language). WatchGPT then waits for \"Hey WatchGPT\" again.",
+                        "'thanks, that's it', in any language). WatchGPT then waits for its wake phrase again.",
                     """{"type":"object","properties":{},"additionalProperties":false}""",
                 ),
             )

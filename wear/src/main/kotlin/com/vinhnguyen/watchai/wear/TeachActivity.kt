@@ -51,9 +51,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * "Learn my voice": the user reads out five short sentences starting with "Hey WatchGPT" and the watch
+ * "Learn my voice": the user reads out five short sentences starting with the wake phrase and the watch
  * learns how the wake word hears their voice ([VoiceTeacher]). Opened from WatchGPT's settings while
- * "Hey WatchGPT" is on. The takes never leave the watch and are dropped once learned.
+ * the wake phrase is on. The takes never leave the watch and are dropped once learned.
  */
 class TeachActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,6 +100,9 @@ internal class TeachViewModel(
 
     private val _step = MutableStateFlow<Step>(Step.Loading)
     val step: StateFlow<Step> = _step.asStateFlow()
+
+    /** What the user reads out, one per take. */
+    val sentences = sentencesFor(WakeSetting.phrase(application))
 
     private val teacher = viewModelScope.async(Dispatchers.Default) { VoiceTeacher(application) }
 
@@ -160,7 +163,7 @@ internal class TeachViewModel(
                 _step.value = Step.Learning
                 val word = CallService.wakeModel()
                 if (word == null) {
-                    _step.value = Step.Failed("Turn on \"Hey WatchGPT\" first")
+                    _step.value = Step.Failed("Turn on the wake phrase first")
                     return@launch
                 }
                 val heard = spellings.awaitAll()
@@ -200,15 +203,15 @@ internal class TeachViewModel(
 }
 
 /** What the user reads out, one per take: the phrase alone first, then as they'd use it. */
-private val SENTENCES =
-    listOf(
-        "Hey WatchGPT",
-        "Hey WatchGPT, what time is it?",
-        "Hey WatchGPT, set a timer for five minutes",
-        "Hey WatchGPT, how's the weather today?",
-        "Hey WatchGPT, tell me a joke",
-    )
-private val TAKES = SENTENCES.size
+private fun sentencesFor(phrase: String) = listOf(
+    phrase,
+    "$phrase, what time is it?",
+    "$phrase, set a timer for five minutes",
+    "$phrase, how's the weather today?",
+    "$phrase, tell me a joke",
+)
+private const val TAKES = 5
+private const val LONG_SENTENCE = 36
 
 @Composable
 private fun TeachScreen(
@@ -239,7 +242,9 @@ private fun TeachScreen(
             is TeachViewModel.Step.Listening -> {
                 Takes(s.take)
                 Hint("Read out loud")
-                Title("\"${SENTENCES[s.take]}\"")
+                // A long phrase makes a long sentence: smaller, so it still fits the round screen.
+                val sentence = "\"${vm.sentences[s.take]}\""
+                if (sentence.length <= LONG_SENTENCE) Title(sentence) else Line(sentence)
             }
 
             is TeachViewModel.Step.Missed -> {

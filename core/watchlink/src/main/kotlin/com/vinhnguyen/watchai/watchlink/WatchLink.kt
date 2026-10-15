@@ -47,7 +47,8 @@ public sealed interface Frame {
  * [type]: "status" (phone to watch: the conversation's [phase] and the talker's [level] 0..1),
  * "ping" / "pong" (either way, [at] echoed, to measure the link's round trip), "bye" (either side ends),
  * "route" (phone to watch: [mic] true = the watch is the microphone, [speaker] true = the watch
- * plays the answer; with a headset on the phone both are false and the watch only shows the face),
+ * plays the answer; with a headset on the phone both are false and the watch only shows the face; [media]
+ * true = it plays the answer as media rather than as a call, louder but without echo cancelling),
  * "timer" / "alarm" (phone to watch: set one on the watch's own clock, [seconds] or [hour]:[minute],
  * with an optional [label]), "battery" (phone to watch: its battery) and "locked" (phone to watch,
  * before a text or call goes out: "locked", "unlocked" or "no lock"), each answered by "done"
@@ -63,6 +64,7 @@ public data class Control(
     val at: Long? = null,
     val speaker: Boolean? = null,
     val mic: Boolean? = null,
+    val media: Boolean? = null,
     val id: Long? = null,
     val seconds: Int? = null,
     val hour: Int? = null,

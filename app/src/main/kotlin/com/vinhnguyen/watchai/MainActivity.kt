@@ -107,7 +107,15 @@ class MainActivity : ComponentActivity() {
         if (intent.getBooleanExtra("organizer", false)) io.github.alisial786.watchgpt.organizer.OrganizerActivity.open(this)
     }
 
+    /** Opened to talk: as the assistant, by a headset's or car's voice button, or as "WatchGPT Talk". */
     private fun assisted(intent: Intent?) {
-        if (intent?.action == Intent.ACTION_ASSIST) (application as WatchAiApp).graph.assistRequests.value += 1
+        intent ?: return
+        val talk = intent.action == Intent.ACTION_ASSIST || intent.action == Intent.ACTION_VOICE_COMMAND || intent.component?.className?.endsWith(TALK_NOW) == true
+        if (talk) (application as WatchAiApp).graph.assistRequests.value += 1
+    }
+
+    private companion object {
+        /** The launcher entry that opens WatchGPT listening (an alias of this activity, in the manifest). */
+        const val TALK_NOW = ".TalkNow"
     }
 }

@@ -62,9 +62,9 @@ fun NoticeScreen(onAccept: () -> Unit) {
             )
             Section(
                 R.drawable.sym_graphic_eq,
-                "\"Hey WatchGPT\" stays on the watch",
-                "The watch listens for it only for a short while after you raise your wrist, or all the time if you switch " +
-                    "that on. Nothing is recorded or sent until it hears the phrase.",
+                "The wake phrase stays on the watch",
+                "The watch listens for \"Hey WatchGPT\" (or your own phrase) only for a short while after you raise your wrist, " +
+                    "or all the time if you switch that on. Nothing is recorded or sent until it hears the phrase.",
             )
             Section(
                 R.drawable.sym_lock,

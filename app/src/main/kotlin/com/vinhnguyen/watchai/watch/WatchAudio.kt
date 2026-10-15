@@ -43,6 +43,8 @@ class WatchAudio(
     override val name: String,
     route: Route,
     private val onEnd: () -> Unit,
+    /** The watch plays the answer as media, not as a call ([io.github.alisial786.watchgpt.AppSettings.watchAnswersAsMedia]). */
+    private val asMedia: Boolean = false,
 ) : ExternalAudio {
     @Volatile
     var route: Route = route
@@ -76,7 +78,7 @@ class WatchAudio(
         outbox.offer(routeMessage())
     }
 
-    private fun routeMessage() = Frame.Message(Control("route", speaker = route == Route.WATCH, mic = route != Route.HEADSET || catchUp))
+    private fun routeMessage() = Frame.Message(Control("route", speaker = route == Route.WATCH, mic = route != Route.HEADSET || catchUp, media = asMedia))
 
     private val mic = PcmQueue(WatchLink.SAMPLE_RATE * EARLY_MAX_S)
     private val outbox = Outbox(maxAudio = OUTBOX_FRAMES)

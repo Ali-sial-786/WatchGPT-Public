@@ -110,7 +110,25 @@
                 <action android:name="android.intent.action.ASSIST" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <!-- A Bluetooth headset's or car's voice button. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VOICE_COMMAND" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
+
+        <!-- "WatchGPT Talk": WatchGPT already listening, for anything that opens an app (the side button's double
+             press, Good Lock's back tap, routines, a lock-screen shortcut, "Hey Google, open WatchGPT Talk"). -->
+        <activity-alias
+            android:name=".TalkNow"
+            android:exported="true"
+            android:label="@string/talk_now"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <!-- Woken by Google Play services when the watch app opens its voice channel. -->
         <service

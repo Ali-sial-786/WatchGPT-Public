@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import io.github.alisial786.watchgpt.watchlink.Leveller
 import io.github.alisial786.watchgpt.watchlink.Pcm
+import io.github.alisial786.watchgpt.watchlink.WakePhrase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +57,7 @@ internal class WakeListener(
     private val displays = appContext.getSystemService(DisplayManager::class.java)
 
     // Loads right away (about 20 s on a Watch5), so it's ready by the first raised wrist.
-    private val word = scope.async { WakeWord(appContext, WakeSetting.keywords(appContext)) }
+    private val word = scope.async { WakeWord(appContext, WakeSetting.listenFor(appContext)) }
 
     // The room's noise, kept from one window to the next, so a new one starts with a good guess.
     @Volatile private var noiseFloor = GATE
@@ -150,9 +151,12 @@ internal class WakeListener(
     /** The loaded model (for teaching and debug tuning), or null if it didn't load. */
     suspend fun model(): WakeWord? = loaded()
 
-    /** Listens for the user's taught spellings from now on (null: the default phrase). */
-    fun useKeywords(keywords: String?) {
-        scope.launch { loaded()?.use(keywords) }
+    /**
+     * Listens for what the settings now say ([WakeSetting.listenFor]). Read when the model is there, not when asked:
+     * two changes while it loads end with the later one.
+     */
+    fun useKeywords() {
+        scope.launch { loaded()?.use(WakeSetting.listenFor(appContext)) }
     }
 
     /** Debug builds: runs [pcm] (16 kHz mono) through the wake word as if the watch had heard it. */
@@ -367,14 +371,20 @@ internal class WakeListener(
     }
 }
 
-/** Whether the user switched "Hey WatchGPT" on (and how); kept across restarts so opening the app turns it back on. */
+/**
+ * Whether the user switched the wake phrase on (and how), and which phrase: "Hey WatchGPT" or their own. Kept across
+ * restarts so opening the app turns it back on.
+ */
 internal object WakeSetting {
     private const val PREFS = "wear"
     private const val SWITCH = "hey_buddy"
     private const val ALWAYS = "hey_buddy_always"
     private const val KEYWORDS = "hey_buddy_keywords"
+    private const val PHRASE = "wake_phrase"
+    private const val PHRASE_KEYWORDS = "wake_phrase_keywords"
 
     private val taughtNow = MutableStateFlow<Boolean?>(null)
+    private val phraseNow = MutableStateFlow<String?>(null)
 
     fun isOn(context: Context): Boolean = prefs(context).getBoolean(SWITCH, false)
 
@@ -391,8 +401,56 @@ internal object WakeSetting {
         on: Boolean,
     ) = prefs(context).edit { putBoolean(ALWAYS, on) }
 
-    /** How the user says it, once taught ([VoiceTeacher]): keywords.txt lines. Null for the default phrase. */
+    /** How the user says the phrase, once taught ([VoiceTeacher]): keywords.txt lines, the phrase's own among them. */
     fun keywords(context: Context): String? = prefs(context).getString(KEYWORDS, null)
+
+    /** What the user says to wake WatchGPT: "Hey WatchGPT" unless they chose their own ([PhraseActivity]). */
+    fun phrase(context: Context): String = prefs(context).getString(PHRASE, null) ?: WakePhrase.DEFAULT
+
+    /** keywords.txt lines for the user's own phrase; null for "Hey WatchGPT", which is keywords.txt itself. */
+    fun phraseKeywords(context: Context): String? = prefs(context).getString(PHRASE_KEYWORDS, null)
+
+    /** What to listen for: the phrase as the user's voice was taught, else as typed; null for keywords.txt. */
+    fun listenFor(context: Context): String? = keywords(context) ?: phraseKeywords(context)
+
+    /**
+     * A new phrase and its keywords.txt lines, or null for "Hey WatchGPT". What was learned of the user's voice
+     * was for the old phrase, so it goes.
+     */
+    fun setPhrase(
+        context: Context,
+        phrase: String?,
+        keywords: String?,
+    ) {
+        prefs(context).edit {
+            if (phrase == null || keywords == null) {
+                remove(PHRASE)
+                remove(PHRASE_KEYWORDS)
+            } else {
+                putString(PHRASE, phrase)
+                putString(PHRASE_KEYWORDS, keywords)
+            }
+            remove(KEYWORDS)
+        }
+        phraseNow.value = phrase(context)
+        taughtNow.value = false
+    }
+
+    /** The user's own phrase written another way ("Hey jarvis" for "Hey Jarvis"): what was learned stays. */
+    fun renamePhrase(
+        context: Context,
+        phrase: String,
+    ) {
+        if (phraseKeywords(context) == null) return
+        prefs(context).edit { putString(PHRASE, phrase) }
+        phraseNow.value = phrase
+    }
+
+    /** The phrase, for the screens to follow. */
+    fun phraseShown(context: Context): StateFlow<String?> {
+        if (phraseNow.value == null) phraseNow.value = phrase(context)
+        return phraseNow.asStateFlow()
+    }
 
     fun setKeywords(
         context: Context,

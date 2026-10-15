@@ -46,12 +46,33 @@ means rows on this device itself can't be read; the other items still work.
 Install the **release** build on the watch: `gradlew :wear:installRelease`. Debug builds are much slower
 on a watch.
 
-### "Hey Watch G P T" doesn't hear me
+### Answers are too quiet on the watch
+
+Turn the bezel (or the crown) while WatchGPT is talking: the face shows the volume for a moment. Answers play
+as a call, so the watch's echo cancelling lets you talk over them; that's why the media and assistant volume
+sliders don't change them, and the watch's own call volume is only offered during a phone call. The level you
+set stays for the next conversation (and for calls on the watch).
+
+Call and media volume are separate, each with its own top level. If the call volume at its top is still too quiet,
+switch on **Settings → Answers on the watch → Play answers as media** on the phone: answers then follow the media
+volume (the bezel sets it too) and can be louder, but without echo cancelling the watch listens again only once an
+answer has finished, so you can't talk over it: tap the face to stop the answer, then talk.
+
+### "Hey Watch G P T" (or my own phrase) doesn't hear me
 
 - By default the watch listens after you raise your wrist. Raise it, then say it.
 - Open **Learn my voice** on the watch and read the five sentences. WatchGPT keeps only the spellings it
-  heard, not your recordings.
+  heard, not your recordings. Run it again after **Change phrase**: a new phrase starts without it.
 - **Always listening** keeps it on all the time. It uses more battery.
+- With your own phrase, a name or an unusual word makes it wake by mistake less often.
+
+### WatchGPT can't see or use my phone's screen
+
+- Using an app for you needs **WatchGPT** switched on in the phone's Settings → Accessibility → Installed apps.
+- The phone has to be unlocked with its screen on: Android shows nothing else to a locked phone. Talking through
+  the watch with the phone in a pocket, WatchGPT says so and asks you to unlock it. An app it opened while the phone
+  was locked waits behind the lock screen.
+- Each app has to be allowed once (WatchGPT asks). Banking, payment, password and system apps never are.
 
 ### WatchGPT can't read my messages
 

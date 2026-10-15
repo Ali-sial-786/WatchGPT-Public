@@ -46,6 +46,8 @@ The same text ships inside both apps (`core/buddy-ui/src/main/assets/licenses/bl
 | ONNX Runtime (inside the sherpa-onnx AAR) | https://github.com/microsoft/onnxruntime | MIT |
 | Model sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01 | https://github.com/k2-fsa/sherpa-onnx/releases/tag/kws-models | Apache-2.0, as published by k2-fsa |
 
+The model's sentencepiece file (`bpe.model`) ships with it, to spell a wake phrase the user chooses; a copy is in `core/watchlink/src/test/resources/kws/` for the tests.
+
 The model was trained on GigaSpeech. GigaSpeech's audio is only licensed for non-commercial research and education, so check whether that carries over to the model before a paid or commercial release.
 
 ## AI models and voice on the phone

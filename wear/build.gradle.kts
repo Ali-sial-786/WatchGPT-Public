@@ -92,7 +92,7 @@ abstract class PinnedDownload : DefaultTask() {
     }
 }
 
-/** The wake word model's four files from its release archive, as app assets under kws/. */
+/** The wake word model's four files and its sentencepiece model (for spelling the user's own phrase), as app assets under kws/. */
 abstract class ExtractWakeModel : DefaultTask() {
     @get:InputFile abstract val archive: RegularFileProperty
 
@@ -107,7 +107,7 @@ abstract class ExtractWakeModel : DefaultTask() {
         val model = "epoch-12-avg-2-chunk-16-left-64.int8.onnx"
         files.sync {
             from(archives.tarTree(archives.bzip2(archive.get().asFile))) {
-                include("*/encoder-$model", "*/decoder-$model", "*/joiner-$model", "*/tokens.txt")
+                include("*/encoder-$model", "*/decoder-$model", "*/joiner-$model", "*/tokens.txt", "*/bpe.model")
                 eachFile { path = "kws/$name" }
                 includeEmptyDirs = false
             }
@@ -159,6 +159,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.play.services.wearable)
     implementation(libs.androidx.wear)
+    implementation(libs.androidx.wear.input)
     implementation(libs.wear.tiles)
     implementation(libs.wear.protolayout)
     implementation(libs.concurrent.futures)

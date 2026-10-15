@@ -10,13 +10,15 @@ import com.k2fsa.sherpa.onnx.OnlineRecognizer
 import com.k2fsa.sherpa.onnx.OnlineRecognizerConfig
 import io.github.alisial786.watchgpt.watchlink.Leveller
 import io.github.alisial786.watchgpt.watchlink.Pcm
+import io.github.alisial786.watchgpt.watchlink.WakePhrase
+import io.github.alisial786.watchgpt.watchlink.WakePieces
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 /**
- * "Learn my voice": the user reads out a few sentences that start with "Hey WatchGPT", and this learns
- * how the wake word model hears their voice saying it. The "Hey WatchGPT" of each take is decoded as
+ * "Learn my voice": the user reads out a few sentences that start with the wake phrase ("Hey WatchGPT" or
+ * their own), and this learns how the wake word model hears their voice saying it. The phrase of each take is decoded as
  * speech with the same model, and what it heard in at least two takes is listened for next to the
  * default phrase (once-only versions only if that isn't enough, and a little more loosely only
  * after that). The same for every voice, and nothing about the person is assumed. The takes stay
@@ -34,8 +36,16 @@ internal class VoiceTeacher(
     private val recognizer = OnlineRecognizer(assets, CONFIG)
     private val tokens: Set<String> = assets.open("kws/tokens.txt").bufferedReader().useLines { lines -> lines.map { it.substringBefore(' ') }.toSet() }
 
-    // What everyone starts with (keywords.txt): taught spellings come on top of these.
-    private val defaults: List<List<String>> = assets.open("kws/keywords.txt").bufferedReader().useLines { lines -> lines.filter { it.isNotBlank() }.map { it.substringBefore(" :").split(' ') }.toList() }
+    // What everyone starts with, the phrase as typed (keywords.txt for "Hey WatchGPT"): taught spellings come on top.
+    private val defaults: List<List<String>> = spellings(WakeSetting.phraseKeywords(context) ?: assets.open("kws/keywords.txt").bufferedReader().use { it.readText() })
+
+    // How many words the phrase is said in, letters one by one: what a take is cut to and checked against. Run
+    // together ("▁G P T"), it can be fewer: that many still counts.
+    private val words = defaults.first().count { it.startsWith(WakePieces.WORD_START) }
+    private val fewest = defaults.minOf { s -> s.count { it.startsWith(WakePieces.WORD_START) } }
+
+    // The lines learned are called as the phrase's are, so listening knows them from keywords.txt's.
+    private val name = if (WakeSetting.phraseKeywords(context) != null) WakeWord.OWN_NAME else WakeWord.DEFAULT_NAME
 
     /** What a take gave. Anything but [Heard] asks for it again. */
     sealed interface Take {
@@ -166,17 +176,17 @@ internal class VoiceTeacher(
         spellings: List<List<String>>,
         word: WakeWord,
     ): Lesson {
-        val shaped = spellings.mapNotNull { shape(it) }.filter { s -> s !in defaults && s.all { it in tokens } }
+        val shaped = spellings.mapNotNull { shape(it, words, fewest) }.filter { s -> s !in defaults && s.all { it in tokens } }
         val counts = shaped.groupingBy { it }.eachCount()
         val repeated = counts.filter { it.value >= 2 }.keys.toList()
         val once = counts.filter { it.value == 1 }.keys.toList()
-        var chosen = keywords(defaults, STEPS.first())
+        var chosen = keywords(defaults, STEPS.first(), name)
         val before = takes.count { word.firstKeyword(chosen, it) != null }
         var caught = before
         tries@ for (learned in listOf(repeated, repeated + once)) {
             val all = defaults + learned.take(MAX_SPELLINGS)
             for (step in STEPS) {
-                val lines = keywords(all, step)
+                val lines = keywords(all, step, name)
                 val n = takes.count { word.firstKeyword(lines, it) != null }
                 if (n > caught || lines == chosen) {
                     caught = n
@@ -222,9 +232,6 @@ internal class VoiceTeacher(
         private const val MIN_LOUD_CHUNKS = 3
         private const val MAX_SPELLINGS = 5
 
-        // Shorter ones ("hey be", "a bit") went off in everyday talk in the broad test (28.09).
-        private const val MIN_PIECES = 5
-
         /** Boost and threshold, strictest first; keywords.txt uses the first. Looser than the last wasn't tried. */
         // Starts where the default phrase is (sweep of 29.09: 2.5/0.12 hears a little more at no extra false alarms).
         private val STEPS = listOf(2.5f to 0.12f, 2.5f to 0.10f, 3.0f to 0.10f)
@@ -239,24 +246,36 @@ internal class VoiceTeacher(
             )
 
         /**
-         * What's worth listening for in one take's spelling: three to five words of at least
-         * [MIN_PIECES] pieces ("HEY WATCH G P T"; a take heard as just "HEY WATCH" would wake on
-         * "hey, watch this"); when the sentence ran on without a pause, its first five words. Null
-         * if nothing is. The first piece starts a word even without the mark: the model sometimes
-         * hears it that way.
+         * What's worth listening for in one take's spelling of a phrase said in [words] words: at most
+         * that many, two fewer at the least (or [fewest], the words of its shortest spelling, "HEY WATCH
+         * GPT"), and at least [WakePhrase.MIN_PIECES] pieces ("HEY WATCH G P T"; a take heard as just
+         * "HEY WATCH" would wake on "hey, watch this"); when the sentence ran on without a pause, its
+         * first [words] words. Null if nothing is. The first piece starts a word even without the mark:
+         * the model sometimes hears it that way.
          */
-        fun shape(spelling: List<String>): List<String>? {
+        fun shape(
+            spelling: List<String>,
+            words: Int = WakePhrase.MAX_WORDS,
+            fewest: Int = words,
+        ): List<String>? {
             if (spelling.isEmpty()) return null
-            val starts = spelling.indices.filter { it == 0 || spelling[it].startsWith("▁") }
-            val s = if (starts.size > 5) spelling.take(starts[5]) else spelling
-            val words = s.indices.count { it == 0 || s[it].startsWith("▁") }
-            return s.takeIf { words in 3..5 && it.size in MIN_PIECES..20 }
+            val starts = spelling.indices.filter { it == 0 || spelling[it].startsWith(WakePieces.WORD_START) }
+            val s = if (starts.size > words) spelling.take(starts[words]) else spelling
+            val heard = s.indices.count { it == 0 || s[it].startsWith(WakePieces.WORD_START) }
+            return s.takeIf { heard in maxOf(WakePhrase.MIN_WORDS, minOf(words - 2, fewest))..words && it.size in WakePhrase.MIN_PIECES..WakePhrase.MAX_PIECES }
         }
 
-        /** keywords.txt lines for [spellings] at a boost and threshold, "/" between them. */
+        /** The spellings in keywords.txt lines ("/" or a new line between them), without boost, threshold or name. */
+        fun spellings(lines: String): List<List<String>> = lines.split('/', '\n').filter { it.isNotBlank() }.map { it.trim().substringBefore(" :").split(' ') }
+
+        /**
+         * keywords.txt lines for [spellings] at a boost and threshold (keywords.txt's own by default), "/" between
+         * them, called [name] ([WakeWord.OWN_NAME] for the user's own phrase).
+         */
         fun keywords(
             spellings: List<List<String>>,
-            step: Pair<Float, Float>,
-        ): String = spellings.joinToString("/") { "${it.joinToString(" ")} :${step.first} #${step.second} @HEY_WATCHGPT" }
+            step: Pair<Float, Float> = STEPS.first(),
+            name: String = WakeWord.DEFAULT_NAME,
+        ): String = spellings.joinToString("/") { "${it.joinToString(" ")} :${step.first} #${step.second} @$name" }
     }
 }

@@ -120,7 +120,7 @@ jobs:
       # Short-lived: a private repository has little artifact storage, and main gets its pair as a draft release.
       # In a public repository anyone signed in can download artifacts, so main's pair, signed with the owner's key,
       # only goes to the draft release.
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         continue-on-error: true # Preserve check results when the account artifact quota is full.
         if: github.event.repository.private || github.ref != 'refs/heads/main'
         with:
@@ -130,7 +130,7 @@ jobs:
             wear/build/outputs/apk/release/*.apk
             apk.sha256
           retention-days: 3
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         continue-on-error: true # Preserve check results when the account artifact quota is full.
         if: failure()
         with:
@@ -173,7 +173,7 @@ jobs:
           pip install --require-hashes --no-deps -r .github/requirements-ci.txt
           mobsfscan --sarif -o mobsfscan.sarif . || true
           mobsfscan --json -o mobsfscan.json .
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         continue-on-error: true # Preserve check results when the account artifact quota is full.
         if: always()
         with:
@@ -265,7 +265,7 @@ jobs:
           git add docs/screenshots/*.png
           git diff --cached --quiet || git commit -m "Capture WatchGPT reminder screens on Android emulator"
           git push origin "HEAD:watchgpt/screenshots-$GITHUB_RUN_ID"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         continue-on-error: true # Preserve check results when the account artifact quota is full.
         if: failure()
         with:

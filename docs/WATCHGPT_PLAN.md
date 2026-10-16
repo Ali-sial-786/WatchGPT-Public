@@ -1,7 +1,7 @@
 # WatchGPT implementation plan
 
 Source: thenguyentrong/watch-ai, commit ccf9dd26a28badac5f78debc11d5079e13161ddf.
-Destination: Ali-sial-786/WatchGPT (private). Preserve upstream history, Apache-2.0 and third-party notices.
+Destination: Ali-sial-786/WatchGPT (private), published as Ali-sial-786/WatchGPT-Public with commit emails replaced by GitHub's no-reply address. Preserve upstream history, Apache-2.0 and third-party notices.
 
 1. Rebrand both existing apps, keep subscription voice and mascot, matching app identity/signing.
 2. Shared pure Kotlin reminder/event model, recurrence and deterministic conflict resolution; encrypted SQLite on both devices.
@@ -13,4 +13,4 @@ Destination: Ali-sial-786/WatchGPT (private). Preserve upstream history, Apache-
 
 Decisions: no cloud database; two apps, reminders integrated into each; local records are authoritative; calendar sync only touches explicitly owned projections. Conflicting concurrent edits use logical revision and device ID, deletion wins permanently. Each reminder selects its alert device; no disconnected automatic failover that could cause duplicate alerts. Cloud voice remains dependent on the phone and undocumented provider access.
 
-Implementation steps 1–7 are complete for all unblocked software work. A review on 2026-10-14 fixed what it found wrong in them (see [Verification](WATCHGPT_VERIFICATION.md#review-and-fixes-2026-10-14) and the commit messages after `f2f2e30`). Matching APK pairs come from the repository's private draft releases ([Install in 5 steps](../README.md#install-in-5-steps)); the checks that need the owner's devices are in the [owner checklist](OWNER-CHECKLIST.md). No hosted database is needed.
+Implementation steps 1–7 are complete for all unblocked software work. A review on 2026-10-14 fixed what it found wrong in them (see [Verification](WATCHGPT_VERIFICATION.md#review-and-fixes-2026-10-14) and the commit messages after `89b7d56`). Matching APK pairs come from the repository's private draft releases ([Install in 5 steps](../README.md#install-in-5-steps)); the checks that need the owner's devices are in the [owner checklist](OWNER-CHECKLIST.md). No hosted database is needed.

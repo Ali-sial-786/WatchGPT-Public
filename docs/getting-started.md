@@ -4,7 +4,7 @@ WatchGPT needs an Android phone (Android 12+) paired through Galaxy Wearable wit
 
 ## Get the matching pair
 
-Open the repository's [Releases page](https://github.com/Ali-sial-786/WatchGPT/releases) while signed in to GitHub. CI publishes verified builds of `main` there as private drafts named **WatchGPT &lt;commit&gt; · key &lt;certificate&gt;** and keeps the newest two ([Signing](#signing-one-time-so-updates-install) says when it publishes). Take the newest. Each holds **WatchGPT-phone.apk**, **WatchGPT-watch.apk**, `SHA256SUMS`, this file (as INSTALL.md) and BEHAVIOR.md. The release notes say which key signed the pair:
+Open the repository's [Releases page](https://github.com/Ali-sial-786/WatchGPT-Public/releases) while signed in to GitHub as the owner. CI publishes verified builds of `main` there as private drafts named **WatchGPT &lt;commit&gt; · key &lt;certificate&gt;** and keeps the newest two ([Signing](#signing-one-time-so-updates-install) says when it publishes). Take the newest. Each holds **WatchGPT-phone.apk**, **WatchGPT-watch.apk**, `SHA256SUMS`, this file (as INSTALL.md) and BEHAVIOR.md. The release notes say which key signed the pair:
 
 - "updates installed pairs with certificate …": the long-term key from [Signing](#signing-one-time-so-updates-install). It installs over an earlier pair with the same key.
 - "FRESH signing key": a key made for that one run. It installs only where WatchGPT isn't installed yet.
@@ -64,7 +64,7 @@ Do this once, on a computer with JDK 17 (it includes `keytool`):
 2. Save it as the repository secret `WATCHGPT_SIGNING_KEYSTORE`, base64-encoded on one line. Either on GitHub: the repository's **Settings → Secrets and variables → Actions → New repository secret**, name `WATCHGPT_SIGNING_KEYSTORE`, value the output of `base64 -w0 watchgpt-sideload.keystore` (macOS: `base64 -i watchgpt-sideload.keystore`). Or with the GitHub CLI:
 
    ```sh
-   gh secret set WATCHGPT_SIGNING_KEYSTORE -R Ali-sial-786/WatchGPT < <(base64 -w0 watchgpt-sideload.keystore)
+   gh secret set WATCHGPT_SIGNING_KEYSTORE -R Ali-sial-786/WatchGPT-Public < <(base64 -w0 watchgpt-sideload.keystore)
    ```
 
 3. Back up `watchgpt-sideload.keystore` somewhere private, for example a password manager. Never commit it. If it is lost, the next pair can't update the installed apps.

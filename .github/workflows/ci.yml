@@ -79,9 +79,10 @@ jobs:
       - name: Checksums
         run: sha256sum app/build/outputs/apk/release/*.apk wear/build/outputs/apk/release/*.apk > apk.sha256
       # Every push to main with the persistent key; without it only when run by hand, since a pair with a fresh key
-      # can only be installed by uninstalling, which deletes the reminders on that device.
+      # can only be installed by uninstalling, which deletes the reminders on that device. A draft release stays
+      # visible only to people who can push, also in a public repository.
       - name: Deliver verified APK pair in a private draft release
-        if: github.event.repository.private && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (steps.signing.outputs.persistent == 'true' || github.event_name == 'workflow_dispatch')
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (steps.signing.outputs.persistent == 'true' || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PERSISTENT: ${{ steps.signing.outputs.persistent }}
@@ -117,8 +118,11 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq '.[] | select(.draft and (.tag_name | startswith("watchgpt-build-"))) | .id' \
             | tail -n +3 | xargs -r -I{} gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/{}"
       # Short-lived: a private repository has little artifact storage, and main gets its pair as a draft release.
+      # In a public repository anyone signed in can download artifacts, so main's pair, signed with the owner's key,
+      # only goes to the draft release.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         continue-on-error: true # Preserve check results when the account artifact quota is full.
+        if: github.event.repository.private || github.ref != 'refs/heads/main'
         with:
           name: WatchGPT-phone-and-watch-${{ github.sha }}
           path: |

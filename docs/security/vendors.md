@@ -9,5 +9,5 @@ see when a user uses the feature.
 | Hugging Face | One-time model download | User's IP address, the file requested | Public download, no account. Mirror to our own static bucket before launch (Apache-2.0 allows it). |
 | Google (ML Kit / AICore) | Gemini Nano, opt-in | Diagnostics: device model, per-install id, speed, error codes | Google APIs Terms; initialised only after opt-in. |
 | Google Play | Distribution, Android vitals | Install and crash data under Google's terms | Play Developer Program Policy (AI-generated content rules apply). |
-| GitHub | Code, CI, Dependabot | Source code, build logs | Private repo; CodeQL/secret scanning need a public repo or paid plan. |
+| GitHub | Code, CI, Dependabot | Source code, build logs | Public repo: CodeQL and secret scanning run; APK pairs stay in private draft releases. |
 | Samsung / Android | Keystore, StrongBox (Knox Vault) | Nothing (on-device) | Hardware-backed keys. |

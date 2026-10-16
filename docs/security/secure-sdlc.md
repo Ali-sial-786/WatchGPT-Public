@@ -2,7 +2,7 @@
 
 1. Work on a branch, open a pull request into `main`.
 2. CI must be green: format, fixture guard, unit tests, lint, debug + release build, SBOM, gitleaks,
-   mobsfscan, OSV. Branch protection needs GitHub Pro on a private repo (planned).
+   mobsfscan, OSV. Branch protection is free on the public repo (planned).
 3. Commit messages are plain and carry no co-author or generator lines (hook + CI check).
 4. Releases are built by CI only, from a tag, with the upload key added at that point.
 

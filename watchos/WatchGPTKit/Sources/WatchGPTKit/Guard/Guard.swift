@@ -134,8 +134,9 @@ public final class UserTurns: @unchecked Sendable {
 
 /// One call or text waiting for the user's yes. Nothing goes out when asked, it's only read back: it goes ahead when
 /// the user says yes in a later turn than the one it was proposed in (so the model can't confirm its own proposal),
-/// within two minutes. A new proposal replaces the old one.
-public final class Pending {
+/// within two minutes. A new proposal replaces the old one. Tool calls use it while the app may cancel it from the main
+/// thread, so it's locked.
+public final class Pending: @unchecked Sendable {
     private struct Proposal {
         let summary: String
         let at: Date
@@ -145,6 +146,7 @@ public final class Pending {
     public static let ttl: TimeInterval = 120
     private let turns: UserTurns
     private let now: () -> Date
+    private let lock = NSLock()
     private var current: Proposal?
 
     public init(turns: UserTurns, now: @escaping () -> Date = { Date() }) {
@@ -154,23 +156,41 @@ public final class Pending {
 
     /// Keeps [go] for later and returns what the model should ask.
     public func propose(_ summary: String, go: @escaping () async -> String) -> String {
-        current = Proposal(summary: summary, at: now(), go: go)
+        locked { current = Proposal(summary: summary, at: now(), go: go) }
         return "not done yet: \(summary) Read it back to the user and ask if you should go ahead; only if they clearly say yes, call confirm_action with yes."
     }
 
     public func decide(yes: Bool) async -> String {
-        guard let proposal = current else { return "error: nothing is waiting for a yes" }
-        if now().timeIntervalSince(proposal.at) > Self.ttl {
-            current = nil
-            return "error: that was too long ago and was dropped; ask the user again if they still want it"
+        enum Decision {
+            case nothing, tooLate, notYet
+            case go(() async -> String)
         }
-        if turns.lastAt <= proposal.at { return "error: the user hasn't answered yet; ask them first and wait for their answer" }
-        current = nil
-        return yes ? await proposal.go() : "ok: cancelled, nothing was done"
+        let decision: Decision = locked {
+            guard let proposal = current else { return .nothing }
+            if now().timeIntervalSince(proposal.at) > Self.ttl {
+                current = nil
+                return .tooLate
+            }
+            if turns.lastAt <= proposal.at { return .notYet }
+            current = nil
+            return .go(proposal.go)
+        }
+        switch decision {
+        case .nothing: return "error: nothing is waiting for a yes"
+        case .tooLate: return "error: that was too long ago and was dropped; ask the user again if they still want it"
+        case .notYet: return "error: the user hasn't answered yet; ask them first and wait for their answer"
+        case let .go(go): return yes ? await go() : "ok: cancelled, nothing was done"
+        }
     }
 
     /// Drops whatever waits for a yes: the user said stop.
     public func cancel() {
-        current = nil
+        locked { current = nil }
+    }
+
+    private func locked<T>(_ body: () -> T) -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        return body()
     }
 }

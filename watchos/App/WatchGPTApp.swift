@@ -18,7 +18,8 @@ struct WatchGPTApp: App {
                 .onOpenURL { model.open($0) }
                 .task { await model.refresh() }
         }
-        .onChange(of: phase) { _, now in
+        .onChange(of: phase, initial: true) { _, now in
+            model.sceneChanged(active: now == .active)
             if now == .active { Task { await Notifier.reschedule() } }
         }
     }

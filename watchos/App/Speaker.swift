@@ -1,4 +1,5 @@
 import AVFoundation
+import Combine
 import Foundation
 import NaturalLanguage
 import WatchGPTKit
@@ -32,7 +33,11 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     @Published private(set) var speaking = false
     let pulse = Pulse()
     private let synthesizer = AVSpeechSynthesizer()
-    private var queued = 0
+    /// What's queued and not yet said. Callbacks for speech that was stopped can come in after new speech was queued,
+    /// so each one only counts for its own utterance; stopped ones are kept until their callback, so no new utterance
+    /// can share their identity meanwhile.
+    private var inFlight: [ObjectIdentifier: AVSpeechUtterance] = [:]
+    private var stopped: [ObjectIdentifier: AVSpeechUtterance] = [:]
     private var waiting: [CheckedContinuation<Void, Never>] = []
 
     override init() {
@@ -44,41 +49,50 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     func say(_ text: String, language: String? = nil) {
         let words = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !words.isEmpty else { return }
-        if queued == 0 { activate() }
+        if inFlight.isEmpty { activate() }
         let utterance = AVSpeechUtterance(string: words)
         utterance.voice = Self.voice(for: words, language: language)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
-        queued += 1
+        inFlight[ObjectIdentifier(utterance)] = utterance
         speaking = true
         synthesizer.speak(utterance)
     }
 
     /// Returns once everything queued has been said (or stopped).
     func finished() async {
-        guard queued > 0 else { return }
+        guard !inFlight.isEmpty else { return }
         await withCheckedContinuation { waiting.append($0) }
     }
 
     func stop() {
         synthesizer.stopSpeaking(at: .immediate)
-        done(all: true)
+        if stopped.count > 50 { stopped.removeAll() }
+        stopped.merge(inFlight) { a, _ in a }
+        inFlight.removeAll()
+        drained()
     }
 
     nonisolated func speechSynthesizer(_: AVSpeechSynthesizer, willSpeakRangeOfSpeechString _: NSRange, utterance _: AVSpeechUtterance) {
         pulse.beat()
     }
 
-    nonisolated func speechSynthesizer(_: AVSpeechSynthesizer, didFinish _: AVSpeechUtterance) {
-        Task { @MainActor in self.done(all: false) }
+    nonisolated func speechSynthesizer(_: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        let id = ObjectIdentifier(utterance)
+        Task { @MainActor in self.said(id) }
     }
 
-    nonisolated func speechSynthesizer(_: AVSpeechSynthesizer, didCancel _: AVSpeechUtterance) {
-        Task { @MainActor in self.done(all: false) }
+    nonisolated func speechSynthesizer(_: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        let id = ObjectIdentifier(utterance)
+        Task { @MainActor in self.said(id) }
     }
 
-    private func done(all: Bool) {
-        queued = all ? 0 : max(0, queued - 1)
-        guard queued == 0 else { return }
+    private func said(_ id: ObjectIdentifier) {
+        if stopped.removeValue(forKey: id) != nil { return }
+        guard inFlight.removeValue(forKey: id) != nil, inFlight.isEmpty else { return }
+        drained()
+    }
+
+    private func drained() {
         speaking = false
         deactivate()
         let resumed = waiting

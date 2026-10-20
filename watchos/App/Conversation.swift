@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import WatchGPTKit
 
@@ -121,8 +122,9 @@ final class Conversation: ObservableObject {
             if said == nil {
                 phase = .listening
                 caption = "Listening…"
-                // The first turn the user asked for themselves; after an answer, silence ends the conversation.
-                switch await Dictation.listen(timeout: firstTurn ? nil : Preferences.timeout) {
+                // After an answer, silence ends the conversation. The first turn the user asked for themselves, so it
+                // waits longer, but never forever: if dictation never showed, nothing else would end the wait.
+                switch await Dictation.listen(timeout: firstTurn ? Self.firstTurnTimeout : Preferences.timeout) {
                 case let .words(words):
                     said = words
                 case .nothing:
@@ -139,6 +141,8 @@ final class Conversation: ObservableObject {
         }
         guard !Task.isCancelled else { return }
         await speaker.finished()
+        // Stopped, or replaced by a typed question, while the last words were said: the state is the new run's.
+        guard !Task.isCancelled else { return }
         active = false
         task = nil
         endedAt = Date()
@@ -168,6 +172,8 @@ final class Conversation: ObservableObject {
         var text = ""
         var failure: BrainError?
         for await event in services.brain.stream(request) {
+            // A stream still hands over what it had buffered after the conversation stopped.
+            if Task.isCancelled { break }
             switch event {
             case let .delta(delta):
                 text += delta
@@ -201,10 +207,14 @@ final class Conversation: ObservableObject {
         await speaker.finished()
     }
 
+    private static let firstTurnTimeout: TimeInterval = 120
+
     /// Whether the watch read something private out in this turn: then the caption keeps it.
     private var shownPrivately = false
 
     fileprivate func say(_ piece: String, language: String? = nil, privately: Bool = false) {
+        // A tool that finishes after the user stopped doesn't speak up.
+        guard active else { return }
         speaker.say(piece, language: language)
         if privately {
             caption = piece

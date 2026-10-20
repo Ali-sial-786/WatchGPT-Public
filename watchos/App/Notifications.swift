@@ -28,8 +28,16 @@ enum Notifier {
         (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
     }
 
-    /// Replaces the scheduled reminder alerts with the plan for the reminders as they are now.
+    private static let passes = OnePassAtATime()
+
+    /// Replaces the scheduled reminder alerts with the plan for the reminders as they are now. Called from several
+    /// places at once (the app coming up, tools, the editor, notification actions, the background refresh), so passes
+    /// run one after another: two at once could put back the alerts of an item the other just deleted.
     static func reschedule() async {
+        await passes.run { await replan() }
+    }
+
+    private static func replan() async {
         let entries = await Services.shared.reminders.all()
         let pending = await center.pendingNotificationRequests()
         let old = pending.map(\.identifier).filter { $0.hasPrefix(AlertPlan.prefix) }
@@ -82,6 +90,22 @@ enum Notifier {
             return
         }
         await reschedule()
+        await MainActor.run { AppModel.shared.remindersVersion += 1 }
+    }
+}
+
+/// Runs work one piece after another, each after the one before has finished.
+private actor OnePassAtATime {
+    private var last: Task<Void, Never>?
+
+    func run(_ work: @escaping @Sendable () async -> Void) async {
+        let previous = last
+        let next = Task {
+            await previous?.value
+            await work()
+        }
+        last = next
+        await next.value
     }
 }
 

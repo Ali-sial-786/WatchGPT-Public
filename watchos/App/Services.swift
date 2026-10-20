@@ -84,9 +84,10 @@ final class WatchServices: WatchDevice, @unchecked Sendable {
     }
 
     func compose(to number: String, body: String) async -> Bool {
+        // Everything but letters, digits and -._~ encoded, so "?", "&" or "#" in the text can't cut it short.
         var allowed = CharacterSet.alphanumerics
-        allowed.insert(charactersIn: " .,!?'-")
-        let text = body.addingPercentEncoding(withAllowedCharacters: allowed)?.replacingOccurrences(of: " ", with: "%20") ?? ""
+        allowed.insert(charactersIn: "-._~")
+        let text = body.addingPercentEncoding(withAllowedCharacters: allowed) ?? ""
         guard let url = URL(string: "sms:\(number.filter { $0.isNumber || $0 == "+" })&body=\(text)") else { return false }
         await MainActor.run { WKApplication.shared().openSystemURL(url) }
         return true

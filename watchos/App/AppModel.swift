@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import WatchGPTKit
 
@@ -15,6 +16,8 @@ final class AppModel: ObservableObject {
     @Published var remindersVersion = 0
 
     let conversation = Conversation()
+    private var onScreen = false
+    private var talkWhenOnScreen = false
 
     private init() {
         Preferences.register()
@@ -43,14 +46,27 @@ final class AppModel: ObservableObject {
         conversation.toggle()
     }
 
-    /// From the complication, Siri or a shortcut: start listening (never stop a conversation that's on).
+    /// From the complication, Siri or a shortcut: start listening (never stop a conversation that's on). Dictation
+    /// only opens over an app on screen, so a request that comes while WatchGPT is still opening waits for it.
     func requestTalk() {
+        guard onScreen else {
+            talkWhenOnScreen = true
+            return
+        }
         guard !conversation.active else { return }
         if case .signedOut = auth {
             showSignIn = true
             return
         }
         conversation.start()
+    }
+
+    func sceneChanged(active: Bool) {
+        onScreen = active
+        if active, talkWhenOnScreen {
+            talkWhenOnScreen = false
+            requestTalk()
+        }
     }
 
     func open(_ url: URL) {

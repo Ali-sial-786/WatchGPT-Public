@@ -6,7 +6,7 @@ What Buddy is built on, where it comes from and under which licence. Checked 28.
 
 - Source: https://github.com/jeremy-prt/bloub
 - Licence: MIT, Copyright (c) 2026 Jérémy Perret (full text below)
-- Used in: `core/buddy` (Shape.kt, Face.kt, Decor.kt, States.kt, Engine.kt) and `core/buddy-ui` (BuddyDraw.kt), on the phone and the watch
+- Used in: `core/buddy` (Shape.kt, Face.kt, Decor.kt, States.kt, Engine.kt) and `core/buddy-ui` (BuddyDraw.kt), on the phone and the watch; ported again to Swift for the Apple Watch in `watchos/WatchGPTKit/Sources/WatchGPTKit/Buddy` and `watchos/App/FaceView.swift`
 
 We ported bloub's engine from TypeScript to Kotlin: outlines as radii at fixed angles so any two shapes morph point for point, eyes on a sphere that turns with the head, gaze drift and blinks as pure functions of time, blending from what is on screen, and the animations (thinking dots, the sliding and the upright "!", the badge, the bouncing sleep dot, egg, hexagon, the play triangle with its swoosh, orbit rings, burst and comet).
 
@@ -36,7 +36,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-The same text ships inside both apps (`core/buddy-ui/src/main/assets/licenses/bloub.txt`).
+The same text ships inside both Android apps (`core/buddy-ui/src/main/assets/licenses/bloub.txt`) and the Apple Watch app (`watchos/App/Licenses/bloub.txt`, under Settings → Licences).
 
 ## "Hey Buddy" on the watch
 

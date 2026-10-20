@@ -1,0 +1,64 @@
+# The Apple Watch app's Xcode project, for XcodeGen (github.com/yonaskolb/XcodeGen). WatchGPT.xcodeproj is generated
+# from this file and committed, so building needs only Xcode; after changing this file run `xcodegen generate` here.
+name: WatchGPT
+options:
+  bundleIdPrefix: io.github.alisial786
+  deploymentTarget:
+    watchOS: "10.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  xcodeVersion: "16.0"
+configFiles:
+  Debug: Config/Signing.xcconfig
+  Release: Config/Signing.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+packages:
+  WatchGPTKit:
+    path: WatchGPTKit
+targets:
+  WatchGPT:
+    type: application
+    platform: watchOS
+    sources:
+      - path: App
+    dependencies:
+      - package: WatchGPTKit
+      - target: WatchGPTComplication
+    settings:
+      base:
+        PRODUCT_NAME: WatchGPT
+        PRODUCT_BUNDLE_IDENTIFIER: $(WATCHGPT_BUNDLE_ID)
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/WatchGPT.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        TARGETED_DEVICE_FAMILY: "4"
+        SKIP_INSTALL: NO
+        SWIFT_EMIT_LOC_STRINGS: YES
+  WatchGPTComplication:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - path: Complication
+    settings:
+      base:
+        PRODUCT_NAME: WatchGPTComplication
+        PRODUCT_BUNDLE_IDENTIFIER: $(WATCHGPT_BUNDLE_ID).complication
+        INFOPLIST_FILE: Complication/Info.plist
+        TARGETED_DEVICE_FAMILY: "4"
+        SKIP_INSTALL: YES
+schemes:
+  WatchGPT:
+    build:
+      targets:
+        WatchGPT: all
+    run:
+      config: Debug
+    archive:
+      config: Release

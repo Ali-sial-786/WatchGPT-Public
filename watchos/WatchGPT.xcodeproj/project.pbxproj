@@ -1,0 +1,559 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		054F7E6A5E729DA14923D823 /* TalkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA75BC04D9D6D4CAE23BBB2C /* TalkIntent.swift */; };
+		1FD6F9CD5E16ACE81A7D95E8 /* WatchGPTComplication.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F9D5EE0D13D56779672C5ABF /* WatchGPTComplication.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		28AE6B4A721FCA59C8564BA0 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3E40E53E758C7023FD70EA /* AppModel.swift */; };
+		32AE255B7C3E7FD5B0185141 /* WatchGPTApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD2C2FE47BB4E3AFEA612DF1 /* WatchGPTApp.swift */; };
+		44DB678487B4345B0F886F26 /* WatchGPTKit in Frameworks */ = {isa = PBXBuildFile; productRef = C77B2BA62B153E6B490B2EF4 /* WatchGPTKit */; };
+		45E9E7C42917C07583C4AD57 /* RemindersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF5CFE9F10100E27ABA893F /* RemindersView.swift */; };
+		480D9003DC7D5ED2EBD4FF60 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E777AED06D819869022D041 /* RootView.swift */; };
+		52C12054C14C65F505DF6972 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07B8E6C5FAD2DB733292F0FA /* Assets.xcassets */; };
+		6864CB88A21B784A3B116C93 /* TalkComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57E2F8D260A1D85BC8674A7 /* TalkComplication.swift */; };
+		6F53B8E0D83975BB998B0C9B /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05E2FF55D704C01711AE3E8A /* Notifications.swift */; };
+		916E1B0A60D9433130B2A050 /* bloub.txt in Resources */ = {isa = PBXBuildFile; fileRef = 09313087EBCA46B8F5AB0E87 /* bloub.txt */; };
+		91F2BA162A5800D1FEB0E693 /* Dictation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 121A8720F2DF8EC15123A02D /* Dictation.swift */; };
+		9D89929B2BEFFD9762B2ACC4 /* Speaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4AB67BC202CF60413D454FD /* Speaker.swift */; };
+		B5654BFC1B039DBFBD2358C6 /* Stores.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51814BE88FF3F2EC7099501A /* Stores.swift */; };
+		CCEB4D6CF13D92A49551189F /* LicencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5A769932C911D246687B06 /* LicencesView.swift */; };
+		D0AA48EF408F83D7288D3A84 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 306D89575B142D0E4B64FD35 /* SettingsView.swift */; };
+		DCAFC005247215B0BEAD09FA /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA9E8D65C6E61050951D9EEC /* SignInView.swift */; };
+		DF8D7AD24C73B24351823559 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB1BE2FC63306A0D0050921 /* Preferences.swift */; };
+		EBAD0141A588AAEC604FC38A /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF68B65E260D7A53A97579B2 /* Conversation.swift */; };
+		EC267D0CDDF33496A670C2FA /* Services.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9558AB5FB2A310080F2729D /* Services.swift */; };
+		FE298569ACE1D8A4FE5E4952 /* FaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE6A2D7BE7B848A13B68B09A /* FaceView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		818B8CC42104E4BA844E449A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 773CCC2095453D3D3767323C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D83CD725951BCF2A0DEA3674;
+			remoteInfo = WatchGPTComplication;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		84CDBDFDBF2EA440C2EA0B06 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				1FD6F9CD5E16ACE81A7D95E8 /* WatchGPTComplication.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		05E2FF55D704C01711AE3E8A /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
+		07B8E6C5FAD2DB733292F0FA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		09313087EBCA46B8F5AB0E87 /* bloub.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = bloub.txt; sourceTree = "<group>"; };
+		0C3E40E53E758C7023FD70EA /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		0E214A06F92F703412AEE145 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		121A8720F2DF8EC15123A02D /* Dictation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dictation.swift; sourceTree = "<group>"; };
+		306D89575B142D0E4B64FD35 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		35795D7FE30BF27EBFE41A7C /* WatchGPTKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WatchGPTKit; path = WatchGPTKit; sourceTree = SOURCE_ROOT; };
+		4F5A769932C911D246687B06 /* LicencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicencesView.swift; sourceTree = "<group>"; };
+		51814BE88FF3F2EC7099501A /* Stores.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stores.swift; sourceTree = "<group>"; };
+		5E777AED06D819869022D041 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		5F864EA057EA60633EE8481E /* WatchGPT.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WatchGPT.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5FB1BE2FC63306A0D0050921 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
+		793EAFAF2C05B8CB5F2376C9 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		7A3EF96A717A8F179CFE197F /* WatchGPT.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WatchGPT.entitlements; sourceTree = "<group>"; };
+		A9558AB5FB2A310080F2729D /* Services.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services.swift; sourceTree = "<group>"; };
+		AE6A2D7BE7B848A13B68B09A /* FaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceView.swift; sourceTree = "<group>"; };
+		CF68B65E260D7A53A97579B2 /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
+		D4AB67BC202CF60413D454FD /* Speaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Speaker.swift; sourceTree = "<group>"; };
+		DAF5CFE9F10100E27ABA893F /* RemindersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersView.swift; sourceTree = "<group>"; };
+		EA9E8D65C6E61050951D9EEC /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		F1A8703345943D9AF7BE73F0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		F57E2F8D260A1D85BC8674A7 /* TalkComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkComplication.swift; sourceTree = "<group>"; };
+		F9D5EE0D13D56779672C5ABF /* WatchGPTComplication.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WatchGPTComplication.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA75BC04D9D6D4CAE23BBB2C /* TalkIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkIntent.swift; sourceTree = "<group>"; };
+		FD2C2FE47BB4E3AFEA612DF1 /* WatchGPTApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchGPTApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1446E588C8C9BCB9D7A59AC5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				44DB678487B4345B0F886F26 /* WatchGPTKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2C4CACDDD97328F6FDD95739 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				793EAFAF2C05B8CB5F2376C9 /* Signing.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		62AD6A9D995E46D35E4E9E1A /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				35795D7FE30BF27EBFE41A7C /* WatchGPTKit */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		C809EDFC8EA48899AA45A337 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5F864EA057EA60633EE8481E /* WatchGPT.app */,
+				F9D5EE0D13D56779672C5ABF /* WatchGPTComplication.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D594B0C799B8629827E674FE /* Licenses */ = {
+			isa = PBXGroup;
+			children = (
+				09313087EBCA46B8F5AB0E87 /* bloub.txt */,
+			);
+			path = Licenses;
+			sourceTree = "<group>";
+		};
+		D5E11D957D60DFEF440DA276 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				0C3E40E53E758C7023FD70EA /* AppModel.swift */,
+				07B8E6C5FAD2DB733292F0FA /* Assets.xcassets */,
+				CF68B65E260D7A53A97579B2 /* Conversation.swift */,
+				121A8720F2DF8EC15123A02D /* Dictation.swift */,
+				AE6A2D7BE7B848A13B68B09A /* FaceView.swift */,
+				F1A8703345943D9AF7BE73F0 /* Info.plist */,
+				4F5A769932C911D246687B06 /* LicencesView.swift */,
+				05E2FF55D704C01711AE3E8A /* Notifications.swift */,
+				5FB1BE2FC63306A0D0050921 /* Preferences.swift */,
+				DAF5CFE9F10100E27ABA893F /* RemindersView.swift */,
+				5E777AED06D819869022D041 /* RootView.swift */,
+				A9558AB5FB2A310080F2729D /* Services.swift */,
+				306D89575B142D0E4B64FD35 /* SettingsView.swift */,
+				EA9E8D65C6E61050951D9EEC /* SignInView.swift */,
+				D4AB67BC202CF60413D454FD /* Speaker.swift */,
+				51814BE88FF3F2EC7099501A /* Stores.swift */,
+				FA75BC04D9D6D4CAE23BBB2C /* TalkIntent.swift */,
+				7A3EF96A717A8F179CFE197F /* WatchGPT.entitlements */,
+				FD2C2FE47BB4E3AFEA612DF1 /* WatchGPTApp.swift */,
+				D594B0C799B8629827E674FE /* Licenses */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		ECFBB4676A389852249CE54D /* Complication */ = {
+			isa = PBXGroup;
+			children = (
+				0E214A06F92F703412AEE145 /* Info.plist */,
+				F57E2F8D260A1D85BC8674A7 /* TalkComplication.swift */,
+			);
+			path = Complication;
+			sourceTree = "<group>";
+		};
+		F1D95191CD50BC6379682CD5 = {
+			isa = PBXGroup;
+			children = (
+				D5E11D957D60DFEF440DA276 /* App */,
+				ECFBB4676A389852249CE54D /* Complication */,
+				2C4CACDDD97328F6FDD95739 /* Config */,
+				62AD6A9D995E46D35E4E9E1A /* Packages */,
+				C809EDFC8EA48899AA45A337 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9F5EA48E4FFD27327D981664 /* WatchGPT */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E60A83B1479CF80A754CE49B /* Build configuration list for PBXNativeTarget "WatchGPT" */;
+			buildPhases = (
+				EC522A780A2C71179FBC2965 /* Sources */,
+				71AAB15CB55A51BC9AA78A1B /* Resources */,
+				1446E588C8C9BCB9D7A59AC5 /* Frameworks */,
+				84CDBDFDBF2EA440C2EA0B06 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BAC2BD8F422DC4CB5201CF26 /* PBXTargetDependency */,
+			);
+			name = WatchGPT;
+			packageProductDependencies = (
+				C77B2BA62B153E6B490B2EF4 /* WatchGPTKit */,
+			);
+			productName = WatchGPT;
+			productReference = 5F864EA057EA60633EE8481E /* WatchGPT.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D83CD725951BCF2A0DEA3674 /* WatchGPTComplication */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5E680679B068C23336D50A1F /* Build configuration list for PBXNativeTarget "WatchGPTComplication" */;
+			buildPhases = (
+				821024F0751DC3C207D91CF1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WatchGPTComplication;
+			packageProductDependencies = (
+			);
+			productName = WatchGPTComplication;
+			productReference = F9D5EE0D13D56779672C5ABF /* WatchGPTComplication.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		773CCC2095453D3D3767323C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					9F5EA48E4FFD27327D981664 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					D83CD725951BCF2A0DEA3674 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 9B90C441922F91C8C84E249D /* Build configuration list for PBXProject "WatchGPT" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = F1D95191CD50BC6379682CD5;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A9DC8AE98DF38F33F17A95ED /* XCLocalSwiftPackageReference "WatchGPTKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = C809EDFC8EA48899AA45A337 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9F5EA48E4FFD27327D981664 /* WatchGPT */,
+				D83CD725951BCF2A0DEA3674 /* WatchGPTComplication */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		71AAB15CB55A51BC9AA78A1B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				52C12054C14C65F505DF6972 /* Assets.xcassets in Resources */,
+				916E1B0A60D9433130B2A050 /* bloub.txt in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		821024F0751DC3C207D91CF1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6864CB88A21B784A3B116C93 /* TalkComplication.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EC522A780A2C71179FBC2965 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				28AE6B4A721FCA59C8564BA0 /* AppModel.swift in Sources */,
+				EBAD0141A588AAEC604FC38A /* Conversation.swift in Sources */,
+				91F2BA162A5800D1FEB0E693 /* Dictation.swift in Sources */,
+				FE298569ACE1D8A4FE5E4952 /* FaceView.swift in Sources */,
+				CCEB4D6CF13D92A49551189F /* LicencesView.swift in Sources */,
+				6F53B8E0D83975BB998B0C9B /* Notifications.swift in Sources */,
+				DF8D7AD24C73B24351823559 /* Preferences.swift in Sources */,
+				45E9E7C42917C07583C4AD57 /* RemindersView.swift in Sources */,
+				480D9003DC7D5ED2EBD4FF60 /* RootView.swift in Sources */,
+				EC267D0CDDF33496A670C2FA /* Services.swift in Sources */,
+				D0AA48EF408F83D7288D3A84 /* SettingsView.swift in Sources */,
+				DCAFC005247215B0BEAD09FA /* SignInView.swift in Sources */,
+				9D89929B2BEFFD9762B2ACC4 /* Speaker.swift in Sources */,
+				B5654BFC1B039DBFBD2358C6 /* Stores.swift in Sources */,
+				054F7E6A5E729DA14923D823 /* TalkIntent.swift in Sources */,
+				32AE255B7C3E7FD5B0185141 /* WatchGPTApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BAC2BD8F422DC4CB5201CF26 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D83CD725951BCF2A0DEA3674 /* WatchGPTComplication */;
+			targetProxy = 818B8CC42104E4BA844E449A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1D22F5A1B7FF293D9864885E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 793EAFAF2C05B8CB5F2376C9 /* Signing.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MARKETING_VERSION = 0.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		3B207AD8A42C0E6BF7BD6264 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = Complication/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WATCHGPT_BUNDLE_ID).complication";
+				PRODUCT_NAME = WatchGPTComplication;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+		9CC1ADDDDAF9368EF868EE5C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = Complication/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WATCHGPT_BUNDLE_ID).complication";
+				PRODUCT_NAME = WatchGPTComplication;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		A4A34C65BA6D956CA44B5D6E /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 793EAFAF2C05B8CB5F2376C9 /* Signing.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MARKETING_VERSION = 0.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		CE73578D11EF0443B168F2CF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/WatchGPT.entitlements;
+				INFOPLIST_FILE = App/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WATCHGPT_BUNDLE_ID)";
+				PRODUCT_NAME = WatchGPT;
+				SDKROOT = watchos;
+				SKIP_INSTALL = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+		D34AF350EB64ED74449156E7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/WatchGPT.entitlements;
+				INFOPLIST_FILE = App/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WATCHGPT_BUNDLE_ID)";
+				PRODUCT_NAME = WatchGPT;
+				SDKROOT = watchos;
+				SKIP_INSTALL = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5E680679B068C23336D50A1F /* Build configuration list for PBXNativeTarget "WatchGPTComplication" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CC1ADDDDAF9368EF868EE5C /* Debug */,
+				3B207AD8A42C0E6BF7BD6264 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9B90C441922F91C8C84E249D /* Build configuration list for PBXProject "WatchGPT" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1D22F5A1B7FF293D9864885E /* Debug */,
+				A4A34C65BA6D956CA44B5D6E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E60A83B1479CF80A754CE49B /* Build configuration list for PBXNativeTarget "WatchGPT" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D34AF350EB64ED74449156E7 /* Debug */,
+				CE73578D11EF0443B168F2CF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A9DC8AE98DF38F33F17A95ED /* XCLocalSwiftPackageReference "WatchGPTKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = WatchGPTKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C77B2BA62B153E6B490B2EF4 /* WatchGPTKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = WatchGPTKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 773CCC2095453D3D3767323C /* Project object */;
+}

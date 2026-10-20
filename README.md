@@ -40,6 +40,10 @@ More detail: [Installation and permissions](docs/getting-started.md) · [Owner c
 - Sleep from Health Connect ("How did I sleep?"): Samsung Health's sleep times and stages, told by the phone in its own voice, or by ChatGPT in its voice if you turn that on.
 - Native Clock requests with recurring weekdays and honest results: sent to Clock, waiting for a notification tap, or failed. Android gives no proof that its Clock app created an alarm.
 
+## Apple Watch
+
+There's also a watchOS version in [watchos/](watchos/README.md): a watch-only app, with no iPhone app needed. It keeps the mascot, the ChatGPT sign-in, the safety gate, reminders, notes, memory and sleep (from Apple Health); you talk through the watch's dictation and it answers in the watch's own voice. It's installed from Xcode with your own Apple ID.
+
 ## Build
 
 ```sh

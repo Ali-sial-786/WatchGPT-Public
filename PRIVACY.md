@@ -61,3 +61,22 @@ The app uses AI to generate answers. They can be wrong. Each answer shows which 
 - **Delete everything** (phone Settings) deletes the reminders on the phone, removes their calendar copies from every calendar WatchGPT wrote to (it needs calendar access for that, and says so), turns calendar sync off, and sends deletion records to the watch, which deletes its copies when it next syncs: reconnect both devices afterwards. Uninstalling removes the local data and keys, not calendar copies.
 
 See [WatchGPT behavior](docs/WATCHGPT_BEHAVIOR.md) for synchronization and retention details.
+
+## WatchGPT on Apple Watch
+
+The Apple Watch version ([watchos/](watchos/README.md)) has no iPhone app and no phone in between: everything above
+that happens "on your phone" happens on the watch instead, with these differences.
+
+| Data | Where it goes | Why | Kept |
+|---|---|---|---|
+| What you say | Turned into words by the watch's dictation, which is Apple's (on the watch or on Apple's servers, depending on the watch and language; Apple's privacy policy applies). WatchGPT never records sound | To hear you | WatchGPT gets only the words |
+| Questions and tool calls | From the watch straight to OpenAI, under your own ChatGPT account | To answer you | OpenAI's terms and your ChatGPT data settings apply |
+| Answers read aloud | Spoken by the watch's own voices, on the watch | To talk with you | Not stored |
+| Conversations and what you ask WatchGPT to remember | In WatchGPT's files on the watch, protected by the watch's encryption and left out of backups; they go to OpenAI with the next conversations, as on Android | To remember what you talked about | 30 days for conversations; facts until you forget them in Settings |
+| Notes, reminders, the calendar (with your OK) | On the watch. With **Private things stay on this watch** on (the default) the watch reads them out itself and they never go to OpenAI; with it off they go with codes, numbers and links taken out | You asked for them | Notes and reminders until you delete them; the calendar isn't stored |
+| Sleep (with your OK in Apple Health) | Read on the watch from Apple Health only when you ask; the watch tells you itself. Only with **Sleep in ChatGPT's voice** on does it go to OpenAI | To tell you how you slept | Not stored; WatchGPT writes nothing to Apple Health |
+| Contacts, calls and texts (with your OK) | Contacts are read on the watch to find the person you name; after your yes the watch's Phone or Messages app takes over, and a text goes when you tap Send | You asked for it | Not stored by WatchGPT |
+| ChatGPT sign-in | In the watch's keychain, for this watch only, never synced or backed up | To keep you signed in | Until you sign out |
+
+Reminders aren't synced with anything and there are no calendar copies. **Settings → Delete everything** on the watch
+deletes reminders, notes, conversations and what WatchGPT remembers; signing out removes the sign-in.

@@ -1,0 +1,13 @@
+// Signing for your own Apple Watch. Xcode signs with your Apple ID's team; Apple needs a bundle id no other team
+// uses. Put your own values in Config/Local.xcconfig (not committed), for example:
+//
+//   DEVELOPMENT_TEAM = ABCDE12345
+//   WATCHGPT_BUNDLE_ID = com.yourname.watchgpt
+//
+// or pick your team in Xcode under Signing & Capabilities.
+
+WATCHGPT_BUNDLE_ID = io.github.alisial786.watchgpt
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"

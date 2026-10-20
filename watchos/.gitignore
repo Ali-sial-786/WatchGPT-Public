@@ -1,0 +1,7 @@
+# SwiftPM and Xcode output, and each developer's own signing settings.
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+Config/Local.xcconfig

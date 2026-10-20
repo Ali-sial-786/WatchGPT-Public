@@ -138,4 +138,12 @@ the phone, starts with it and with the last conversations, so "text my sister" f
 | `app` | Phone app: WatchGPT, conversations, actions (incl. using apps on screen), the gate, memory and History, the apps WatchGPT can use, privacy screens, WatchGPT Plus. |
 | `wear` | Watch app: face, conversations through the phone, "Hey Watch G P T", Learn my voice. |
 
+## Apple Watch (`watchos`)
+
+The watchOS version runs on the watch alone, with no iPhone app: `WatchGPTKit` is a Swift package with the ChatGPT
+sign-in and Responses client, the Guard, memory, reminders, the sleep report, the watch's tools and the mascot engine,
+ported from the modules above; the SwiftUI app adds dictation, the watch's own voices, notifications, HealthKit,
+EventKit and Contacts. ChatGPT answers in text (no WebRTC on watchOS) and private data is read out by the watch
+itself. See [watchos/README.md](../watchos/README.md).
+
 The decisions behind the big choices are in [docs/adr](adr/).

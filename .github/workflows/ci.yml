@@ -141,6 +141,27 @@ jobs:
             build/reports/cyclonedx/**
           retention-days: 7
 
+  # The Apple Watch app (watchos/): its shared package's tests, and the app built for watchOS without signing. Nothing
+  # is delivered: it is installed from Xcode with the user's own Apple ID (watchos/README.md).
+  apple-watch:
+    if: (github.event_name != 'workflow_dispatch' || !inputs.android_only) && (github.event_name != 'push' || github.ref != 'refs/heads/watchgpt/setup')
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Test the shared Swift package
+        run: swift test --package-path watchos/WatchGPTKit
+      - name: watchOS platform
+        # Xcode downloads platforms on demand; the runner image normally has watchOS already.
+        run: xcodebuild -showsdks | grep -q watchos || xcodebuild -downloadPlatform watchOS
+      - name: Build the watch app and its complication
+        run: |
+          xcodebuild -project watchos/WatchGPT.xcodeproj -scheme WatchGPT -configuration Release \
+            -destination 'generic/platform=watchOS' -derivedDataPath "$RUNNER_TEMP/derived" \
+            CODE_SIGNING_ALLOWED=NO build
+
   secrets:
     permissions:
       contents: read
